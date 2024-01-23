@@ -2,11 +2,9 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { SendEmail } from './interfaces/send-email.interface';
 import * as path from 'path';
-
 @Injectable()
 export class EmailService {
   constructor(private readonly mailService: MailerService) {}
-
   getTemplatePath(templateName: any) {
     return `${path.resolve()}/public/templates/${templateName}.hbs`;
   }
@@ -15,7 +13,7 @@ export class EmailService {
     try {
       await this.mailService.sendMail({
         to: data.email,
-        from: 'no-reply@ocreal.co',
+        from: 'no-reply@ocreal.io',
         subject: data.subject,
         template: this.getTemplatePath(data.template),
         context: data.body,

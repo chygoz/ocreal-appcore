@@ -7,24 +7,22 @@ import {
 import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { decodeJwtToken } from 'src/utils/jwt.util';
-import { UsersService } from 'src/modules/users/users.service';
 import { Reflector } from '@nestjs/core';
-import { User } from 'src/modules/users/user.model';
+import { User } from 'src/modules/users/schema/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: User;
-      buyer?: User;
-      seller?: User;
-      agent?: User;
     }
   }
 }
 export class JwtAuthGuard implements CanActivate {
   constructor(
-    private readonly usersService: UsersService,
+    @InjectModel(User.name) private readonly userModel: Model<User>,
     private reflector: Reflector,
   ) {}
   canActivate(
@@ -54,7 +52,7 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Please login again.');
     }
 
-    const user = await this.usersService.getUserProfile(decodedToken.id);
+    const user = await this.userModel.findById(decodedToken.id);
 
     if (!user) {
       throw new UnauthorizedException('Invalid token. Please login again.');

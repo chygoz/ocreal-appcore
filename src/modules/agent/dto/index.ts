@@ -1,29 +1,13 @@
+import { Type } from 'class-transformer';
 import {
-  IsEmail,
   IsString,
+  Matches,
+  IsOptional,
   IsNotEmpty,
   IsObject,
-  IsOptional,
-  IsNumber,
   IsArray,
-  IsEnum,
-  Matches,
+  IsNumber,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { AccountTypeEnum } from 'src/constants';
-
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[a-zA-Z0-9]).{8,}$/;
-
-export class CreateMobileDto {
-  @IsString()
-  number_body: string;
-
-  @IsString()
-  mobile_extension: string;
-
-  @IsString()
-  raw_mobile: string;
-}
 
 export class AddAddress {
   @IsNumber()
@@ -45,16 +29,30 @@ export class AddAddress {
   city: string;
 }
 
-export class CreateUserDto {
-  @IsEmail()
-  email: string;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[a-zA-Z0-9]).{8,}$/;
 
+export class CreateMobileDto {
+  @IsString()
+  number_body: string;
+
+  @IsString()
+  mobile_extension: string;
+
+  @IsString()
+  raw_mobile: string;
+}
+
+export class CreateAgentDto {
   @Matches(passwordRegex, { message: 'This password is not strong enough.' })
   password: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   licence_number?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  region: string;
 
   @IsString()
   @IsNotEmpty()
@@ -72,36 +70,23 @@ export class CreateUserDto {
   @IsNotEmpty()
   lastname: string;
 
-  @IsEnum(AccountTypeEnum, { message: 'Invalid account type' })
-  account_type: string;
-
   @IsOptional()
   @Type(() => AddAddress)
   address?: AddAddress;
 }
 
-export class LoginUserDto {
-  @IsEmail()
-  email: string;
+export class UpdateAgentDto {
+  // @IsEmail()
+  // @IsOptional()
+  // email?: string;
 
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-}
+  // @IsString()
+  // @IsOptional()
+  // licence_number?: string;
 
-export class SendUserEverificationDto {
-  @IsEmail()
-  email: string;
-}
-
-export class UpdateUserDto {
-  @IsEmail()
-  @IsOptional()
-  email?: string;
-
-  @IsOptional()
-  @Matches(passwordRegex, { message: 'This password is not strong enough.' })
-  password?: string;
+  // @IsString()
+  // @IsOptional()
+  // fullname: string;
 
   @IsString()
   @IsOptional()
@@ -109,7 +94,7 @@ export class UpdateUserDto {
 
   @IsString()
   @IsOptional()
-  fullname: string;
+  region: string;
 
   @IsObject()
   @IsOptional()

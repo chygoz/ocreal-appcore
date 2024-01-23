@@ -9,8 +9,6 @@ import { configs } from 'src/configs';
     MailerModule.forRoot({
       transport: {
         host: configs.MAILER_HOST,
-        // port: Number(configs.MAILER_PORT),
-        // secure: false,
         service: 'gmail',
         auth: {
           user: configs.MAILER_USERNAME,
@@ -18,7 +16,7 @@ import { configs } from 'src/configs';
         },
       },
       defaults: {
-        from: '"Pharmaserv Help Desk" <helpdesk@pharmaserv.ng>',
+        from: '"OCReal Help Desk" <helpdesk@OCReal.io>',
       },
       template: {
         adapter: new HandlebarsAdapter(),
