@@ -8,6 +8,9 @@ export const configs =
         ENVIRONMENT: process.env.ENVIRONMENT,
         MONGO_DB_URL: process.env.DEV_MONGO_URI || '',
         JWT_SECRET: process.env.DEV_JWT_SECRET || '',
+        JWT_FORGOTPASSWORD_SECRET:
+          process.env.DEV_FORGOTPASSWORD_JWT_SECRET || '',
+        JWT_AGENT_SECRET: process.env.DEV_AGENT_JWT_SECRET || '',
         JWT_EXIPIRY: process.env.DEV_JWT_EXPIRY || '',
         EMAIL_JWT_SECRET: process.env.EMAIL_JWT_EXPIRY || '',
         EMAIL_JWT_EXPIRY: process.env.EMAIL_JWT_EXPIRY || '',
@@ -23,8 +26,8 @@ export const configs =
         TWILO_PHONE_NUMBER_SID: process.env.DEV_TWILO_PHONE_NUMBER_SID || '',
         BUCKET_NAME: process.env.BUCKET_NAME || '',
         MAILER_HOST: process.env.MAILER_HOST || '',
-        MAILER_USERNAME: process.env.MAILER_USERNAME || '',
-        MAILER_PASSWORD: process.env.MAILER_PASSWORD || '',
+        MAILER_USERNAME: process.env.DEV_NODEMAILER_EMAIL_USER || '',
+        MAILER_PASSWORD: process.env.DEV_NODEMAILER_EMAIL_PASSWORD || '',
         MAILER_PORT: process.env.MAILER_PORT || '',
         EMAIL_LOGIN_URL: process.env.MAILER_PORT || 'https://login.com',
       }
@@ -33,7 +36,10 @@ export const configs =
           BASE_URL: process.env.PRODUCTION_BASE_URL || '',
           ENVIRONMENT: process.env.ENVIRONMENT,
           MONGO_DB_URL: process.env.DEV_MONGO_URI || '',
+          JWT_AGENT_SECRET: process.env.PROD_AGENT_JWT_SECRET || '',
           JWT_SECRET: process.env.PROD_JWT_SECRET || '',
+          JWT_FORGOTPASSWORD_SECRET:
+            process.env.PROD_FORGOTPASSWORD_JWT_SECRET || '',
           EMAIL_JWT_SECRET: process.env.EMAIL_JWT_EXPIRY || '',
           EMAIL_JWT_EXPIRY: process.env.EMAIL_JWT_EXPIRY || '',
           JWT_EXIPIRY: process.env.PROD_JWT_EXPIRY || '',
@@ -50,8 +56,8 @@ export const configs =
             process.env.PRODUCTION_TWILO_PHONE_NUMBER_SID || '',
           BUCKET_NAME: process.env.BUCKET_NAME || '',
           MAILER_HOST: process.env.MAILER_HOST || '',
-          MAILER_USERNAME: process.env.MAILER_USERNAME || '',
-          MAILER_PASSWORD: process.env.MAILER_PASSWORD || '',
+          MAILER_USERNAME: process.env.PROD_NODEMAILER_EMAIL_USER || '',
+          MAILER_PASSWORD: process.env.PROD_NODEMAILER_EMAIL_PASSWORD || '',
           MAILER_PORT: process.env.MAILER_PORT || '',
           EMAIL_LOGIN_URL: process.env.MAILER_PORT || 'https://login.com',
         }
@@ -61,6 +67,9 @@ export const configs =
           MONGO_DB_URL: process.env.DEV_MONGO_URI || '',
           JWT_SECRET: process.env.DEV_JWT_SECRET || '',
           EMAIL_JWT_SECRET: process.env.EMAIL_JWT_EXPIRY || '',
+          JWT_AGENT_SECRET: process.env.DEV_AGENT_JWT_SECRET || '',
+          JWT_FORGOTPASSWORD_SECRET:
+            process.env.DEV_FORGOTPASSWORD_JWT_SECRET || '',
           EMAIL_JWT_EXPIRY: process.env.EMAIL_JWT_EXPIRY || '',
           JWT_EXIPIRY: process.env.DEV_JWT_EXPIRY || '',
           EMAIL_SERVICE: process.env.DEV_NODEMAILER_EMAIL_SERVICE || '',
@@ -75,8 +84,8 @@ export const configs =
           TWILO_PHONE_NUMBER_SID: process.env.DEV_TWILO_PHONE_NUMBER_SID || '',
           BUCKET_NAME: process.env.BUCKET_NAME || '',
           MAILER_HOST: process.env.MAILER_HOST || '',
-          MAILER_USERNAME: process.env.MAILER_USERNAME || '',
-          MAILER_PASSWORD: process.env.MAILER_PASSWORD || '',
+          MAILER_USERNAME: process.env.DEV_NODEMAILER_EMAIL_USER || '',
+          MAILER_PASSWORD: process.env.DEV_NODEMAILER_EMAIL_PASSWORD || '',
           MAILER_PORT: process.env.MAILER_PORT || '',
           EMAIL_LOGIN_URL: process.env.MAILER_PORT || 'https://login.com',
         };

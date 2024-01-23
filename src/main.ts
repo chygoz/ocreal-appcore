@@ -80,6 +80,7 @@ async function bootstrap() {
     });
   }
   app.setGlobalPrefix('api/v1');
+  app.useGlobalFilters(new ExceptionsHandler());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   const PORT = parseInt(process.env.PORT, 10);
   app.enableCors();

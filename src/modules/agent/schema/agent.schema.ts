@@ -1,13 +1,13 @@
-// user.model.ts
+// Agent.model.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument } from 'mongoose';
-import { AccountTypeEnum } from 'src/constants';
+import { Document, HydratedDocument, SchemaTypes } from 'mongoose';
+import { User } from '../../users/schema/user.schema';
 // import * as moment from 'moment';
 
-export type UserDocument = HydratedDocument<User>;
+export type AgentDocument = HydratedDocument<Agent>;
 
 @Schema({ timestamps: true })
-export class User extends Document {
+export class Agent extends Document {
   @Prop({ unique: true, trim: true, required: true, lowercase: true })
   email: string;
 
@@ -16,6 +16,17 @@ export class User extends Document {
 
   @Prop()
   fullname: string;
+
+  @Prop({
+    type: { type: SchemaTypes.ObjectId, ref: 'User' },
+    default: [],
+  })
+  connectedUsers: User[];
+
+  @Prop({
+    type: { type: SchemaTypes.ObjectId, ref: 'User' },
+  })
+  invitedBy?: User;
 
   @Prop({
     type: {
@@ -31,7 +42,10 @@ export class User extends Document {
   };
 
   @Prop()
-  licence_number?: string;
+  licence_number: string;
+
+  @Prop()
+  region?: string;
 
   @Prop()
   firstname: string;
@@ -39,14 +53,8 @@ export class User extends Document {
   @Prop()
   lastname: string;
 
-  // @Prop({ type: Date, default: moment().add(5, 'minutes').toDate() })
-  // verificationExpiry: Date;
-
   @Prop({ type: Boolean, default: false })
   emailVerified: false;
-
-  @Prop({ type: String, enum: Object.values(AccountTypeEnum), required: true })
-  account_type: AccountTypeEnum;
 
   @Prop({
     type: {
@@ -67,23 +75,6 @@ export class User extends Document {
     city: string;
   };
 
-  @Prop({
-    type: {
-      connected_apps: {
-        apple: Object,
-        google: Object,
-        facebook: Object,
-        docuSign: Object,
-      },
-    },
-  })
-  connected_apps: {
-    apple: object;
-    google: object;
-    facebook: object;
-    docuSign: object;
-  };
-
   @Prop({ default: Date.now })
   createdAt: Date;
 
@@ -91,4 +82,4 @@ export class User extends Document {
   updatedAt: Date;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const AgentSchema = SchemaFactory.createForClass(Agent);

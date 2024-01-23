@@ -1,15 +1,12 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from './user.model';
+import { User } from './schema/user.schema';
 import { DuplicateException } from 'src/custom_errors';
-import { configs } from '../../configs/index';
-import {
-  createEmailJwtToken,
-  createJwtToken,
-  decodeEmailJwtToken,
-} from 'src/utils/jwt.util';
+import { createUserJwtToken } from 'src/utils/jwt.util';
 import { EmailService } from 'src/services/email/email.service';
+import { CreateUserDto } from './dto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -18,61 +15,55 @@ export class UsersService {
     private readonly emailService: EmailService,
   ) {}
 
-  async sendUserVerificationEmail(emailDto: { email: string }): Promise<any> {
-    const userExists = await this.userModel.findOne({ email: emailDto.email });
-    if (userExists) throw new DuplicateException();
-    await this.userModel.create({ email: emailDto.email });
-    const token = createEmailJwtToken({
-      email: emailDto.email,
-      id: userExists.id,
-    });
-    await this.emailService.sendEmail({
-      email: emailDto.email,
-      subject: 'Welcome to OCReal',
-      body: `${configs.BASE_URL}/auth/verify-email/${token}`,
-    });
-    return;
-  }
+  async createUser(userId: string, userDto: CreateUserDto) {
+    const userExists = await this.userModel.findById(userId);
+    if (!userExists) {
+      throw new BadRequestException('Account not found please sign up again.');
+    }
 
-  async resendVerificationEmail(emailDto: { email: string }): Promise<any> {
-    const user = await this.userModel.findOne({ email: emailDto.email });
-    await this.userModel.findOneAndUpdate({ email: emailDto.email });
-    const token = createEmailJwtToken({ email: emailDto.email, id: user.id });
-    await this.emailService.sendEmail({
-      email: emailDto.email,
-      subject: 'Welcome to OCReal',
-      body: `${configs.BASE_URL}/auth/verify-email/${token}`,
-    });
-    return;
-  }
+    const payload = {
+      ...userDto,
+      fullname: `${userDto.firstname} ${userDto.lastname}`,
+      password: crypto.createHash('md5').update(userDto.password).digest('hex'),
+    };
 
-  async verifyEmail(token: string): Promise<any> {
-    const decodedToken: any = decodeEmailJwtToken(token);
-    if (!decodedToken)
-      throw new UnauthorizedException('Verification link expired or invalid.');
-    const user = await this.userModel.findById(decodedToken.id);
-    if (!user) throw new UnauthorizedException();
-    await this.userModel.findByIdAndUpdate(
-      user.id,
-      {
-        emailVerified: true,
+    const user = await this.userModel.findByIdAndUpdate(userId, payload, {
+      new: true,
+    });
+
+    const token = createUserJwtToken({
+      id: user._id,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      fullname: user.fullname,
+      account_type: user.account_type,
+    });
+    return {
+      user: {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        fullname: user.fullname,
+        account_type: user.account_type,
       },
-      { new: true },
-    );
-    return;
+      token,
+    };
   }
 
   async updateUserProfile(user: User, data: Partial<User>) {
-    if (data?.email) {
-      const userExistis = await this.userModel.findOne({
-        email: data.email.toLowerCase(),
-      });
+    // if (data?.email) {
+    //   const userExistis = await this.userModel.findOne({
+    //     email: data.email.toLowerCase(),
+    //   });
 
-      if (userExistis)
-        throw new DuplicateException(
-          'An account with this email already exists',
-        );
-    }
+    //   if (userExistis)
+    //     throw new DuplicateException(
+    //       'An account with this email already exists',
+    //     );
+    // }
+
     if (data?.mobile) {
       const userExistis = await this.userModel.findOne({
         'mobile.raw_mobile': data.mobile.raw_mobile,
@@ -83,13 +74,17 @@ export class UsersService {
         );
     }
     //TODO: Perform any notification actions here
-
-    const updatedUser = await this.userModel.findByIdAndUpdate(user._id, data);
-
-    const token = createJwtToken(updatedUser!);
+    const payload = { ...data };
+    if (data?.firstname && data?.lastname) {
+      payload['fullname'] = `${data.firstname} ${data.lastname}`;
+    }
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      user._id,
+      payload,
+    );
 
     return {
-      user: {
+      updatedUser: {
         id: updatedUser!._id,
         email: updatedUser!.email,
         firstname: updatedUser!.firstname,
@@ -97,7 +92,6 @@ export class UsersService {
         fullname: updatedUser!.fullname,
         account_type: updatedUser!.account_type,
       },
-      token,
     };
   }
 

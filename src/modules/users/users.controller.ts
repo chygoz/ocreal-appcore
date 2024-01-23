@@ -1,5 +1,4 @@
 import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
-import { SendUserEverificationDto, UpdateUserDto } from '../auth/dto/user.dto';
 import { UsersService } from './users.service';
 import {
   Controller,
@@ -11,34 +10,51 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { CreateUserDto, UpdateUserDto } from './dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
-  @Post('/send-verification')
-  async sendUserVerificationEmail(
-    @Body() sendEmailDto: SendUserEverificationDto,
+  @Post('/onboard-user')
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
     @Res() res: Response,
-  ) {
-    await this.userService.sendUserVerificationEmail(sendEmailDto);
+    @Req() req: Request,
+  ): Promise<any> {
+    const data = await this.userService.createUser(req.user.id, createUserDto);
     this._sendResponse({
       res,
+      data,
       message: 'Email sent successfully',
     });
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @Post('/onboard-user')
+  // async updateUserPassword(
+  //   @Body() createUserDto: UserUpdatePasswordDto,
+  //   @Res() res: Response,
+  // ): Promise<any> {
+  //   const data = await this.userService.createUser(createUserDto);
+  //   this._sendResponse({
+  //     res,
+  //     data,
+  //     message: 'Email sent successfully',
+  //   });
+  // }
+
   @Put('/profile/update')
   async updateProfile(
     @Body() profile: UpdateUserDto,
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    await this.userService.updateUserProfile(req.user, profile);
+    const data = await this.userService.updateUserProfile(req.user, profile);
     this._sendResponse({
       res,
-      message: 'Email sent successfully',
+      data,
+      message: 'Profile update successfully',
     });
   }
 

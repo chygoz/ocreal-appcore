@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import { User } from 'src/modules/users/user.model';
+import { User } from 'src/modules/users/schema/user.schema';
 
 @Schema({ timestamps: true, versionKey: false })
 export class Notification extends Document {
