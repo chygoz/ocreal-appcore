@@ -9,7 +9,6 @@ import { Request } from 'express';
 import { decodeJwtToken } from 'src/utils/jwt.util';
 import { Reflector } from '@nestjs/core';
 import { Agent } from 'src/modules/agent/schema/agent.schema';
-import { AgentsService } from 'src/modules/agent/agents.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 

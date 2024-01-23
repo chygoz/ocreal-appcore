@@ -1,71 +1,162 @@
+# # service: ocreal-app
+
+# # frameworkVersion: '3'
+
+# # useDotenv: true
+
+# # plugins:
+# #   # - serverless-jetpack
+# #   - serverless-offline
+# #   # - serverless-dotenv-plugin
+
+# # provider:
+# #   name: aws
+# #   runtime: nodejs14.x
+# #   region: us-west-2 # or whatever your region is
+# #   memorySize: 512
+# #   # enviroment:
+# #   #   PORT: ${env:PORT}
+# #   #   # DEV MONGO URI
+# #   #   MONGODB_DB_URI: ${env:MONGODB_DB_URI}
+# #   #   # MYSQL DEV DB CONFIGURATION
+# #   #   HOST: ${env:HOST}
+# #   #   MYSQL_PORT: ${env:MYSQL_PORT}
+# #   #   MYSQL_USERNAME: ${env:MYSQL_USERNAME}
+# #   #   MYSQL_PASSWORD: ${env:MYSQL_PASSWORD}
+# #   #   MYSQL_DB_NAME: ${env:MYSQL_DB_NAME}
+# #   #   # DEV COGNITO BUYER POOL
+# #   #   BUYER_COGNITO_USER_POOL_ID: ${env:BUYER_COGNITO_USER_POOL_ID}
+# #   #   BUYER_COGNITO_CLIENT_ID: ${env:BUYER_COGNITO_CLIENT_ID}
+# #   #   # DEV COGNITO SELLER POOL
+# #   #   SELLER_COGNITO_USER_POOL_ID: ${env:SELLER_COGNITO_USER_POOL_ID}
+# #   #   SELLER_COGNITO_CLIENT_ID: ${env:SELLER_COGNITO_CLIENT_ID}
+# #   #   # DEV AWS
+# #   #   AWS_REGION_: ${env:AWS_REGION_}
+# #   #   AWS_ACCESS_KEYS_ID: ${env:AWS_ACCESS_KEYS_ID}
+# #   #   AWS_ACCESS_SECRET_KEY:
+# #   #     ${env:AWS_ACCESS_SECRET_KEY}
+# #   #     # DEV AWS COGNITO BUYER
+# #   #   BUYER_AT_SECRET: ${env:BUYER_AT_SECRET}
+# #   #   BUYER_RT_SECRET: ${env:BUYER_RT_SECRET}
+# #   #   # DEV AWS COGNITO SELLER
+# #   #   SELLER_AT_SECRET: ${env:SELLER_AT_SECRET}
+# #   #   SELLER_RT_SECRET: ${env:SELLER_RT_SECRET}
+# #   #   # DOJAH DEV CONFIGURATION
+# #   #   DOJAH_BASE_URL: ${env:DOJAH_BASE_URL}
+# #   #   DOHAJ_PUBLIC_KEY: ${env:DOHAJ_PUBLIC_KEY}
+# #   #   DOJAH_PRIVATE_KEY: ${env:DOJAH_PRIVATE_KEY}
+# #   #   DOJAH_APP_ID: ${env:DOJAH_APP_ID}
+# #   #   # TWILO
+# #   #   TWILO_SID: ${env:TWILO_SID}
+# #   #   TWILO_AUTH_TOKEN: ${env:TWILO_AUTH_TOKEN}
+# #   #   TWILO_PHONE_NUMBER: ${env:TWILO_PHONE_NUMBER}
+# #   #   TWILO_PHONE_NUMBER_SID: ${env:TWILO_PHONE_NUMBER_SID}
+# #   #   # NODEMAILER
+# #   #   NODEMAILER_EMAIL_SERVICE: ${env:NODEMAILER_EMAIL_SERVICE}
+# #   #   NODEMAILER_EMAIL_USER: ${env:NODEMAILER_EMAIL_USER}
+# #   #   NODEMAILER_EMAIL_PASSWORD: ${env:NODEMAILER_EMAIL_PASSWORD}
+# #   #   NODEMAILER_HOST: ${env:NODEMAILER_HOST}
+# #   #   NODEMAILER_PORT: ${env:NODEMAILER_PORT}
+# #   #   # S3
+# #   #   S3_PROFILE_BUCKET: ${env:S3_PROFILE_BUCKET}
+# #   #   # PAYSTACK
+# #   #   PAYSTACK_SECRET_KEY: ${env:PAYSTACK_SECRET_KEY}
+# #   #   PAYSTACK_PUBLIC_KEY: ${env:PAYSTACK_PUBLIC_KEY}
+
+# # functions:
+# #   main:
+# #     handler: dist/main.handler
+# #     events:
+# #       - http:
+# #           method: ANY
+# #           path: /
+# #       - http:
+# #           method: ANY
+# #           path: '{proxy+}'
+
+
+
+ 
+  # environment:
+  #     PORT: 3002
+  #     NODE_ENV: development
+  #     JWT_EXPIRES_IN: "10days"
+  #     EMAIL_JWT_EXPIRY: a1f3c9b8f7e5a2b3c4e9f2d5a8b9c0a7b3c4ee9f2d5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5e4f7a8
+  #     DEV_MONGO_URI: mongodb+srv://ocrealus:18TAwS3YI0N3zYRs@cluster0.bw2r2a1.mongodb.net/ocreal_dev?retryWrites=true&w=majority
+  #     DEV_JWT_SECRET: 4e2a1f3c9b8f7e5a2b3c4e9f2d5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5e4f7a8b7c3a8d9a2b8c4e9f2d5a8
+  #     DEV_AGENT_JWT_SECRET: c4a3b5f6e8a9b3c4c9b8b7a2b8d9c5e4f7a8b7c3a8d3c4e9f2d5a8c6b7a2b8d9c5e4f7a8b3c4e9f2d5a8c6b7a24e9f2d5a8
+  #     DEV_FORGOTPASSWORD_JWT_SECRET: 4a3b5f6e8a9b3c4c9b8b7a2b8d9c5e4f7a8a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9ce5a2b3c4e9f26b7a24e9f2
+  #     DEV_NODEMAILER_EMAIL_SERVICE: gmail
+  #     DEV_NODEMAILER_EMAIL_USER: ocreal.us@gmail.com
+  #     DEV_NODEMAILER_EMAIL_PASSWORD: "zssp ytes lkpy jiae"
+  #     DEV_NODEMAILER_HOST: smtp.gmail.com
+  #     DEV_NODEMAILER_PORT: 465
+  #     DEV_EMAIL_FROM: support@ocreal.us
+  #     DEV_BASE_URL: http://localhost:3002
+  #     PROD_MONGO_URI: mongodb+srv://ocrealus:18TAwS3YI0N3zYRs@cluster0.bw2r2a1.mongodb.net/ocreal_main?retryWrites=true&w=majority
+  #     PROD_JWT_SECRET: 3a8e2f1d0c6b9a8f7d9c4a3b5f6e8a9b3c4e9f2d5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5e4f7a8b7c3a8d98d9c5e4f7
+  #     PROD_AGENT_JWT_SECRET: 1f3c9b8f7e5e8a9b3c4c9b5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5b8d9c5e8c6b7a2b8d9c5e4f7a8b7c3a8d9a28d9c5e4f7
+  #     PROD_FORGOTPASSWORD_JWT_SECRET: 4a3bc46e8a9b3c4c9b8b7a2f3c9b8f7e5e8a9b3c4c9b5a8bb9a8f7d9c4a3b57a2b8d9ce5a2b3c4e9f26b7a24e9f2
+  #     PROD_JWT_EXPIRY: "10days"
+  #     PROD_NODEMAILER_EMAIL_SERVICE: gmail
+  #     PROD_NODEMAILER_EMAIL_USER: ocreal.us@gmail.com
+  #     PROD_NODEMAILER_EMAIL_PASSWORD: "zssp ytes lkpy jiae"
+  #     PROD_NODEMAILER_HOST: smtp.gmail.com
+  #     PROD_NODEMAILER_PORT: 465
+  #     PROD_EMAIL_FROM: support@ocreal.us
+  #     PRODUCTION_BASE_URL: api.ocreal.co
+
+
+
 # service: ocreal-app
 
 # frameworkVersion: '3'
 
 # useDotenv: true
 
-# plugins:
-#   # - serverless-jetpack
-#   - serverless-offline
-#   # - serverless-dotenv-plugin
-
 # provider:
 #   name: aws
-#   runtime: nodejs14.x
-#   region: us-west-2 # or whatever your region is
-#   memorySize: 512
-#   # enviroment:
-#   #   PORT: ${env:PORT}
-#   #   # DEV MONGO URI
-#   #   MONGODB_DB_URI: ${env:MONGODB_DB_URI}
-#   #   # MYSQL DEV DB CONFIGURATION
-#   #   HOST: ${env:HOST}
-#   #   MYSQL_PORT: ${env:MYSQL_PORT}
-#   #   MYSQL_USERNAME: ${env:MYSQL_USERNAME}
-#   #   MYSQL_PASSWORD: ${env:MYSQL_PASSWORD}
-#   #   MYSQL_DB_NAME: ${env:MYSQL_DB_NAME}
-#   #   # DEV COGNITO BUYER POOL
-#   #   BUYER_COGNITO_USER_POOL_ID: ${env:BUYER_COGNITO_USER_POOL_ID}
-#   #   BUYER_COGNITO_CLIENT_ID: ${env:BUYER_COGNITO_CLIENT_ID}
-#   #   # DEV COGNITO SELLER POOL
-#   #   SELLER_COGNITO_USER_POOL_ID: ${env:SELLER_COGNITO_USER_POOL_ID}
-#   #   SELLER_COGNITO_CLIENT_ID: ${env:SELLER_COGNITO_CLIENT_ID}
-#   #   # DEV AWS
-#   #   AWS_REGION_: ${env:AWS_REGION_}
-#   #   AWS_ACCESS_KEYS_ID: ${env:AWS_ACCESS_KEYS_ID}
-#   #   AWS_ACCESS_SECRET_KEY:
-#   #     ${env:AWS_ACCESS_SECRET_KEY}
-#   #     # DEV AWS COGNITO BUYER
-#   #   BUYER_AT_SECRET: ${env:BUYER_AT_SECRET}
-#   #   BUYER_RT_SECRET: ${env:BUYER_RT_SECRET}
-#   #   # DEV AWS COGNITO SELLER
-#   #   SELLER_AT_SECRET: ${env:SELLER_AT_SECRET}
-#   #   SELLER_RT_SECRET: ${env:SELLER_RT_SECRET}
-#   #   # DOJAH DEV CONFIGURATION
-#   #   DOJAH_BASE_URL: ${env:DOJAH_BASE_URL}
-#   #   DOHAJ_PUBLIC_KEY: ${env:DOHAJ_PUBLIC_KEY}
-#   #   DOJAH_PRIVATE_KEY: ${env:DOJAH_PRIVATE_KEY}
-#   #   DOJAH_APP_ID: ${env:DOJAH_APP_ID}
-#   #   # TWILO
-#   #   TWILO_SID: ${env:TWILO_SID}
-#   #   TWILO_AUTH_TOKEN: ${env:TWILO_AUTH_TOKEN}
-#   #   TWILO_PHONE_NUMBER: ${env:TWILO_PHONE_NUMBER}
-#   #   TWILO_PHONE_NUMBER_SID: ${env:TWILO_PHONE_NUMBER_SID}
-#   #   # NODEMAILER
-#   #   NODEMAILER_EMAIL_SERVICE: ${env:NODEMAILER_EMAIL_SERVICE}
-#   #   NODEMAILER_EMAIL_USER: ${env:NODEMAILER_EMAIL_USER}
-#   #   NODEMAILER_EMAIL_PASSWORD: ${env:NODEMAILER_EMAIL_PASSWORD}
-#   #   NODEMAILER_HOST: ${env:NODEMAILER_HOST}
-#   #   NODEMAILER_PORT: ${env:NODEMAILER_PORT}
-#   #   # S3
-#   #   S3_PROFILE_BUCKET: ${env:S3_PROFILE_BUCKET}
-#   #   # PAYSTACK
-#   #   PAYSTACK_SECRET_KEY: ${env:PAYSTACK_SECRET_KEY}
-#   #   PAYSTACK_PUBLIC_KEY: ${env:PAYSTACK_PUBLIC_KEY}
+#   runtime: nodejs16.x
+#   architecture: arm64
+#   stage: development
+#   region: us-east-1
+#   memorySize: 2048
+#   logRetentionInDays: 1
+#   timeout: 15
+  
+#   environment:
+#       PORT: 3002
+#       NODE_ENV: development
+#       JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
+#       EMAIL_JWT_EXPIRY:  ${env:EMAIL_JWT_EXPIRY}
+#       DEV_MONGO_URI:  ${env:DEV_MONGO_URI}
+#       DEV_JWT_SECRET:  ${env:DEV_JWT_SECRET}
+#       DEV_AGENT_JWT_SECRET:  ${env:DEV_AGENT_JWT_SECRET}
+#       DEV_FORGOTPASSWORD_JWT_SECRET:  ${env:DEV_FORGOTPASSWORD_JWT_SECRET}
+#       DEV_NODEMAILER_EMAIL_SERVICE: ${env:DEV_NODEMAILER_EMAIL_SERVICE}
+#       DEV_NODEMAILER_EMAIL_USER: ${env:DEV_NODEMAILER_EMAIL_USER}
+#       DEV_NODEMAILER_EMAIL_PASSWORD:  ${env:DEV_NODEMAILER_EMAIL_PASSWORD}
+#       DEV_NODEMAILER_HOST:  ${env:DEV_NODEMAILER_HOST}
+#       DEV_NODEMAILER_PORT:  ${env:DEV_NODEMAILER_PORT}
+#       DEV_EMAIL_FROM:  ${env:DEV_EMAIL_FROM}
+#       DEV_BASE_URL: ${env:DEV_BASE_URL}
+#       PROD_MONGO_URI:  ${env:PROD_MONGO_URI}
+#       PROD_JWT_SECRET:  ${env:PROD_JWT_SECRET}
+#       PROD_AGENT_JWT_SECRET:  ${env:PROD_AGENT_JWT_SECRET}
+#       PROD_FORGOTPASSWORD_JWT_SECRET:  ${env:PROD_FORGOTPASSWORD_JWT_SECRET}
+#       PROD_JWT_EXPIRY:  ${env:PROD_JWT_EXPIRY}
+#       PROD_NODEMAILER_EMAIL_SERVICE: ${env:PROD_NODEMAILER_EMAIL_SERVICE}
+#       PROD_NODEMAILER_EMAIL_USER:  ${env:PROD_NODEMAILER_EMAIL_USER}
+#       PROD_NODEMAILER_EMAIL_PASSWORD:  ${env:PROD_NODEMAILER_EMAIL_PASSWORD}
+#       PROD_NODEMAILER_HOST:  ${env:PROD_NODEMAILER_HOST}
+#       PROD_NODEMAILER_PORT:  ${env:PROD_NODEMAILER_PORT}
+#       PROD_EMAIL_FROM:  ${env:PROD_EMAIL_FROM}
+#       PRODUCTION_BASE_URL:  ${env:PRODUCTION_BASE_URL}
+
 
 # functions:
-#   main:
-#     handler: dist/main.handler
+#   api:
+#     handler: dist/lambda.handler
 #     events:
 #       - http:
 #           method: ANY
@@ -73,32 +164,68 @@
 #       - http:
 #           method: ANY
 #           path: '{proxy+}'
+   
+# plugins:
+#   - serverless-jetpack
+#   - serverless-offline
 
 
 
-service: ocreal-app
+
+service: ocreal-appcore-app
 
 frameworkVersion: '3'
 
-provider:
-  name: aws
-  runtime: nodejs16.x
-  architecture: arm64
-  stage: development
-  region: us-west-2
-  memorySize: 2048
-  logRetentionInDays: 1
-  timeout: 15
-  
-
-functions:
-  api:
-    handler: dist/lambda.handler
-    events:
-      - appcore:
-          method: any
-          path: /{proxy+}
+useDotenv: true
 
 plugins:
   - serverless-jetpack
   - serverless-offline
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: us-east-1 
+  memorySize: 512
+  environment:
+      PORT: 3002
+      NODE_ENV: development
+      JWT_EXPIRES_IN: "10days"
+      EMAIL_JWT_EXPIRY: a1f3c9b8f7e5a2b3c4e9f2d5a8b9c0a7b3c4ee9f2d5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5e4f7a8
+      DEV_MONGO_URI: mongodb+srv://ocrealus:18TAwS3YI0N3zYRs@cluster0.bw2r2a1.mongodb.net/ocreal_dev?retryWrites=true&w=majority
+      DEV_JWT_SECRET: 4e2a1f3c9b8f7e5a2b3c4e9f2d5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5e4f7a8b7c3a8d9a2b8c4e9f2d5a8
+      DEV_AGENT_JWT_SECRET: c4a3b5f6e8a9b3c4c9b8b7a2b8d9c5e4f7a8b7c3a8d3c4e9f2d5a8c6b7a2b8d9c5e4f7a8b3c4e9f2d5a8c6b7a24e9f2d5a8
+      DEV_FORGOTPASSWORD_JWT_SECRET: 4a3b5f6e8a9b3c4c9b8b7a2b8d9c5e4f7a8a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9ce5a2b3c4e9f26b7a24e9f2
+      DEV_NODEMAILER_EMAIL_SERVICE: gmail
+      DEV_NODEMAILER_EMAIL_USER: ocreal.us@gmail.com
+      DEV_NODEMAILER_EMAIL_PASSWORD: "zssp ytes lkpy jiae"
+      DEV_NODEMAILER_HOST: smtp.gmail.com
+      DEV_NODEMAILER_PORT: 465
+      DEV_EMAIL_FROM: support@ocreal.us
+      DEV_BASE_URL: http://localhost:3002
+      PROD_MONGO_URI: mongodb+srv://ocrealus:18TAwS3YI0N3zYRs@cluster0.bw2r2a1.mongodb.net/ocreal_main?retryWrites=true&w=majority
+      PROD_JWT_SECRET: 3a8e2f1d0c6b9a8f7d9c4a3b5f6e8a9b3c4e9f2d5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5e4f7a8b7c3a8d98d9c5e4f7
+      PROD_AGENT_JWT_SECRET: 1f3c9b8f7e5e8a9b3c4c9b5a8b9c0a7b3c4e9f2d5a8c6b7a2b8d9c5b8d9c5e8c6b7a2b8d9c5e4f7a8b7c3a8d9a28d9c5e4f7
+      PROD_FORGOTPASSWORD_JWT_SECRET: 4a3bc46e8a9b3c4c9b8b7a2f3c9b8f7e5e8a9b3c4c9b5a8bb9a8f7d9c4a3b57a2b8d9ce5a2b3c4e9f26b7a24e9f2
+      PROD_JWT_EXPIRY: "10days"
+      PROD_NODEMAILER_EMAIL_SERVICE: gmail
+      PROD_NODEMAILER_EMAIL_USER: ocreal.us@gmail.com
+      PROD_NODEMAILER_EMAIL_PASSWORD: "zssp ytes lkpy jiae"
+      PROD_NODEMAILER_HOST: smtp.gmail.com
+      PROD_NODEMAILER_PORT: 465
+      PROD_EMAIL_FROM: support@ocreal.us
+      PRODUCTION_BASE_URL: api.ocreal.co
+
+functions:
+  app:
+    handler: dist/main.handler
+    events:
+      - http:
+          Type: Api
+          method: any
+          path: /{any+}
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+  

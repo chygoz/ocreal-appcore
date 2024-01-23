@@ -7,7 +7,6 @@ import {
 import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { decodeJwtToken } from 'src/utils/jwt.util';
-import { UsersService } from 'src/modules/users/users.service';
 import { Reflector } from '@nestjs/core';
 import { User } from 'src/modules/users/schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
