@@ -5,8 +5,10 @@ import * as path from 'path';
 @Injectable()
 export class EmailService {
   constructor(private readonly mailService: MailerService) {}
-  getTemplatePath(templateName: any) {
-    return `${path.resolve()}/public/templates/${templateName}.hbs`;
+
+  getTemplatePath(templateName: string): string {
+    const rootDir = process.cwd();
+    return path.join(rootDir, 'public/templates', `${templateName}.hbs`);
   }
 
   async sendEmail(data: SendEmail) {

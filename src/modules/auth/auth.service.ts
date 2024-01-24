@@ -77,6 +77,7 @@ export class AuthService {
       template: 'welcome',
       body: {
         verificationLink: `${configs.BASE_URL}/auth/verify-email/${token}`,
+        recipientName: 'User',
       },
     });
     return;
