@@ -4,6 +4,10 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { EmailService } from './email.service';
 import { configs } from 'src/configs';
 
+console.log({
+  user: configs.MAILER_USERNAME,
+  pass: configs.MAILER_PASSWORD,
+});
 @Module({
   imports: [
     MailerModule.forRoot({
