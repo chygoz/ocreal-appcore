@@ -19,7 +19,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use(helmet());
-  console.log(process.env.NODE_ENV);
   if (process.env.NODE_ENV === 'development') {
     app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
@@ -58,29 +57,3 @@ bootstrap();
 //   server = server ?? (await bootstrap());
 //   return server(event, context, callback);
 // };
-
-// async function bootstrap() {
-//   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-//   if (process.env.NODE_ENV === 'development') {
-//     app.use((req, res, next) => {
-//       res.header('Access-Control-Allow-Origin', '*');
-//       res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH');
-//       res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
-//       next();
-//     });
-
-//     app.enableCors({
-//       allowedHeaders: '*',
-//       origin: '*',
-//     });
-//   }
-//   app.setGlobalPrefix('api/v1');
-//   app.useGlobalFilters(new ExceptionsHandler());
-//   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-//   const PORT = parseInt(process.env.PORT, 10);
-//   app.enableCors();
-//   await app.listen(PORT).then(() => {
-//     console.log(`Server running on port: ${PORT}`, 'Bootstrap');
-//   });
-// }
-// bootstrap();

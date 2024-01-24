@@ -41,3 +41,7 @@ lerna-debug.log*
 
 node_modules
 /serverless.yml
+
+deploy.sh
+ocreal__key.pem
+docker-compose.yaml
