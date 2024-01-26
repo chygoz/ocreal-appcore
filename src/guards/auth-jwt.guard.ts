@@ -48,6 +48,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const decodedToken: any = decodeJwtToken(token);
+    console.log(decodedToken);
     if (!decodedToken) {
       throw new UnauthorizedException('Please login again.');
     }

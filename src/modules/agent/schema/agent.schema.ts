@@ -8,10 +8,10 @@ export type AgentDocument = HydratedDocument<Agent>;
 
 @Schema({ timestamps: true })
 export class Agent extends Document {
-  @Prop({ unique: true, trim: true, required: true, lowercase: true })
+  @Prop({ unique: true, trim: true, lowercase: true })
   email: string;
 
-  @Prop({ required: true, select: false })
+  @Prop({ select: false })
   password: string;
 
   @Prop()
@@ -52,6 +52,12 @@ export class Agent extends Document {
 
   @Prop()
   lastname: string;
+
+  @Prop()
+  verification_code: string;
+
+  @Prop({ type: Date })
+  token_expiry_time: Date;
 
   @Prop({ type: Boolean, default: false })
   emailVerified: false;

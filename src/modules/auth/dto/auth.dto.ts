@@ -1,4 +1,11 @@
-import { IsEmail, IsString, IsNotEmpty, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  IsNotEmpty,
+  Matches,
+  IsEnum,
+} from 'class-validator';
+import { AccountTypeEnum } from 'src/constants';
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[a-zA-Z0-9]).{8,}$/;
 
@@ -11,18 +18,28 @@ export class LoginUserDto {
   password: string;
 }
 
+export class AccountSignUpDto {
+  @IsEmail()
+  email: string;
+
+  @IsEnum(AccountTypeEnum, { message: 'Invalid account type' })
+  account_type: string;
+}
+
 export class SendUserVerificationDto {
   @IsEmail()
   email: string;
 }
-export class ForgotPasswordDto {
+
+export class UpdatePasswordDto {
   @Matches(passwordRegex, { message: 'This password is not strong enough.' })
   password: string;
 }
 
-export class VerifyForgotPasswordDto {
-  @Matches(passwordRegex, { message: 'This password is not strong enough.' })
-  password: string;
+export class VerifyCode {
+  @IsString()
+  @IsNotEmpty()
+  code: string;
 }
 
 export class UserUpdatePasswordDto {
