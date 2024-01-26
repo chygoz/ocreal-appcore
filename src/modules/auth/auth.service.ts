@@ -1,18 +1,17 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DuplicateException } from 'src/custom_errors';
 import * as crypto from 'crypto';
 import { EmailService } from 'src/services/email/email.service';
-import { ForgotPasswordDto, LoginUserDto } from './dto/auth.dto';
+import { UpdatePasswordDto, LoginUserDto } from './dto/auth.dto';
 import { User } from '../users/schema/user.schema';
 import { configs } from 'src/configs';
 import { Agent } from '../agent/schema/agent.schema';
 import * as jwt from 'jsonwebtoken';
+import { verificationTokenGen } from 'src/utils/randome-generators';
+import * as moment from 'moment';
+import { createAgentJwtToken } from 'src/utils/jwt.util';
 
 @Injectable()
 export class AuthService {
@@ -62,101 +61,114 @@ export class AuthService {
     const userExists = await this.userModel.findOne({ email: emailDto.email });
     if (userExists)
       throw new DuplicateException('An account with this email already exists');
-    const user = await this.userModel.create({ email: emailDto.email });
-    const token = this._generateToken(
-      {
-        email: emailDto.email,
-        id: user.id,
-      },
-      configs.EMAIL_JWT_SECRET,
-      10 * 24 * 60 * 60,
-    );
+    const token = this._generateUserEmailToken();
+    await this.userModel.create({
+      email: emailDto.email,
+      verification_code: token,
+      token_expiry_time: moment().add(10, 'minutes').toDate(),
+    });
     await this.emailService.sendEmail({
       email: emailDto.email,
       subject: 'Welcome to OCReal',
       template: 'welcome',
       body: {
-        verificationLink: `${configs.BASE_URL}/auth/verify-email/${token}`,
+        verificationCode: token,
         recipientName: 'User',
       },
     });
-    return;
+    return { token };
   }
 
-  async requestUserForgotPasswordToken(emailDto: {
-    email: string;
-  }): Promise<any> {
+  async userForgotPassword(emailDto: { email: string }): Promise<any> {
     const userExists = await this.userModel.findOne({ email: emailDto.email });
     if (!userExists)
       throw new DuplicateException('This account does not exist');
-
-    const token = this._generateToken(
-      {
-        email: emailDto.email,
-        id: userExists.id,
-      },
-      configs.JWT_FORGOTPASSWORD_SECRET,
-      15 * 60,
-    );
-    console.log('TOKEN:   ', token);
-    const decoded = this._decodeToken(token, configs.JWT_FORGOTPASSWORD_SECRET);
-    console.log(decoded);
+    const token = await this._generateUserEmailToken();
+    await this.userModel.findByIdAndUpdate(userExists.id, {
+      verification_code: token,
+      token_expiry_time: moment().add(10, 'minutes').toDate(),
+    });
     await this.emailService.sendEmail({
       email: emailDto.email,
       subject: 'Password Reset Request',
-      template: 'start_forgot_password',
+      template: 'forgot_password',
       body: {
-        resetPasswordLink: `${configs.BASE_URL}/auth/verify-email/${token}`,
+        verificationCode: token,
         fullname: userExists.fullname,
       },
     });
-    return;
+    return {
+      token,
+    };
   }
 
   async requestAgentForgotPasswordToken(emailDto: {
     email: string;
   }): Promise<any> {
-    const agentExists = await this.agentModel.findOne({
+    const agentExistis = await this.agentModel.findOne({
       email: emailDto.email,
     });
-    if (!agentExists)
+    if (!agentExistis) {
       throw new DuplicateException('This account does not exist');
-
-    const token = this._generateToken(
-      {
-        email: emailDto.email,
-        id: agentExists.id,
-      },
-      configs.JWT_FORGOTPASSWORD_SECRET,
-      15 * 60,
-    );
-
+    }
+    const token = await this._generateAgentEmailToken();
+    await this.agentModel.findByIdAndUpdate(agentExistis.id, {
+      verification_code: token,
+      token_expiry_time: moment().add(10, 'minutes').toDate(),
+    });
     await this.emailService.sendEmail({
       email: emailDto.email,
       subject: 'Password Reset Request',
       template: 'start_forgot_password',
       body: {
-        resetPasswordLink: `${configs.BASE_URL}/auth/verify-email/${token}`,
-        fullname: agentExists.fullname,
+        verificationCode: token,
+        fullname: agentExistis.fullname,
       },
     });
-    return;
+    return {
+      token,
+    };
   }
 
-  async forgotUserPassword(
+  async verifyUserCode(code: string) {
+    const userExists = await this.userModel.findOne({
+      verification_code: code,
+      token_expiry_time: { $gte: moment().toDate() },
+    });
+    if (!userExists) {
+      throw new DuplicateException('Invalid or expired code');
+    }
+
+    await this.userModel.findByIdAndUpdate(userExists.id, {
+      verification_code: '',
+      token_expiry_time: null,
+    });
+    const token = this._generateToken(
+      {
+        email: userExists.email,
+        id: userExists.id,
+      },
+      configs.JWT_FORGOTPASSWORD_SECRET,
+      15 * 60,
+    );
+    return {
+      token,
+    };
+  }
+
+  async updateUserPassword(
     userId: string,
-    dto: ForgotPasswordDto,
+    dto: UpdatePasswordDto,
   ): Promise<any> {
     const user = await this.userModel.findByIdAndUpdate(userId, {
       password: crypto.createHash('md5').update(dto.password).digest('hex'),
     });
-
     if (!user) throw new DuplicateException('Invalid token. Please try again');
 
     await this.emailService.sendEmail({
       email: user.email,
       subject: 'Password Changed!!!',
-      template: 'password_changed',
+      template: 'password-update',
       body: {
         fullname: user.fullname ? user.fullname : 'User',
       },
@@ -188,9 +200,32 @@ export class AuthService {
     };
   }
 
+  async verifyAgentCode(code: string) {
+    const agentExistis = await this.agentModel.findOne({
+      verification_code: code,
+      token_expiry_time: { $gte: moment().toDate() },
+    });
+    if (!agentExistis) {
+      throw new DuplicateException('Invalid or expired code');
+    }
+
+    await this.agentModel.findByIdAndUpdate(agentExistis.id, {
+      verification_code: '',
+      token_expiry_time: null,
+    });
+
+    const token = createAgentJwtToken({
+      email: agentExistis.email,
+      id: agentExistis.id,
+    });
+    return {
+      token,
+    };
+  }
+
   async forgotAgentPassword(
     agentId: string,
-    dto: ForgotPasswordDto,
+    dto: UpdatePasswordDto,
   ): Promise<any> {
     const agent = await this.agentModel.findByIdAndUpdate(agentId, {
       password: crypto.createHash('md5').update(dto.password).digest('hex'),
@@ -240,26 +275,22 @@ export class AuthService {
     });
     if (agentExistis)
       throw new DuplicateException('An account with this email already exists');
-    const agent = await this.agentModel.create({ email: emailDto.email });
-
-    const token = this._generateToken(
-      {
-        email: emailDto.email,
-        id: agent.id,
-      },
-      configs.EMAIL_JWT_SECRET,
-      10 * 24 * 60 * 60,
-    );
-
+    const token = await this._generateAgentEmailToken();
+    await this.agentModel.create({
+      email: emailDto.email,
+      verification_code: token,
+      token_expiry_time: moment().add(10, 'minutes').toDate(),
+    });
     await this.emailService.sendEmail({
       email: emailDto.email,
       subject: 'Welcome to OCReal',
       template: 'welcome',
       body: {
-        verificationLink: `${configs.BASE_URL}/auth/verify-email/${token}`,
+        verificationCode: token,
+        recipientName: 'User',
       },
     });
-    return;
+    return { token };
   }
 
   async resendUserVerificationEmail(emailDto: { email: string }): Promise<any> {
@@ -267,23 +298,24 @@ export class AuthService {
     if (!user) throw new BadRequestException("User doesn't exist");
     await this.userModel.findOneAndUpdate({ email: emailDto.email });
 
-    const token = this._generateToken(
-      {
-        email: emailDto.email,
-        id: user.id,
-      },
-      configs.EMAIL_JWT_SECRET,
-      10 * 24 * 60 * 60,
-    );
+    const token = await this._generateUserEmailToken();
+    await this.userModel.findByIdAndUpdate(user.id, {
+      email: emailDto.email,
+      verification_code: token,
+      token_expiry_time: moment().add(10, 'minutes').toDate(),
+    });
     await this.emailService.sendEmail({
       email: emailDto.email,
       subject: 'Welcome to OCReal',
-      template: 'welcome',
+      template: 'resend_code',
       body: {
-        verificationLink: `${configs.BASE_URL}/auth/verify-email/${token}`,
+        verificationCode: token,
+        fullname: user.fullname || 'User',
       },
     });
-    return;
+    return {
+      token,
+    };
   }
 
   async resendAgentVerificationEmail(emailDto: {
@@ -293,99 +325,22 @@ export class AuthService {
     if (!agent) throw new BadRequestException("User doesn't exist");
     await this.agentModel.findOneAndUpdate({ email: emailDto.email });
 
-    const token = this._generateToken(
-      {
-        email: emailDto.email,
-        id: agent.id,
-      },
-      configs.EMAIL_JWT_SECRET,
-      10 * 24 * 60 * 60,
-    );
-
+    const token = await this._generateAgentEmailToken();
+    await this.agentModel.findByIdAndUpdate(agent.id, {
+      email: emailDto.email,
+      verification_code: token,
+      token_expiry_time: moment().add(10, 'minutes').toDate(),
+    });
     await this.emailService.sendEmail({
       email: emailDto.email,
       subject: 'Welcome to OCReal',
-      template: 'welcome',
+      template: 'resend_code',
       body: {
-        verificationLink: `${configs.BASE_URL}/auth/verify-email/${token}`,
+        verificationCode: token,
+        fullname: agent.fullname || 'User',
       },
     });
-    return;
-  }
-
-  async verifyUserEmail(token: string): Promise<any> {
-    const decodedToken: any = this._decodeToken(
-      token,
-      configs.EMAIL_JWT_SECRET,
-    );
-    if (!decodedToken)
-      throw new UnauthorizedException('Verification link expired or invalid.');
-    const user = await this.userModel.findById(decodedToken.id);
-
-    if (!user) {
-      throw new BadRequestException("User doesn't exist");
-    }
-    await this.userModel.findByIdAndUpdate(
-      user.id,
-      {
-        emailVerified: true,
-      },
-      { new: true },
-    );
-    const loginToken = this._generateToken(
-      {
-        email: user.email,
-        id: user.id,
-      },
-      configs.JWT_SECRET,
-      10 * 24 * 60 * 60,
-    );
-
-    return {
-      user: {
-        id: user._id,
-        email: user.email,
-      },
-      token: loginToken,
-    };
-  }
-
-  async verifyAgentEmail(token: string): Promise<any> {
-    const decodedToken: any = this._decodeToken(
-      token,
-      configs.EMAIL_JWT_SECRET,
-    );
-
-    if (!decodedToken)
-      throw new UnauthorizedException('Verification link expired or invalid.');
-    const agent = await this.agentModel.findById(decodedToken.id);
-
-    if (!agent) {
-      throw new BadRequestException("User doesn't exist");
-    }
-    await this.userModel.findByIdAndUpdate(
-      agent.id,
-      {
-        emailVerified: true,
-      },
-      { new: true },
-    );
-    const loginToken = this._generateToken(
-      {
-        id: agent._id,
-        email: agent.email,
-      },
-      configs.JWT_AGENT_SECRET,
-      10 * 24 * 60 * 60,
-    );
-
-    return {
-      agent: {
-        id: agent._id,
-        email: agent.email,
-      },
-      token: loginToken,
-    };
+    return { token };
   }
 
   private _generateToken(payload: any, secret: string, expiresIn: number) {
@@ -394,12 +349,41 @@ export class AuthService {
     });
   }
 
-  private _decodeToken(token: string, secret: string) {
-    try {
-      const data = jwt.verify(token, secret);
-      return data;
-    } catch (error) {
-      return false;
+  private async _generateUserEmailToken(): Promise<string> {
+    let token: undefined | string = undefined;
+    while (!token) {
+      token = verificationTokenGen(6);
+      const tokenExists = await this.userModel.findOne({
+        verification_code: token,
+        token_expiry_time: { $gte: moment().toDate() },
+      });
+      if (tokenExists) {
+        token = undefined;
+      }
     }
+    return token;
   }
+  private async _generateAgentEmailToken(): Promise<string> {
+    let token: undefined | string = undefined;
+    while (!token) {
+      token = verificationTokenGen(6);
+      const tokenExists = await this.agentModel.findOne({
+        verification_code: token,
+        token_expiry_time: { $gte: moment().toDate() },
+      });
+      if (tokenExists) {
+        token = undefined;
+      }
+    }
+    return token;
+  }
+
+  // private _decodeToken(token: string, secret: string) {
+  //   try {
+  //     const data = jwt.verify(token, secret);
+  //     return data;
+  //   } catch (error) {
+  //     return false;
+  //   }
+  // }
 }

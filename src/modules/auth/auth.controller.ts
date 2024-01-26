@@ -10,10 +10,11 @@ import {
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import {
+  AccountSignUpDto,
   LoginUserDto,
   SendUserVerificationDto,
-  VerifyForgotPasswordDto,
-  VerifyUserEmail,
+  UserUpdatePasswordDto,
+  VerifyCode,
 } from './dto/auth.dto';
 import { ForgotPasswordJwtAuthGuard } from 'src/guards/forgotPassword.gaurd';
 
@@ -23,43 +24,79 @@ export class AuthController {
 
   @Post('/user/send-verification')
   async sendUserVerificationEmail(
-    @Body() sendEmailDto: SendUserVerificationDto,
+    @Body() sendEmailDto: AccountSignUpDto,
     @Res() res: Response,
   ) {
-    await this.authService.sendUserVerificationEmail(sendEmailDto);
+    const data = await this.authService.sendUserVerificationEmail(sendEmailDto);
     this._sendResponse({
       res,
+      data,
       message: 'Email sent successfully',
     });
   }
 
-  @UseGuards(ForgotPasswordJwtAuthGuard)
-  @Put('/user/verify/forgot-password')
-  async forgotUserPassword(
-    @Body() forgotPasswordDto: VerifyForgotPasswordDto,
+  @Post('/user/resend/code')
+  async resendVerificationCode(
+    @Body() sendEmailDto: SendUserVerificationDto,
     @Res() res: Response,
-    @Req() req: Request,
   ) {
-    const data = await this.authService.forgotUserPassword(
-      req.user.id,
-      forgotPasswordDto,
-    );
-    return this._sendResponse({
+    const data =
+      await this.authService.resendUserVerificationEmail(sendEmailDto);
+    this._sendResponse({
       res,
       data,
-      message: 'Password updated successfully',
+      message: 'Email sent successfully',
     });
   }
 
-  @Put('/user/start/forgot-password')
-  async requestUserForgotPasswordToken(
+  @Post('/user/verify/code')
+  async verifyUserCode(@Body() { code }: VerifyCode, @Res() res: Response) {
+    const data = await this.authService.verifyUserCode(code);
+    return this._sendResponse({
+      res,
+      data,
+      message: 'Code Verified successfully',
+    });
+  }
+
+  @Post('/agent/verify/code')
+  async verifyAgentCode(@Body() { code }: VerifyCode, @Res() res: Response) {
+    const data = await this.authService.verifyAgentCode(code);
+    return this._sendResponse({
+      res,
+      data,
+      message: 'Code Verified successfully',
+    });
+  }
+
+  @Put('/user/forgot-password')
+  async userForgotPassword(
     @Body() forgotPasswordDto: SendUserVerificationDto,
     @Res() res: Response,
   ) {
-    await this.authService.requestUserForgotPasswordToken(forgotPasswordDto);
+    const data = await this.authService.userForgotPassword(forgotPasswordDto);
     return this._sendResponse({
       res,
-      message: 'Password Reset Email successfully',
+      message: 'Password Reset Email Sent successfully',
+      data,
+    });
+  }
+
+  @UseGuards(ForgotPasswordJwtAuthGuard)
+  @Put('/user/update/password')
+  async updateUserPassword(
+    @Body() passwordDto: UserUpdatePasswordDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const data = await this.authService.updateUserPassword(
+      req.user.id,
+      passwordDto,
+    );
+    return this._sendResponse({
+      res,
+      message: 'Password Updated successfully',
+      data,
     });
   }
 
@@ -75,55 +112,17 @@ export class AuthController {
     });
   }
 
-  @UseGuards(ForgotPasswordJwtAuthGuard)
-  @Put('/agent/verify/forgot-password')
-  async updateAgentPassword(
-    @Body() forgotPasswordDto: VerifyForgotPasswordDto,
-    @Res() res: Response,
-    @Req() req: Request,
-  ) {
-    await this.authService.forgotAgentPassword(req.agent.id, forgotPasswordDto);
-    return this._sendResponse({
-      res,
-      message: 'Password updated successfully',
-    });
-  }
-
   @Post('/agent/resend-verification')
   async resendAgentVerificationEmail(
     @Body() sendEmailDto: SendUserVerificationDto,
     @Res() res: Response,
   ) {
-    await this.authService.resendAgentVerificationEmail(sendEmailDto);
+    const data =
+      await this.authService.resendAgentVerificationEmail(sendEmailDto);
     return this._sendResponse({
       res,
       message: 'Email sent successfully',
-    });
-  }
-
-  @Post('/user/verify-email')
-  async verifyUserEmail(
-    @Body() tokenDto: VerifyUserEmail,
-    @Res() res: Response,
-  ) {
-    const data = await this.authService.verifyUserEmail(tokenDto.token);
-    this._sendResponse({
-      res,
       data,
-      message: 'Email verification successfully',
-    });
-  }
-
-  @Post('/agent/verify-email')
-  async verifyAgentEmail(
-    @Body() tokenDto: VerifyUserEmail,
-    @Res() res: Response,
-  ) {
-    const data = await this.authService.verifyAgentEmail(tokenDto.token);
-    this._sendResponse({
-      res,
-      data,
-      message: 'Email verification successfully',
     });
   }
 
@@ -142,10 +141,12 @@ export class AuthController {
     @Body() sendEmailDto: SendUserVerificationDto,
     @Res() res: Response,
   ) {
-    await this.authService.sendAgentVerificationEmail(sendEmailDto);
+    const data =
+      await this.authService.sendAgentVerificationEmail(sendEmailDto);
     this._sendResponse({
       res,
       message: 'Email sent successfully',
+      data,
     });
   }
 

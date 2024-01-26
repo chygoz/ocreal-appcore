@@ -36,6 +36,12 @@ export class User extends Document {
   @Prop()
   lastname: string;
 
+  @Prop()
+  verification_code: string;
+
+  @Prop({ type: Date })
+  token_expiry_time: Date;
+
   @Prop({ type: Boolean, default: false })
   emailVerified: false;
 

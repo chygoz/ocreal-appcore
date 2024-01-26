@@ -18,12 +18,15 @@ export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
   @Post('/onboard-user')
-  async createUser(
+  async onBoardNewuser(
     @Body() createUserDto: CreateUserDto,
     @Res() res: Response,
     @Req() req: Request,
   ): Promise<any> {
-    const data = await this.userService.createUser(req.user.id, createUserDto);
+    const data = await this.userService.onBoardNewuser(
+      req.user.id,
+      createUserDto,
+    );
     this._sendResponse({
       res,
       data,
@@ -31,26 +34,13 @@ export class UsersController {
     });
   }
 
-  // @Post('/onboard-user')
-  // async updateUserPassword(
-  //   @Body() createUserDto: UserUpdatePasswordDto,
-  //   @Res() res: Response,
-  // ): Promise<any> {
-  //   const data = await this.userService.createUser(createUserDto);
-  //   this._sendResponse({
-  //     res,
-  //     data,
-  //     message: 'Email sent successfully',
-  //   });
-  // }
-
-  @Put('/profile/update')
-  async updateProfile(
+  @Put('/user/update/profile')
+  async updateUserProfile(
     @Body() profile: UpdateUserDto,
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    const data = await this.userService.updateUserProfile(req.user, profile);
+    const data = await this.userService.updateUserProfile(req.user.id, profile);
     this._sendResponse({
       res,
       data,

@@ -7,7 +7,6 @@ import { AuthController } from './auth.controller';
 import { AgentsModule } from '../agent/agents.module';
 import { UsersModule } from '../users/users.module';
 import { AgentSchema, Agent } from '../agent/schema/agent.schema';
-import { ForgotPasswordJwtAuthGuard } from 'src/guards/forgotPassword.gaurd';
 
 @Module({
   imports: [
@@ -20,6 +19,6 @@ import { ForgotPasswordJwtAuthGuard } from 'src/guards/forgotPassword.gaurd';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, ForgotPasswordJwtAuthGuard],
+  providers: [AuthService],
 })
 export class AuthModule {}
