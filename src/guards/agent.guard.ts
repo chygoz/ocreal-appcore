@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
-import { decodeJwtToken } from 'src/utils/jwt.util';
+import { decodeAgentJwtToken } from 'src/utils/jwt.util';
 import { Reflector } from '@nestjs/core';
 import { Agent } from 'src/modules/agent/schema/agent.schema';
 import { InjectModel } from '@nestjs/mongoose';
@@ -47,7 +47,7 @@ export class JwtAgentAuthGuard implements CanActivate {
       );
     }
 
-    const decodedToken: any = decodeJwtToken(token);
+    const decodedToken: any = decodeAgentJwtToken(token);
     if (!decodedToken) {
       throw new UnauthorizedException('Please login again.');
     }

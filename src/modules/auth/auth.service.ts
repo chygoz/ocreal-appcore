@@ -39,6 +39,7 @@ export class AuthService {
         lastname: user.lastname,
         fullname: user.fullname,
         account_type: user.account_type,
+        emailVerified: user.emailVerified,
       },
       configs.JWT_SECRET,
       10 * 24 * 60 * 60,
@@ -61,7 +62,7 @@ export class AuthService {
     const userExists = await this.userModel.findOne({ email: emailDto.email });
     if (userExists)
       throw new DuplicateException('An account with this email already exists');
-    const token = this._generateUserEmailToken();
+    const token = await this._generateUserEmailToken();
     await this.userModel.create({
       email: emailDto.email,
       verification_code: token,
@@ -142,6 +143,7 @@ export class AuthService {
     await this.userModel.findByIdAndUpdate(userExists.id, {
       verification_code: '',
       token_expiry_time: null,
+      emailVerified: true,
     });
     const token = this._generateToken(
       {
@@ -212,6 +214,7 @@ export class AuthService {
     await this.agentModel.findByIdAndUpdate(agentExistis.id, {
       verification_code: '',
       token_expiry_time: null,
+      emailVerified: true,
     });
 
     const token = createAgentJwtToken({
@@ -377,13 +380,4 @@ export class AuthService {
     }
     return token;
   }
-
-  // private _decodeToken(token: string, secret: string) {
-  //   try {
-  //     const data = jwt.verify(token, secret);
-  //     return data;
-  //   } catch (error) {
-  //     return false;
-  //   }
-  // }
 }

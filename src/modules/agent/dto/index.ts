@@ -42,21 +42,17 @@ export class CreateMobileDto {
   raw_mobile: string;
 }
 
-export class CreateAgentDto {
+export class OnboardAgentDto {
   @Matches(passwordRegex, { message: 'This password is not strong enough.' })
   password: string;
 
   @IsString()
   @IsNotEmpty()
-  licence_number?: string;
+  licence_number: string;
 
   @IsString()
   @IsNotEmpty()
   region: string;
-
-  @IsString()
-  @IsNotEmpty()
-  fullname: string;
 
   @IsObject()
   @Type(() => CreateMobileDto)
@@ -79,10 +75,6 @@ export class UpdateAgentDto {
   // @IsEmail()
   // @IsOptional()
   // email?: string;
-
-  // @IsString()
-  // @IsOptional()
-  // licence_number?: string;
 
   // @IsString()
   // @IsOptional()

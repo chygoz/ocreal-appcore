@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AgentsService } from './agents.service';
-import { CreateAgentDto, UpdateAgentDto } from './dto';
+import { OnboardAgentDto, UpdateAgentDto } from './dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 
 @UseGuards(JwtAgentAuthGuard)
@@ -19,14 +19,18 @@ export class AgentsController {
 
   @Post('/onboard-agent')
   async onboardAgent(
-    @Body() onboardAgentDto: CreateAgentDto,
+    @Body() onboardAgentDto: OnboardAgentDto,
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    await this.agentsService.createAgent(req.agent.id, onboardAgentDto);
+    const data = await this.agentsService.onboardAgent(
+      req.agent.id,
+      onboardAgentDto,
+    );
     this._sendResponse({
       res,
       message: 'Email sent successfully',
+      data,
     });
   }
 
