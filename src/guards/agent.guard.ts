@@ -48,6 +48,7 @@ export class JwtAgentAuthGuard implements CanActivate {
     }
 
     const decodedToken: any = decodeAgentJwtToken(token);
+
     if (!decodedToken) {
       throw new UnauthorizedException('Please login again.');
     }

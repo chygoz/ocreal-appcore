@@ -58,6 +58,41 @@ export class AuthService {
     };
   }
 
+  async agentLogin(loginDto: LoginUserDto) {
+    const user = await this.agentModel.findOne({
+      email: loginDto.email,
+      password: crypto
+        .createHash('md5')
+        .update(loginDto.password)
+        .digest('hex'),
+    });
+    if (!user) throw new Error('Invalid email or password');
+
+    const token = createAgentJwtToken({
+      id: user._id,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      fullname: user.fullname,
+      emailVerified: user.emailVerified,
+      region: user.region,
+      licence_number: user.licence_number,
+    });
+
+    return {
+      user: {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        fullname: user.fullname,
+        region: user.region,
+        licence_number: user.licence_number,
+      },
+      token,
+    };
+  }
+
   async sendUserVerificationEmail(emailDto: { email: string }): Promise<any> {
     const userExists = await this.userModel.findOne({ email: emailDto.email });
     if (userExists)
@@ -96,6 +131,31 @@ export class AuthService {
       body: {
         verificationCode: token,
         fullname: userExists.fullname,
+      },
+    });
+    return {
+      token,
+    };
+  }
+
+  async agentForgotPassword(emailDto: { email: string }): Promise<any> {
+    const agentExists = await this.agentModel.findOne({
+      email: emailDto.email,
+    });
+    if (!agentExists)
+      throw new DuplicateException('This account does not exist');
+    const token = await this._generateAgentEmailToken();
+    await this.agentModel.findByIdAndUpdate(agentExists.id, {
+      verification_code: token,
+      token_expiry_time: moment().add(10, 'minutes').toDate(),
+    });
+    await this.emailService.sendEmail({
+      email: emailDto.email,
+      subject: 'Password Reset Request',
+      template: 'forgot_password',
+      body: {
+        verificationCode: token,
+        fullname: agentExists.fullname,
       },
     });
     return {
@@ -147,11 +207,16 @@ export class AuthService {
     });
     const token = this._generateToken(
       {
+        id: userExists._id,
         email: userExists.email,
-        id: userExists.id,
+        firstname: userExists.firstname,
+        lastname: userExists.lastname,
+        fullname: userExists.fullname,
+        account_type: userExists.account_type,
+        emailVerified: userExists.emailVerified,
       },
-      configs.JWT_FORGOTPASSWORD_SECRET,
-      15 * 60,
+      configs.JWT_SECRET,
+      10 * 24 * 60 * 60,
     );
     return {
       token,
@@ -202,6 +267,48 @@ export class AuthService {
     };
   }
 
+  async updateAgentPassword(
+    userId: string,
+    dto: UpdatePasswordDto,
+  ): Promise<any> {
+    const agent = await this.agentModel.findByIdAndUpdate(userId, {
+      password: crypto.createHash('md5').update(dto.password).digest('hex'),
+    });
+    if (!agent) throw new DuplicateException('Invalid token. Please try again');
+
+    await this.emailService.sendEmail({
+      email: agent.email,
+      subject: 'Password Changed!!!',
+      template: 'password-update',
+      body: {
+        fullname: agent.fullname ? agent.fullname : 'User',
+      },
+    });
+
+    const token = createAgentJwtToken({
+      id: agent.id,
+      email: agent.email,
+      firstname: agent.firstname,
+      lastname: agent.lastname,
+      fullname: agent.fullname,
+      emailVerified: agent.emailVerified,
+      region: agent.region,
+      licence_number: agent.licence_number,
+    });
+
+    return {
+      user: {
+        id: agent.id,
+        email: agent.email,
+        firstname: agent.firstname,
+        lastname: agent.lastname,
+        fullname: agent.fullname,
+        region: agent.region,
+        licence_number: agent.licence_number,
+      },
+      token,
+    };
+  }
   async verifyAgentCode(code: string) {
     const agentExistis = await this.agentModel.findOne({
       verification_code: code,
