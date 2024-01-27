@@ -5,8 +5,8 @@ import { DuplicateException } from 'src/custom_errors';
 import { createAgentJwtToken } from 'src/utils/jwt.util';
 import { EmailService } from 'src/services/email/email.service';
 import { Agent } from './schema/agent.schema';
-import { CreateAgentDto } from './dto';
-import crypto from 'crypto';
+import { OnboardAgentDto } from './dto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AgentsService {
@@ -15,10 +15,14 @@ export class AgentsService {
     private readonly emailService: EmailService,
   ) {}
 
-  async createAgent(agentId: string, agentDto: CreateAgentDto) {
-    const userExists = await this.agentModel.findById(agentId);
-    if (!userExists) {
+  async onboardAgent(agentId: string, agentDto: OnboardAgentDto) {
+    const agentExists = await this.agentModel.findById(agentId);
+    if (!agentExists) {
       throw new BadRequestException('Account not found please sign up again.');
+    }
+
+    if (agentExists.completedOnboarding) {
+      throw new BadRequestException('Agent has already completed onboarding');
     }
 
     const payload = {
@@ -28,6 +32,7 @@ export class AgentsService {
         .createHash('md5')
         .update(agentDto.password)
         .digest('hex'),
+      completedOnboarding: true,
     };
 
     const agent = await this.agentModel.findByIdAndUpdate(agentId, payload, {
@@ -46,6 +51,7 @@ export class AgentsService {
       fullname: agent.fullname,
       licence_number: agent.licence_number,
       region: agent.region,
+      emailVerified: agent.emailVerified,
     });
     return {
       agent: {
@@ -56,6 +62,7 @@ export class AgentsService {
         fullname: agent.fullname,
         region: agent.region,
         licence_number: agent.licence_number,
+        emailVerified: agent.emailVerified,
       },
       token,
     };
@@ -108,16 +115,6 @@ export class AgentsService {
   // }
 
   async updateAgentProfile(Agent: Agent, data: Partial<Agent>) {
-    // if (data?.email) {
-    //   const agentExistis = await this.agentModel.findOne({
-    //     email: data.email.toLowerCase(),
-    //   });
-
-    //   if (agentExistis)
-    //     throw new DuplicateException(
-    //       'An account with this email already exists',
-    //     );
-    // }
     if (data?.mobile) {
       const agentExistis = await this.agentModel.findOne({
         'mobile.raw_mobile': data.mobile.raw_mobile,

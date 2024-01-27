@@ -45,7 +45,7 @@ export class Agent extends Document {
   licence_number: string;
 
   @Prop()
-  region?: string;
+  region: string;
 
   @Prop()
   firstname: string;
@@ -58,6 +58,9 @@ export class Agent extends Document {
 
   @Prop({ type: Date })
   token_expiry_time: Date;
+
+  @Prop({ type: Boolean, default: false })
+  completedOnboarding: boolean;
 
   @Prop({ type: Boolean, default: false })
   emailVerified: false;
