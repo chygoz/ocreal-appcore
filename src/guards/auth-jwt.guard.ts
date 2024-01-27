@@ -7,7 +7,6 @@ import {
 import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { decodeJwtToken } from 'src/utils/jwt.util';
-import { Reflector } from '@nestjs/core';
 import { User } from 'src/modules/users/schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -23,7 +22,6 @@ declare global {
 export class JwtAuthGuard implements CanActivate {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
-    private reflector: Reflector,
   ) {}
   canActivate(
     context: ExecutionContext,
@@ -48,7 +46,6 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const decodedToken: any = decodeJwtToken(token);
-    console.log(decodedToken);
     if (!decodedToken) {
       throw new UnauthorizedException('Please login again.');
     }

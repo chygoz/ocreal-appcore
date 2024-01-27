@@ -16,7 +16,8 @@ import {
   UserUpdatePasswordDto,
   VerifyCode,
 } from './dto/auth.dto';
-import { ForgotPasswordJwtAuthGuard } from 'src/guards/forgotPassword.gaurd';
+import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
+import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -82,7 +83,20 @@ export class AuthController {
     });
   }
 
-  @UseGuards(ForgotPasswordJwtAuthGuard)
+  @Put('/agent/forgot-password')
+  async agentForgotPassword(
+    @Body() forgotPasswordDto: SendUserVerificationDto,
+    @Res() res: Response,
+  ) {
+    const data = await this.authService.agentForgotPassword(forgotPasswordDto);
+    return this._sendResponse({
+      res,
+      message: 'Password Reset Email Sent successfully',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Put('/user/update/password')
   async updateUserPassword(
     @Body() passwordDto: UserUpdatePasswordDto,
@@ -100,17 +114,35 @@ export class AuthController {
     });
   }
 
-  @Put('/agent/start/forgot-password')
-  async requestAgentForgotPasswordToken(
-    @Body() forgotPasswordDto: SendUserVerificationDto,
+  @UseGuards(JwtAgentAuthGuard)
+  @Put('/agent/update/password')
+  async updateAgentPassword(
+    @Body() passwordDto: UserUpdatePasswordDto,
     @Res() res: Response,
+    @Req() req: Request,
   ) {
-    await this.authService.requestAgentForgotPasswordToken(forgotPasswordDto);
+    const data = await this.authService.updateAgentPassword(
+      req.agent.id,
+      passwordDto,
+    );
     return this._sendResponse({
       res,
-      message: 'Password Reset Email successfully',
+      message: 'Password Updated successfully',
+      data,
     });
   }
+
+  // @Put('/agent/start/forgot-password')
+  // async requestAgentForgotPasswordToken(
+  //   @Body() forgotPasswordDto: SendUserVerificationDto,
+  //   @Res() res: Response,
+  // ) {
+  //   await this.authService.requestAgentForgotPasswordToken(forgotPasswordDto);
+  //   return this._sendResponse({
+  //     res,
+  //     message: 'Password Reset Email successfully',
+  //   });
+  // }
 
   @Post('/agent/resend-verification')
   async resendAgentVerificationEmail(
@@ -133,6 +165,15 @@ export class AuthController {
       res,
       data,
       message: 'User login successfully',
+    });
+  }
+  @Post('/agent/login')
+  async agentLogin(@Body() loginDto: LoginUserDto, @Res() res: Response) {
+    const data = await this.authService.agentLogin(loginDto);
+    this._sendResponse({
+      res,
+      data,
+      message: 'login successfully',
     });
   }
 
