@@ -163,34 +163,6 @@ export class AuthService {
     };
   }
 
-  async requestAgentForgotPasswordToken(emailDto: {
-    email: string;
-  }): Promise<any> {
-    const agentExistis = await this.agentModel.findOne({
-      email: emailDto.email,
-    });
-    if (!agentExistis) {
-      throw new DuplicateException('This account does not exist');
-    }
-    const token = await this._generateAgentEmailToken();
-    await this.agentModel.findByIdAndUpdate(agentExistis.id, {
-      verification_code: token,
-      token_expiry_time: moment().add(10, 'minutes').toDate(),
-    });
-    await this.emailService.sendEmail({
-      email: emailDto.email,
-      subject: 'Password Reset Request',
-      template: 'start_forgot_password',
-      body: {
-        verificationCode: token,
-        fullname: agentExistis.fullname,
-      },
-    });
-    return {
-      token,
-    };
-  }
-
   async verifyUserCode(code: string) {
     const userExists = await this.userModel.findOne({
       verification_code: code,
@@ -309,6 +281,7 @@ export class AuthService {
       token,
     };
   }
+
   async verifyAgentCode(code: string) {
     const agentExistis = await this.agentModel.findOne({
       verification_code: code,
@@ -403,19 +376,18 @@ export class AuthService {
     return { token };
   }
 
-  async resendUserVerificationEmail(emailDto: { email: string }): Promise<any> {
-    const user = await this.userModel.findOne({ email: emailDto.email });
+  async resendUserVerificationEmail({ email }): Promise<any> {
+    const user = await this.userModel.findOne({ email });
+    console.log(user, '  ::: THE DTO   :::');
     if (!user) throw new BadRequestException("User doesn't exist");
-    await this.userModel.findOneAndUpdate({ email: emailDto.email });
-
     const token = await this._generateUserEmailToken();
     await this.userModel.findByIdAndUpdate(user.id, {
-      email: emailDto.email,
+      email: email,
       verification_code: token,
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
     await this.emailService.sendEmail({
-      email: emailDto.email,
+      email: email,
       subject: 'Welcome to OCReal',
       template: 'resend_code',
       body: {
@@ -433,7 +405,6 @@ export class AuthService {
   }): Promise<any> {
     const agent = await this.agentModel.findOne({ email: emailDto.email });
     if (!agent) throw new BadRequestException("User doesn't exist");
-    await this.agentModel.findOneAndUpdate({ email: emailDto.email });
 
     const token = await this._generateAgentEmailToken();
     await this.agentModel.findByIdAndUpdate(agent.id, {
