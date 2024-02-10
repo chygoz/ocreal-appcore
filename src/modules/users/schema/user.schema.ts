@@ -34,6 +34,9 @@ export class User extends Document {
   firstname: string;
 
   @Prop()
+  stripe_customer_id: string;
+
+  @Prop()
   lastname: string;
 
   @Prop()
