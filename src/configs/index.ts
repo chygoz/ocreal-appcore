@@ -30,6 +30,10 @@ export const configs =
         MAILER_PASSWORD: process.env.DEV_NODEMAILER_EMAIL_PASSWORD || '',
         MAILER_PORT: process.env.MAILER_PORT || '',
         EMAIL_LOGIN_URL: process.env.MAILER_PORT || 'https://login.com',
+        STRIPE_PUB_KEY: process.env.DEV_STRIPE_PUB_KEY || '',
+        STRIPE_SECRET_KEY: process.env.DEV_STRIPE_SECRET_KEY || '',
+        STRIPE_WEBHOOK_SECRET: process.env.DEV_STRIPE_WEBHOOK_SECRET || '',
+        ADMIN_API_KEY: process.env.DEV_ADMIN_API_KEY || '',
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -60,6 +64,10 @@ export const configs =
           MAILER_PASSWORD: process.env.PROD_NODEMAILER_EMAIL_PASSWORD || '',
           MAILER_PORT: process.env.MAILER_PORT || '',
           EMAIL_LOGIN_URL: process.env.MAILER_PORT || 'https://login.com',
+          STRIPE_PUB_KEY: process.env.PROD_STRIPE_PUB_KEY || '',
+          STRIPE_SECRET_KEY: process.env.PROD_STRIPE_SECRET_KEY || '',
+          STRIPE_WEBHOOK_SECRET: process.env.PROD_STRIPE_WEBHOOK_SECRET || '',
+          ADMIN_API_KEY: process.env.PROD_ADMIN_API_KEY || '',
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -88,4 +96,8 @@ export const configs =
           MAILER_PASSWORD: process.env.DEV_NODEMAILER_EMAIL_PASSWORD || '',
           MAILER_PORT: process.env.MAILER_PORT || '',
           EMAIL_LOGIN_URL: process.env.MAILER_PORT || 'https://login.com',
+          STRIPE_PUB_KEY: process.env.DEV_STRIPE_PUB_KEY || '',
+          STRIPE_SECRET_KEY: process.env.DEV_STRIPE_SECRET_KEY || '',
+          STRIPE_WEBHOOK_SECRET: process.env.DEV_STRIPE_WEBHOOK_SECRET || '',
+          ADMIN_API_KEY: process.env.DEV_ADMIN_API_KEY || '',
         };

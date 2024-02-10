@@ -8,6 +8,10 @@ import { User, UserSchema } from './modules/users/schema/user.schema';
 import { AuthModule } from './modules/auth/auth.module';
 import { AgentsModule } from './modules/agent/agents.module';
 import { Agent, AgentSchema } from './modules/agent/schema/agent.schema';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { WebhooksModule } from './modules/webhooks/wehbooks.module';
+import { PaymentModule } from './services/payments/payments.module';
+import { StripeModule } from './services/stripe/stripe.module';
 
 @Module({
   imports: [
@@ -19,6 +23,10 @@ import { Agent, AgentSchema } from './modules/agent/schema/agent.schema';
     UsersModule,
     AuthModule,
     AgentsModule,
+    SubscriptionModule,
+    WebhooksModule,
+    StripeModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

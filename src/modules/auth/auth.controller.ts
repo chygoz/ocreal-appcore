@@ -206,7 +206,7 @@ export class AuthController {
       message,
       data,
     };
-    const statsu_code = statusCode ? statusCode : 200;
-    res.status(statsu_code).json(responseData);
+    const status_code = statusCode ? statusCode : 200;
+    res.status(status_code).json(responseData);
   }
 }
