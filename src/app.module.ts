@@ -12,7 +12,7 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { WebhooksModule } from './modules/webhooks/wehbooks.module';
 import { PaymentModule } from './services/payments/payments.module';
 import { StripeModule } from './services/stripe/stripe.module';
-import { PropertyModule } from './modules/listing/property.module';
+import { PropertyModule } from './modules/property/property.module';
 
 @Module({
   imports: [

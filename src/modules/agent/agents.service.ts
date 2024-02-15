@@ -10,7 +10,7 @@ import * as crypto from 'crypto';
 import { PaginationDto } from '../../constants/pagination.dto';
 
 import { configs } from 'src/configs';
-import { Property } from '../listing/schema/property.schema';
+import { Property } from '../property/schema/property.schema';
 import { User } from '../users/schema/user.schema';
 
 @Injectable()
