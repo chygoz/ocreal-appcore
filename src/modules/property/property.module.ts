@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { PropertyController } from './Property.controller';
+import { PropertyController } from './property.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { PropertyService } from './Property.service';
+import { PropertyService } from './property.service';
 import { EmailModule } from 'src/services/email/email.module';
 import {
   PropertyQuery,

@@ -17,7 +17,7 @@ import {
   CreatePropertyDto,
   UpdatePropertyDto,
 } from './dto/property.dto';
-import { PropertyService } from './Property.service';
+import { PropertyService } from './property.service';
 import { SellerAuthGuard } from 'src/guards/seller.gaurd';
 import { IsPublic } from 'src/guards/isPublic.gaurd';
 import { PaginationDto } from 'src/constants/pagination.dto';
