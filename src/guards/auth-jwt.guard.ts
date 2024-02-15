@@ -10,12 +10,14 @@ import { decodeJwtToken } from 'src/utils/jwt.util';
 import { User } from 'src/modules/users/schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { AccountTypeEnum } from 'src/constants';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: User;
+      active_user_role: AccountTypeEnum;
     }
   }
 }
@@ -37,6 +39,16 @@ export class JwtAuthGuard implements CanActivate {
         'Please provde bearer token in authorization header.',
       );
     }
+    if (
+      !request.headers.active_user_role ||
+      !Object.values(AccountTypeEnum).includes(
+        request.headers.active_user_role as AccountTypeEnum,
+      )
+    ) {
+      throw new BadRequestException(
+        'Please provde an active_user_role in the header.',
+      );
+    }
     const token = request.headers.authorization.split(' ')[1];
 
     if (!token) {
@@ -56,6 +68,9 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid token. Please login again.');
     }
     request['user'] = user;
+    request['active_user_role'] = request.headers
+      .active_user_role as AccountTypeEnum;
+
     return true;
   }
 }

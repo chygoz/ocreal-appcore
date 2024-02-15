@@ -6,17 +6,21 @@ import {
   Put,
   Req,
   UseGuards,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AgentsService } from './agents.service';
-import { OnboardAgentDto, UpdateAgentDto } from './dto';
+import { InviteAgentDto, OnboardAgentDto, UpdateAgentDto } from './dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
+import { PaginationDto } from '../../constants/pagination.dto';
+import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
 
-@UseGuards(JwtAgentAuthGuard)
 @Controller('agent')
 export class AgentsController {
   constructor(private readonly agentsService: AgentsService) {}
 
+  @UseGuards(JwtAgentAuthGuard)
   @Post('/onboard-agent')
   async onboardAgent(
     @Body() onboardAgentDto: OnboardAgentDto,
@@ -34,6 +38,54 @@ export class AgentsController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/user/invited-agents')
+  async getUserInvitedAgent(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.agentsService.getUserInvitedAgent(
+      req.user.id,
+      paginationDto,
+    );
+    this._sendResponse({
+      res,
+      message: 'Agents Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/search')
+  async searchForAgents(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.agentsService.searchForAgents(paginationDto);
+    this._sendResponse({
+      res,
+      message: 'Agents Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/invite')
+  async inviteAgent(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() dto: InviteAgentDto,
+  ) {
+    await this.agentsService.inviteAgent(dto, req.user);
+    this._sendResponse({
+      res,
+      message: 'Agent Invited',
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
   @Put('/profile/update')
   async updateProfile(
     @Body() profile: UpdateAgentDto,

@@ -7,6 +7,7 @@ import {
   IsObject,
   IsArray,
   IsNumber,
+  IsEmail,
 } from 'class-validator';
 
 export class AddAddress {
@@ -104,4 +105,14 @@ export class UpdateAgentDto {
   @IsOptional()
   @Type(() => AddAddress)
   address?: AddAddress;
+}
+
+export class InviteAgentDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  propertyId: string;
 }
