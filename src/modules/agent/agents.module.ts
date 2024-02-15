@@ -5,7 +5,7 @@ import { AgentSchema, Agent } from './schema/agent.schema';
 import { AgentsController } from './agents.controller';
 import { AgentsService } from './agents.service';
 import { User, UserSchema } from '../users/schema/user.schema';
-import { Property, PropertySchema } from '../listing/schema/property.schema';
+import { Property, PropertySchema } from '../property/schema/property.schema';
 
 @Module({
   imports: [
