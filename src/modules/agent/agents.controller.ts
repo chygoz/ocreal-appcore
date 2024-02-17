@@ -33,7 +33,7 @@ export class AgentsController {
     );
     this._sendResponse({
       res,
-      message: 'Email sent successfully',
+      message: 'Agent Onboarded',
       data,
     });
   }
@@ -78,10 +78,11 @@ export class AgentsController {
     @Req() req: Request,
     @Body() dto: InviteAgentDto,
   ) {
-    await this.agentsService.inviteAgent(dto, req.user);
+    const data = await this.agentsService.inviteAgent(dto, req.user);
     this._sendResponse({
       res,
       message: 'Agent Invited',
+      data,
     });
   }
 
@@ -92,10 +93,14 @@ export class AgentsController {
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    await this.agentsService.updateAgentProfile(req.agent, profile);
+    const data = await this.agentsService.updateAgentProfile(
+      req.agent,
+      profile,
+    );
     this._sendResponse({
       res,
-      message: 'Email sent successfully',
+      message: 'Profile Updated',
+      data,
     });
   }
 
@@ -113,6 +118,7 @@ export class AgentsController {
     const responseData = {
       message,
       data,
+      success: statusCode >= 300 ? false : true,
     };
     const statsu_code = statusCode ? statusCode : 200;
     res.status(statsu_code).json(responseData);

@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   ValidateNested,
+  IsMongoId,
 } from 'class-validator';
 
 class PropertyAddressDetailsDto {
@@ -172,10 +173,22 @@ export class UpdatePropertyDto {
   propertyType: string;
 }
 export class AddAgentToPropertyDto {
-  @IsString()
+  @IsNotEmpty()
+  @IsMongoId()
   agentId: string;
 
-  @IsString()
+  @IsNotEmpty()
+  @IsMongoId()
+  propertyId: string;
+}
+
+export class AgentAcceptInviteDto {
+  @IsNotEmpty()
+  @IsMongoId()
+  userId: string;
+
+  @IsNotEmpty()
+  @IsMongoId()
   propertyId: string;
 }
 

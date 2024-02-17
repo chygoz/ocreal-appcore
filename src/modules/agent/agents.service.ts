@@ -143,7 +143,7 @@ export class AgentsService {
         template: 'agent_invite',
         body: {
           inviterName: user.fullname,
-          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?token=${token}`,
+          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?propertyId=${property._id.toString()}&userId=${user._id.toString()}`,
         },
       });
     } else {
@@ -153,11 +153,11 @@ export class AgentsService {
         template: 'agent_invite',
         body: {
           inviterName: user.fullname,
-          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?token=${token}`,
+          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?propertyId=${property._id}&userId=${user._id}`,
         },
       });
     }
-    return true;
+    return { token };
   }
 
   async updateAgentProfile(Agent: Agent, data: Partial<Agent>) {

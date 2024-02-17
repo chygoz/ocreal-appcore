@@ -14,6 +14,7 @@ import { Response, Request } from 'express';
 import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
 import {
   AddAgentToPropertyDto,
+  AgentAcceptInviteDto,
   CreatePropertyDto,
   UpdatePropertyDto,
 } from './dto/property.dto';
@@ -21,6 +22,7 @@ import { PropertyService } from './property.service';
 import { SellerAuthGuard } from 'src/guards/seller.gaurd';
 import { IsPublic } from 'src/guards/isPublic.gaurd';
 import { PaginationDto } from 'src/constants/pagination.dto';
+import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 
 @Controller('property')
 export class PropertyController {
@@ -80,6 +82,24 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('/user/properties')
+  async searchForAgents(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getUserProperties(
+      paginationDto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Agents Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Put('add/agent')
   async addAgentToProperty(
     @Body() data: AddAgentToPropertyDto,
@@ -88,13 +108,30 @@ export class PropertyController {
   ) {
     const property = await this.propertyService.addAgentToProperty(
       req.active_user_role,
-
       data,
     );
     this._sendResponse({
       res,
       data: { property },
       message: 'Agent Added',
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Put('agent/accept/invite')
+  async agentAcceptInviteToProperty(
+    @Body() data: AgentAcceptInviteDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const property = await this.propertyService.agentAcceptInviteToProperty(
+      req.agent,
+      data,
+    );
+    this._sendResponse({
+      res,
+      data: { property },
+      message: 'Agent Accepted Invite',
     });
   }
 

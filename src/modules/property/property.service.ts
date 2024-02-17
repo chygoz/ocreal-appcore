@@ -13,6 +13,7 @@ import { Property, PropertyStatusEnum } from './schema/property.schema';
 import { PropertyQuery } from './schema/propertyQuery.schema';
 import {
   AddAgentToPropertyDto,
+  AgentAcceptInviteDto,
   CreatePropertyDto,
   UpdatePropertyDto,
 } from './dto/property.dto';
@@ -104,6 +105,137 @@ export class PropertyService {
       { ...update },
       { new: true },
     );
+    return updatedProperty;
+  }
+
+  async getUserProperties(paginationDto: PaginationDto, user: User) {
+    const { page = 1, limit = 10, search } = paginationDto;
+
+    const skip = (page - 1) * limit;
+    let query;
+    if (search) {
+      query = {
+        $or: [
+          {
+            numBathroom: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            lotSizeUnit: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+
+          {
+            propertyType: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'features.feature': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            propertyName: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'propertyAddressDetails.formattedAddress': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.city': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.state': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.streetName': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+        ],
+      };
+    }
+
+    const queryData = search
+      ? {
+          $or: [
+            { seller: user._id.toString() },
+            { buyer: user._id.toString() },
+          ],
+          ...query,
+        }
+      : {
+          $or: [
+            { seller: user._id.toString() },
+            { buyer: user._id.toString() },
+          ],
+        };
+    const [agents, total] = await Promise.all([
+      this.propertyModel.find(queryData).skip(skip).limit(limit).exec(),
+      this.propertyModel.countDocuments(queryData),
+    ]);
+    if (agents.length === 0) {
+      throw new BadRequestException('No property found');
+    }
+    return { agents, total, page, limit };
+  }
+
+  async agentAcceptInviteToProperty(
+    agent: Agent,
+    data: AgentAcceptInviteDto,
+  ): Promise<Property> {
+    const property = await this.propertyModel
+      .findById(data.propertyId)
+      .populate('seller')
+      .populate('buyer')
+      .exec();
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    let user;
+    const update: any = {};
+    if (property?.seller._id.toString() === data.userId) {
+      property.status.push({
+        status: PropertyStatusEnum.sellerAgentAcceptedInvite,
+        eventTime: new Date(),
+      });
+      update.sellerAgent = agent;
+      update.status = property.status;
+      user = property.seller;
+    } else if (property?.buyer._id.toString() === data.userId) {
+      update.buyerAgent = agent;
+      property.status.push({
+        status: PropertyStatusEnum.buyerAgentAcceptedInvite,
+        eventTime: new Date(),
+      });
+      update.status = property.status;
+      user = property.buyer;
+    } else {
+      throw new BadRequestException(
+        'You are not authorized to accept this invite',
+      );
+    }
+    const updatedProperty = await this.propertyModel.findByIdAndUpdate(
+      property._id,
+      { ...update },
+      { new: true },
+    );
+    await this.emailService.sendEmail({
+      email: user!.email,
+      subject: 'Agent Accepted Invitation',
+      template: 'agent_accepted_invite_to_user',
+      body: {
+        name: user!.fullname,
+        property: property.propertyName,
+      },
+    });
     return updatedProperty;
   }
 

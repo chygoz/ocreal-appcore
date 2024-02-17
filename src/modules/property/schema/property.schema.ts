@@ -14,6 +14,8 @@ export enum PropertyStatusEnum {
   underContract = 'UnderContract',
   sold = 'Sold',
   buyerAgentAdded = 'Buyer Agent Added',
+  buyerAgentAcceptedInvite = 'Buyer Agent Accepted Invite',
+  sellerAgentAcceptedInvite = 'Seller Agent Accepted Invite',
   sellerAgentAdded = 'Seller Agent Added',
 }
 
@@ -28,7 +30,7 @@ export interface Status {
   status: boolean;
 }
 
-@Schema()
+@Schema({ timestamps: true, versionKey: false })
 export class Property extends Document {
   @Prop({
     type: SchemaTypes.Mixed,
