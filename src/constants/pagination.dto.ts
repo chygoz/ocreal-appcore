@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Min, IsString, IsArray } from 'class-validator';
+import { IsInt, IsOptional, Min, IsString } from 'class-validator';
 
 export class PaginationDto {
   @IsOptional()
@@ -41,5 +41,5 @@ export class PaginationDto {
   bedRooms?: number;
 
   @IsOptional()
-  features: string;
+  features?: string;
 }
