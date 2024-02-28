@@ -110,8 +110,10 @@ export class Property extends Document {
   @Prop()
   numBedroom: string;
 
-  @Prop([{ amount: SchemaTypes.Number, currency: SchemaTypes.String }])
-  prices: Array<Price>;
+  @Prop({
+    type: SchemaTypes.Mixed,
+  })
+  price: { amount: number; currency: string };
 
   @Prop([
     {

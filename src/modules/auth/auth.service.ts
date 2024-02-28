@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DuplicateException } from 'src/custom_errors';
@@ -29,8 +33,7 @@ export class AuthService {
         .update(loginDto.password)
         .digest('hex'),
     });
-    if (!user) throw new Error('Invalid email or password');
-
+    if (!user) throw new UnauthorizedException('Invalid email or password');
     const token = this._generateToken(
       {
         id: user._id,

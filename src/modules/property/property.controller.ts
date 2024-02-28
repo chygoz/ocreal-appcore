@@ -23,6 +23,7 @@ import { SellerAuthGuard } from 'src/guards/seller.gaurd';
 import { IsPublic } from 'src/guards/isPublic.gaurd';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
+import { CreateTourDto } from './dto/tour.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -62,6 +63,21 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAuthGuard, SellerAuthGuard)
+  @Post('schedule/tour')
+  async scheduleTour(
+    @Body() dto: CreateTourDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const tour = await this.propertyService.scheduleTour(dto, req.user);
+    this._sendResponse({
+      res,
+      data: { tour },
+      message: 'Tour Scheduled',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, SellerAuthGuard)
   @Put('update/:id')
   async updateProperty(
     @Param('id') id: string,
@@ -95,6 +111,42 @@ export class PropertyController {
     this._sendResponse({
       res,
       message: 'Agents Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/user/tours')
+  async getUserTours(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getUserTours(
+      paginationDto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/tours')
+  async getAgentUpcomingTours(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentUpcomingTours(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
       data,
     });
   }
