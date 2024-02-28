@@ -13,6 +13,7 @@ import { WebhooksModule } from './modules/webhooks/wehbooks.module';
 import { PaymentModule } from './services/payments/payments.module';
 import { StripeModule } from './services/stripe/stripe.module';
 import { PropertyModule } from './modules/property/property.module';
+import { MessageModule } from './modules/message/message.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PropertyModule } from './modules/property/property.module';
     StripeModule,
     PaymentModule,
     PropertyModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

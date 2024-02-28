@@ -10,6 +10,7 @@ import {
 import { User, UserSchema } from '../users/schema/user.schema';
 import { Property, PropertySchema } from './schema/property.schema';
 import { Agent, AgentSchema } from '../agent/schema/agent.schema';
+import { PropertyTourSchema, PropertyTour } from './schema/propertyTour.schema';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Agent, AgentSchema } from '../agent/schema/agent.schema';
       { name: Property.name, schema: PropertySchema },
       { name: PropertyQuery.name, schema: PropertyQuerySchema },
       { name: Agent.name, schema: AgentSchema },
+      { name: PropertyTour.name, schema: PropertyTourSchema },
     ]),
     EmailModule,
   ],

@@ -20,6 +20,8 @@ import {
 import { AccountTypeEnum } from 'src/constants';
 import { Agent } from '../agent/schema/agent.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
+import { PropertyTour } from './schema/propertyTour.schema';
+import { CreateTourDto } from './dto/tour.dto';
 // import { calculateDaysBetweenDates } from 'src/utils/data.utils';
 
 @Injectable()
@@ -28,6 +30,8 @@ export class PropertyService {
   constructor(
     @InjectModel(Property.name) private propertyModel: Model<Property>,
     @InjectModel(Agent.name) private agentModel: Model<Agent>,
+    @InjectModel(PropertyTour.name)
+    private propertyTourModel: Model<PropertyTour>,
     @InjectModel(PropertyQuery.name)
     private propertyQueryModel: Model<PropertyQuery>,
     private readonly emailService: EmailService,
@@ -47,9 +51,47 @@ export class PropertyService {
     const newData = {
       propertyName: data.propertyAddressDetails.formattedAddress,
       seller: user.id,
+      propertyAddressDetails: data.propertyAddressDetails,
     };
     const createdProperty = new this.propertyModel(newData);
     return createdProperty.save();
+  }
+
+  async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
+    const property = await this.propertyModel.findById(data.property);
+    if (!property) throw new NotFoundException('Property not found');
+    const currentDate = new Date();
+    if (data.tourDate < currentDate) {
+      throw new BadRequestException('You can not book a date in the past');
+    }
+    const tourPayload = {
+      ...data,
+      buyer: user,
+      seller: property.seller,
+      sellerAgent: property.sellerAgent,
+    };
+    const propertyTour = new this.propertyTourModel(tourPayload);
+    const savedTour = propertyTour.save();
+    //TODO: send notifications to the seller and seller Agent here as also the buyer and BuyerAgent
+
+    return savedTour;
+  }
+
+  async getAgentUpcomingTours(paginationDto: PaginationDto, agent: Agent) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const [tours, total] = await Promise.all([
+      this.propertyTourModel
+        .find({ agent: agent._id })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyTourModel.countDocuments({ agent: agent._id }),
+    ]);
+    if (tours.length === 0) {
+      throw new BadRequestException('No property found');
+    }
+    return { tours, total, page, limit };
   }
 
   async updateProperty(
@@ -109,7 +151,17 @@ export class PropertyService {
   }
 
   async getUserProperties(paginationDto: PaginationDto, user: User) {
-    const { page = 1, limit = 10, search } = paginationDto;
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      priceMin,
+      priceMax,
+      sqTfMin,
+      sqTfMax,
+      bedRooms,
+      features,
+    } = paginationDto;
 
     const skip = (page - 1) * limit;
     let query;
@@ -177,14 +229,91 @@ export class PropertyService {
             { buyer: user._id.toString() },
           ],
         };
+
+    const queryParam: any = {
+      $or: [
+        {
+          buyer: user._id,
+        },
+        {
+          seller: user._id,
+        },
+      ],
+      ...queryData,
+    };
+    if (priceMax) {
+      queryParam.price.$gte = priceMax;
+    }
+    if (priceMin) {
+      queryParam.price.$lte = priceMin;
+    }
+    if (sqTfMax) {
+      queryParam.lotSizeValue.$gte = sqTfMax;
+    }
+    if (sqTfMin) {
+      queryParam.lotSizeValue.$lte = sqTfMin;
+    }
+    if (bedRooms) {
+      queryParam.numBedroom.$gte = bedRooms;
+    }
+    if (features) {
+      const featuresArray = features.split(',');
+      queryParam['features'] = {
+        $elemMatch: {
+          feature: { $in: featuresArray },
+        },
+      };
+    }
+
     const [agents, total] = await Promise.all([
-      this.propertyModel.find(queryData).skip(skip).limit(limit).exec(),
-      this.propertyModel.countDocuments(queryData),
+      this.propertyModel.find(queryParam).skip(skip).limit(limit).exec(),
+      this.propertyModel.countDocuments(queryParam),
     ]);
     if (agents.length === 0) {
       throw new BadRequestException('No property found');
     }
     return { agents, total, page, limit };
+  }
+
+  async getUserTours(paginationDto: PaginationDto, user: User) {
+    const { page = 1, limit = 10 } = paginationDto;
+
+    const skip = (page - 1) * limit;
+
+    const query: any = {
+      $or: [
+        {
+          buyer: user._id,
+        },
+        {
+          seller: user._id,
+        },
+      ],
+    };
+
+    const [tours, total] = await Promise.all([
+      this.propertyTourModel
+        .find(query)
+        .sort({ tourDate: 1 })
+        .populate('property')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyTourModel.countDocuments({
+        $or: [
+          {
+            buyer: user._id,
+          },
+          {
+            seller: user._id,
+          },
+        ],
+      }),
+    ]);
+    if (tours.length === 0) {
+      throw new BadRequestException('No tour found');
+    }
+    return { tours, total, page, limit };
   }
 
   async agentAcceptInviteToProperty(
