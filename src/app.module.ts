@@ -14,6 +14,7 @@ import { PaymentModule } from './services/payments/payments.module';
 import { StripeModule } from './services/stripe/stripe.module';
 import { PropertyModule } from './modules/property/property.module';
 import { MessageModule } from './modules/message/message.module';
+import { InviteModule } from './modules/Agentinvite/agentInvite.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MessageModule } from './modules/message/message.module';
     PaymentModule,
     PropertyModule,
     MessageModule,
+    InviteModule,
   ],
   controllers: [AppController],
   providers: [AppService],

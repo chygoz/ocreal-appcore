@@ -24,6 +24,7 @@ import { IsPublic } from 'src/guards/isPublic.gaurd';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { CreateTourDto } from './dto/tour.dto';
+import { CreateOfferDto } from './dto/offer.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -59,6 +60,27 @@ export class PropertyController {
       res,
       data: { property },
       message: 'Property Created',
+      statusCode: 201,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Post('create/offer')
+  async createPropertyOffer(
+    // @Body() dto: CreateOfferDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    console.log('Something');
+    const offer = await this.propertyService.createPropertyOffer(
+      // dto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      data: { offer },
+      message: 'Offer Created',
+      statusCode: 201,
     });
   }
 
@@ -111,6 +133,17 @@ export class PropertyController {
     this._sendResponse({
       res,
       message: 'Agents Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/agent/recent/tour')
+  async getAgentMostRecentTour(@Res() res: Response, @Req() req: Request) {
+    const data = await this.propertyService.getAgentMostRecentTour(req.agent);
+    this._sendResponse({
+      res,
+      message: 'Tour Found',
       data,
     });
   }

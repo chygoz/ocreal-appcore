@@ -86,13 +86,12 @@ export class InviteService {
 
   async getAgentInvites(agent: Agent, paginationDto: PaginationDto) {
     const { page = 1, limit = 10 } = paginationDto;
-
     const skip = (page - 1) * limit;
-
     const [invites, total] = await Promise.all([
       this.agentInviteModel
         .find({
-          _id: agent._id,
+          email: agent.email,
+          status: { $ne: AgentIviteStatus.pending },
         })
         .sort({ createdAt: 1 })
         .populate('inviteBy')
@@ -101,11 +100,27 @@ export class InviteService {
         .exec(),
       this.agentInviteModel.countDocuments({
         _id: agent._id,
+        status: { $ne: AgentIviteStatus.pending },
       }),
     ]);
     if (invites.length === 0) {
-      throw new BadRequestException('No tour found');
+      throw new BadRequestException('No invite found');
     }
     return { invites, total, page, limit };
+  }
+
+  async getRecentInvite(agent: Agent) {
+    const invite = await this.agentInviteModel
+      .findOne({
+        email: agent.email,
+        status: { $ne: AgentIviteStatus.pending },
+      })
+      .sort({ createdAt: 1 })
+      .populate('inviteBy')
+      .exec();
+    if (!invite) {
+      throw new BadRequestException('No invite found');
+    }
+    return { invite };
   }
 }

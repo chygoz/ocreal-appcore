@@ -1,14 +1,10 @@
-import { IsInt, IsOptional, Min, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class PaginationDto {
   @IsOptional()
-  @IsInt()
-  @Min(1)
   page?: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
   limit?: number;
 
   @IsOptional()
@@ -16,30 +12,24 @@ export class PaginationDto {
   search?: string;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsString()
+  propertyType?: string;
+
+  @IsOptional()
   priceMin?: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
   priceMax?: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
   sqTfMin?: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
   sqTfMax?: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
   bedRooms?: number;
 
   @IsOptional()
-  features?: string;
+  features: string;
 }
