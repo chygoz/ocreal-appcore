@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   Res,
-  Put,
   Req,
   UseGuards,
   Get,
@@ -53,6 +52,17 @@ export class InviteController {
     this._sendResponse({
       res,
       message: 'Invites Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/user/invited-agents')
+  async getRecentInvite(@Res() res: Response, @Req() req: Request) {
+    const data = await this.inviteService.getRecentInvite(req.agent);
+    this._sendResponse({
+      res,
+      message: 'Recent invite',
       data,
     });
   }

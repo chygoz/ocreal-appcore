@@ -22,11 +22,14 @@ import { Agent } from '../agent/schema/agent.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { PropertyTour } from './schema/propertyTour.schema';
 import { CreateTourDto } from './dto/tour.dto';
+import { CreateOfferDto } from './dto/offer.dto';
+import { configs } from 'src/configs';
+import axios, { AxiosInstance } from 'axios';
 // import { calculateDaysBetweenDates } from 'src/utils/data.utils';
 
 @Injectable()
 export class PropertyService {
-  // private readonly axiosInstance: AxiosInstance;
+  private readonly axiosInstance: AxiosInstance;
   constructor(
     @InjectModel(Property.name) private propertyModel: Model<Property>,
     @InjectModel(Agent.name) private agentModel: Model<Agent>,
@@ -37,14 +40,17 @@ export class PropertyService {
     private readonly emailService: EmailService,
     // private readonly axiosInstance: AxiosInstance,
   ) {
-    // this.axiosInstance = axios.create({
-    //   baseURL: 'https://api.datafiniti.co/v4/',
-    //   timeout: 5000,
-    //   headers: {
-    //     Authorization: 'Bearer ' + configs.DATA_INFINITI_API_KEY,
-    //     'Content-Type': 'application/json',
-    //   },
-    // });
+    this.axiosInstance = axios.create({
+      // baseURL: 'https://api.datafiniti.co/v4/',
+      // timeout: 5000,
+      // headers: {
+      //   Authorization: 'Bearer ' + configs.DATA_INFINITI_API_KEY,
+      //   'Content-Type': 'application/json',
+      //   'x-api-key': configs.MLS_API_KEY,
+      //   'X-RapidAPI-Key': configs.MLS_RAPID_API_KEY,
+      //   'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
+      // },
+    });
   }
 
   async createProperty(data: CreatePropertyDto, user: User): Promise<Property> {
@@ -55,6 +61,44 @@ export class PropertyService {
     };
     const createdProperty = new this.propertyModel(newData);
     return createdProperty.save();
+  }
+
+  async createPropertyOffer(
+    // dto: CreateOfferDto,
+    agent: Agent,
+  ) {
+    const encodedParams = new URLSearchParams();
+    encodedParams.set('grant_type', 'client_credentials');
+    encodedParams.set('app_client_id', configs.MLS_CLIENT_ID);
+    const config = {
+      headers: {
+        // Authorization: 'Bearer ' + configs.DATA_INFINITI_API_KEY,
+        'content-type': 'application/x-www-form-urlencoded',
+        'x-api-key': configs.MLS_API_KEY,
+        'X-RapidAPI-Key': configs.MLS_RAPID_API_KEY,
+        'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
+      },
+    };
+
+    const propertResponse = await this.axiosInstance.post(
+      'https://mls-router1.p.rapidapi.com/cognito-oauth2/token',
+      encodedParams,
+      config,
+    );
+    const access_token = propertResponse.data.access_token;
+    const authConfig = {
+      Authorization: access_token,
+      ...config,
+    };
+    const propertyResponse = await this.axiosInstance.get(
+      "https://api.realtyfeed.com/reso/odata/v1/Property('P_5dba1fb94aa4055b9f296948')",
+      authConfig,
+    );
+    console.log(propertyResponse.data);
+    // const property = await this.propertyModel.findById(dto.property);
+    // if (!property) {
+    //   throw new BadRequestException('Property not found');
+    // }
   }
 
   async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
@@ -161,6 +205,7 @@ export class PropertyService {
       sqTfMax,
       bedRooms,
       features,
+      propertyType,
     } = paginationDto;
 
     const skip = (page - 1) * limit;
@@ -241,6 +286,9 @@ export class PropertyService {
       ],
       ...queryData,
     };
+    if (propertyType) {
+      queryParam.propertyType = propertyType;
+    }
     if (priceMax) {
       queryParam.price.$gte = priceMax;
     }
@@ -423,6 +471,20 @@ export class PropertyService {
       throw new BadRequestException('No properties at the moment');
     }
     return { properties, total, page, limit };
+  }
+
+  async getAgentMostRecentTour(agent: Agent) {
+    const tour = await this.propertyTourModel
+      .findOne({
+        sellerAgent: agent.id,
+      })
+      .sort({ createdAt: -1 })
+      .populate('buyer')
+      .exec();
+    if (!tour) {
+      throw new NotFoundException('No tour found');
+    }
+    return tour;
   }
 
   // async searchForProperty(search: string, user: User) {

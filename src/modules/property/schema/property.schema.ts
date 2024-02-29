@@ -150,7 +150,7 @@ export class Property extends Document {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
   sellerAgent: Agent;
 
-  @Prop([{ type: SchemaTypes.ObjectId, ref: 'Agent' }])
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
   buyerAgent: Agent;
 
   @Prop({ type: SchemaTypes.Boolean, default: false })

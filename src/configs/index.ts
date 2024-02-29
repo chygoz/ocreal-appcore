@@ -35,6 +35,10 @@ export const configs =
         STRIPE_WEBHOOK_SECRET: process.env.DEV_STRIPE_WEBHOOK_SECRET || '',
         ADMIN_API_KEY: process.env.DEV_ADMIN_API_KEY || '',
         DATA_INFINITI_API_KEY: process.env.DEV_DATA_INFINITI_KEY || '',
+        MLS_API_KEY: process.env.MLS_API_KEY || '',
+        MLS_CLIENT_ID: process.env.MLS_CLIENT_ID || '',
+        MLS_CLIENT_SECRET: process.env.MLS_CLIENT_SECRET || '',
+        MLS_RAPID_API_KEY: process.env.MLS_RAPID_API_KEY || '',
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -70,6 +74,10 @@ export const configs =
           STRIPE_WEBHOOK_SECRET: process.env.PROD_STRIPE_WEBHOOK_SECRET || '',
           ADMIN_API_KEY: process.env.PROD_ADMIN_API_KEY || '',
           DATA_INFINITI_API_KEY: process.env.PROD_DATA_INFINITI_KEY || '',
+          MLS_API_KEY: process.env.MLS_API_KEY || '',
+          MLS_CLIENT_ID: process.env.MLS_CLIENT_ID || '',
+          MLS_CLIENT_SECRET: process.env.MLS_CLIENT_SECRET || '',
+          MLS_RAPID_API_KEY: process.env.MLS_RAPID_API_KEY || '',
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -103,4 +111,8 @@ export const configs =
           STRIPE_WEBHOOK_SECRET: process.env.DEV_STRIPE_WEBHOOK_SECRET || '',
           ADMIN_API_KEY: process.env.DEV_ADMIN_API_KEY || '',
           DATA_INFINITI_API_KEY: process.env.DEV_DATA_INFINITI_KEY || '',
+          MLS_API_KEY: process.env.MLS_API_KEY || '',
+          MLS_CLIENT_ID: process.env.MLS_CLIENT_ID || '',
+          MLS_CLIENT_SECRET: process.env.MLS_CLIENT_SECRET || '',
+          MLS_RAPID_API_KEY: process.env.MLS_RAPID_API_KEY || '',
         };
