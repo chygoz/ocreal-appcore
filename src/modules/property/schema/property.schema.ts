@@ -29,6 +29,14 @@ export interface Status {
   eventTime: Date;
   status: boolean;
 }
+export interface IPropertyImage {
+  url: string;
+  thumbNail: string;
+}
+export interface IPropertyVideo {
+  url: string;
+  thumbNail: string;
+}
 
 @Schema({ timestamps: true, versionKey: false })
 export class Property extends Document {
@@ -48,11 +56,11 @@ export class Property extends Document {
     country?: string;
   };
 
-  @Prop([SchemaTypes.String])
-  images: Array<string>;
+  @Prop([{ url: SchemaTypes.String, thumbNail: SchemaTypes.String }])
+  images: Array<IPropertyImage>;
 
-  @Prop([SchemaTypes.String])
-  videos: Array<string>;
+  @Prop([{ url: SchemaTypes.String, thumbNail: SchemaTypes.String }])
+  videos: Array<IPropertyVideo>;
 
   @Prop([{ name: SchemaTypes.String, url: SchemaTypes.String }])
   propertyDocument: Array<{
@@ -74,8 +82,14 @@ export class Property extends Document {
   @Prop()
   dateAdded: Date;
 
-  @Prop([{ feature: SchemaTypes.String, icon: SchemaTypes.String }])
-  features: Array<{ feature: string; icon: string }>;
+  @Prop([
+    {
+      feature: SchemaTypes.String,
+      icon: SchemaTypes.String,
+      description: SchemaTypes.String,
+    },
+  ])
+  features: Array<{ feature: string; icon: string; description: string }>;
 
   @Prop()
   latitude: string;

@@ -92,20 +92,24 @@ class PropertyFeaturesDto {
   @IsNotEmpty()
   @IsString()
   icon: string;
+
+  @IsString()
+  description: string;
 }
 
-// class StatusDto {
-//   @IsArray()
-//   @ValidateNested()
-//   @Type(() => Date)
-//   dateSeen: Date[];
+class PropertyImageDto {
+  @IsString()
+  url: string;
+  @IsString()
+  thumbNail: string;
+}
 
-//   @IsBoolean()
-//   isUnderContract: boolean;
-
-//   @IsString()
-//   type: string;
-// }
+class PropertyVideoDto {
+  @IsString()
+  url: string;
+  @IsString()
+  thumbNail: string;
+}
 
 export class UpdatePropertyDto {
   @ValidateNested()
@@ -113,12 +117,10 @@ export class UpdatePropertyDto {
   propertyAddressDetails: PropertyAddressDetailsDto;
 
   @IsArray()
-  @IsString({ each: true })
-  images: string[];
+  images: PropertyImageDto[];
 
   @IsArray()
-  @IsString({ each: true })
-  videos: string[];
+  videos: PropertyVideoDto[];
 
   @ValidateNested()
   @Type(() => PropertyDocumentDto)
@@ -137,7 +139,7 @@ export class UpdatePropertyDto {
   @IsArray()
   @ValidateNested()
   @Type(() => PropertyFeaturesDto)
-  features: Array<{ feature: string; icon: string }>;
+  features: Array<{ feature: string; icon: string; description: string }>;
 
   // @IsString()
   // propertyName: string;
