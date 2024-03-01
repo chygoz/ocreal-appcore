@@ -117,14 +117,14 @@ export class AgentsService {
       ],
     };
 
-    const [agents, total] = await Promise.all([
+    const [result, total] = await Promise.all([
       this.agentModel.find(query).skip(skip).limit(limit).exec(),
       this.agentModel.countDocuments(query),
     ]);
-    if (agents.length === 0) {
+    if (result.length === 0) {
       throw new BadRequestException('No agent found');
     }
-    return { agents, total, page, limit };
+    return { result, total, page, limit };
   }
 
   async inviteAgent(dto: InviteAgentDto, user: User) {
