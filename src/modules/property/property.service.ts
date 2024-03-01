@@ -86,19 +86,47 @@ export class PropertyService {
       config,
     );
     const access_token = propertResponse.data.access_token;
-    const authConfig = {
-      Authorization: access_token,
-      ...config,
-    };
-    const propertyResponse = await this.axiosInstance.get(
-      "https://api.realtyfeed.com/reso/odata/v1/Property('P_5dba1fb94aa4055b9f296948')",
-      authConfig,
-    );
-    console.log(propertyResponse.data);
-    // const property = await this.propertyModel.findById(dto.property);
-    // if (!property) {
-    //   throw new BadRequestException('Property not found');
-    // }
+    // const authConfig = {
+    //   Authorization: access_token,
+    //   ...config,
+    // };
+    // const options = {
+    //   headers: authConfig,
+    //   params: {
+    //     orderby: 'ModificationTimestamp desc',
+    //     top: '5',
+    //   },
+    // };
+    console.log(access_token, 'THE access_token');
+    try {
+      const propertyResponse = await this.axiosInstance.get(
+        'https://api.realtyfeed.com/reso/odata/v1/Property',
+        {
+          headers: {
+            // Authorization: 'Bearer ' + configs.DATA_INFINITI_API_KEY,
+            'content-type': 'application/x-www-form-urlencoded',
+            'x-api-key': 'a50YsdAcOQ6xyDqVYTzEB57jBqKVYV01MyTD4at6',
+            'X-RapidAPI-Key':
+              '68ebf7e8a8msh2d48b6885318cdcp124236jsn5026b1724e27',
+            'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
+            Authorization: access_token,
+          },
+          params: {
+            orderby: 'ModificationTimestamp desc',
+            top: '5',
+          },
+        },
+      );
+      console.log(propertyResponse.data, 'THE RESPONSE');
+      // const property = await this.propertyModel.findById(dto.property);
+      // if (!property) {
+      //   throw new BadRequestException('Property not found');
+      // }
+
+      return propertyResponse;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
@@ -124,7 +152,7 @@ export class PropertyService {
   async getAgentUpcomingTours(paginationDto: PaginationDto, agent: Agent) {
     const { page = 1, limit = 10 } = paginationDto;
     const skip = (page - 1) * limit;
-    const [tours, total] = await Promise.all([
+    const [result, total] = await Promise.all([
       this.propertyTourModel
         .find({ agent: agent._id })
         .skip(skip)
@@ -132,10 +160,10 @@ export class PropertyService {
         .exec(),
       this.propertyTourModel.countDocuments({ agent: agent._id }),
     ]);
-    if (tours.length === 0) {
-      throw new BadRequestException('No property found');
+    if (result.length === 0) {
+      throw new BadRequestException('No tour found');
     }
-    return { tours, total, page, limit };
+    return { result, total, page, limit };
   }
 
   async updateProperty(
@@ -313,14 +341,14 @@ export class PropertyService {
       };
     }
 
-    const [agents, total] = await Promise.all([
+    const [result, total] = await Promise.all([
       this.propertyModel.find(queryParam).skip(skip).limit(limit).exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
-    if (agents.length === 0) {
+    if (result.length === 0) {
       throw new BadRequestException('No property found');
     }
-    return { agents, total, page, limit };
+    return { result, total, page, limit };
   }
 
   async getUserTours(paginationDto: PaginationDto, user: User) {
@@ -458,7 +486,7 @@ export class PropertyService {
     }
     const queryObject = search ? { ...query } : {};
 
-    const [properties, total] = await Promise.all([
+    const [result, total] = await Promise.all([
       this.propertyModel
         .find(queryObject)
         .skip(skip)
@@ -467,10 +495,10 @@ export class PropertyService {
         .exec(),
       this.propertyModel.countDocuments(query),
     ]);
-    if (properties.length === 0) {
+    if (result.length === 0) {
       throw new BadRequestException('No properties at the moment');
     }
-    return { properties, total, page, limit };
+    return { result, total, page, limit };
   }
 
   async getAgentMostRecentTour(agent: Agent) {

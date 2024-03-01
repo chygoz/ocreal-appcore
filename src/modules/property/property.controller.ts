@@ -40,7 +40,7 @@ export class PropertyController {
     const properties = await this.propertyService.getProperties(paginationDto);
     this._sendResponse({
       res,
-      data: { properties },
+      data: { ...properties },
       message: 'Properties Found',
     });
   }
@@ -132,7 +132,7 @@ export class PropertyController {
     );
     this._sendResponse({
       res,
-      message: 'Agents Found',
+      message: 'Properties Found',
       data,
     });
   }

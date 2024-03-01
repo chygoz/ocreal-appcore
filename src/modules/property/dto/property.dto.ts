@@ -158,7 +158,7 @@ export class UpdatePropertyDto {
 
   @ValidateNested()
   @Type(() => PriceDto)
-  prices: {
+  price: {
     amount: number;
     currency: string;
   };
