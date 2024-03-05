@@ -82,9 +82,9 @@ export class AgentsService {
       .skip(skip)
       .limit(limit)
       .exec();
-    if (agents.length === 0) {
-      throw new BadRequestException('No agent found');
-    }
+    // if (agents.length === 0) {
+    //   throw new BadRequestException('No agent found');
+    // }
     return { agents };
   }
 
