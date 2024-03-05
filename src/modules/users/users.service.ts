@@ -65,24 +65,24 @@ export class UsersService {
           'An account with this mobile already exists',
         );
     }
-    //TODO: Perform any notification actions here
     const payload = { ...data };
     if (data?.firstname && data?.lastname) {
       payload['fullname'] = `${data.firstname} ${data.lastname}`;
     }
     const updatedUser = await this.userModel.findByIdAndUpdate(
-      user._id,
+      user.id,
       payload,
     );
-
     return {
       updatedUser: {
-        id: updatedUser!._id,
+        id: updatedUser!.id,
         email: updatedUser!.email,
         firstname: updatedUser!.firstname,
         lastname: updatedUser!.lastname,
         fullname: updatedUser!.fullname,
         account_type: updatedUser!.account_type,
+        preApproval: updatedUser.preApproval,
+        preApprovalDocument: updatedUser.preApprovalDocument,
       },
     };
   }

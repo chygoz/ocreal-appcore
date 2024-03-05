@@ -6,7 +6,7 @@ import {
 // import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { User } from '../users/schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { EmailService } from 'src/services/email/email.service';
 import { Property, PropertyStatusEnum } from './schema/property.schema';
 // import { configs } from 'src/configs';
@@ -25,7 +25,12 @@ import { CreateTourDto } from './dto/tour.dto';
 import { CreateOfferDto } from './dto/offer.dto';
 import { configs } from 'src/configs';
 import axios, { AxiosInstance } from 'axios';
-// import { calculateDaysBetweenDates } from 'src/utils/data.utils';
+import { Offer } from './schema/offer.schema';
+import {
+  AgentPropertyInvite,
+  AgentPropertyInviteStatusEnum,
+} from './schema/agentPropertyInvite.schema';
+import { UserSavedProperty } from './schema/userFavoriteProperties.schema';
 
 @Injectable()
 export class PropertyService {
@@ -35,8 +40,14 @@ export class PropertyService {
     @InjectModel(Agent.name) private agentModel: Model<Agent>,
     @InjectModel(PropertyTour.name)
     private propertyTourModel: Model<PropertyTour>,
+    @InjectModel(AgentPropertyInvite.name)
+    private agentPropertyInviteModel: Model<AgentPropertyInvite>,
+    @InjectModel(Offer.name)
+    private offerModel: Model<Offer>,
     @InjectModel(PropertyQuery.name)
     private propertyQueryModel: Model<PropertyQuery>,
+    @InjectModel(UserSavedProperty.name)
+    private userSavedPropertyModel: Model<UserSavedProperty>,
     private readonly emailService: EmailService,
     // private readonly axiosInstance: AxiosInstance,
   ) {
@@ -46,7 +57,7 @@ export class PropertyService {
       // headers: {
       //   Authorization: 'Bearer ' + configs.DATA_INFINITI_API_KEY,
       //   'Content-Type': 'application/json',
-      //   'x-api-key': configs.MLS_API_KEY,
+      //   'x-api-key': configs.MLS_API_AUTH_KEY,
       //   'X-RapidAPI-Key': configs.MLS_RAPID_API_KEY,
       //   'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
       // },
@@ -60,21 +71,54 @@ export class PropertyService {
       propertyAddressDetails: data.propertyAddressDetails,
     };
     const createdProperty = new this.propertyModel(newData);
-    return createdProperty.save();
+    const result = createdProperty.save();
+    return result;
+  }
+  async createPropertyOffer(
+    data: CreateOfferDto,
+    agent: Agent,
+  ): Promise<Offer> {
+    const property = await this.propertyModel
+      .findById(data.property)
+      .populate('buyer')
+      .exec();
+    if (
+      property.currentStatus != PropertyStatusEnum.pending &&
+      property.currentStatus !== PropertyStatusEnum.sold
+    ) {
+      throw new BadRequestException(
+        'You can not make an offer for this property at this time.',
+      );
+    }
+
+    const newData = {
+      ...data,
+      seller: property?.seller,
+      sellerAgent: agent,
+      buyer: property.buyer,
+      buyerAgent: property.buyerAgent,
+    };
+    const createdProperty = new this.offerModel(newData);
+    const result = createdProperty.save();
+    console.log(result);
+    return result;
   }
 
-  async createPropertyOffer(
-    // dto: CreateOfferDto,
-    agent: Agent,
-  ) {
+  async queryPropertiesByAddress(UnparsedAddress: string) {
+    const savedQueries = await this.propertyQueryModel.find({
+      UnparsedAddress: new RegExp(new RegExp(UnparsedAddress, 'i'), 'i'),
+    });
+    if (savedQueries.length > 0) {
+      return savedQueries.map((x) => this.mapPropertyQueryToProperty(x));
+    }
+
     const encodedParams = new URLSearchParams();
     encodedParams.set('grant_type', 'client_credentials');
     encodedParams.set('app_client_id', configs.MLS_CLIENT_ID);
     const config = {
       headers: {
-        // Authorization: 'Bearer ' + configs.DATA_INFINITI_API_KEY,
         'content-type': 'application/x-www-form-urlencoded',
-        'x-api-key': configs.MLS_API_KEY,
+        'x-api-key': configs.MLS_API_AUTH_KEY,
         'X-RapidAPI-Key': configs.MLS_RAPID_API_KEY,
         'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
       },
@@ -86,46 +130,31 @@ export class PropertyService {
       config,
     );
     const access_token = propertResponse.data.access_token;
-    // const authConfig = {
-    //   Authorization: access_token,
-    //   ...config,
-    // };
-    // const options = {
-    //   headers: authConfig,
-    //   params: {
-    //     orderby: 'ModificationTimestamp desc',
-    //     top: '5',
-    //   },
-    // };
-    console.log(access_token, 'THE access_token');
     try {
       const propertyResponse = await this.axiosInstance.get(
-        'https://api.realtyfeed.com/reso/odata/v1/Property',
+        `https://mls-router1.p.rapidapi.com/reso/odata/Property?UnparsedAddress eq "${UnparsedAddress}"&top=10`,
         {
           headers: {
-            // Authorization: 'Bearer ' + configs.DATA_INFINITI_API_KEY,
             'content-type': 'application/x-www-form-urlencoded',
-            'x-api-key': 'a50YsdAcOQ6xyDqVYTzEB57jBqKVYV01MyTD4at6',
-            'X-RapidAPI-Key':
-              '68ebf7e8a8msh2d48b6885318cdcp124236jsn5026b1724e27',
-            'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
+            'x-api-key': configs.MLS_X_API_REQUEST_KEY,
+            'X-RapidAPI-Key': configs.MLS__RAPID_API_REQUEST_KEY,
+            'X-RapidAPI-Host': configs.MLS__RAPID_API_REQUEST_HOST,
             Authorization: access_token,
-          },
-          params: {
-            orderby: 'ModificationTimestamp desc',
-            top: '5',
           },
         },
       );
-      console.log(propertyResponse.data, 'THE RESPONSE');
-      // const property = await this.propertyModel.findById(dto.property);
-      // if (!property) {
-      //   throw new BadRequestException('Property not found');
-      // }
-
-      return propertyResponse;
+      const properties = propertyResponse.data.value;
+      if (properties.length > 0) {
+        await this.propertyQueryModel.insertMany(properties);
+      }
+      return properties.map((x: PropertyQuery) =>
+        this.mapPropertyQueryToProperty(x),
+      );
     } catch (e) {
       console.log(e);
+      throw new BadRequestException(
+        'Something went wrong, please try again later.',
+      );
     }
   }
 
@@ -147,6 +176,25 @@ export class PropertyService {
     //TODO: send notifications to the seller and seller Agent here as also the buyer and BuyerAgent
 
     return savedTour;
+  }
+
+  async saveUserProperty(propertyId: string, user: User) {
+    const property = await this.propertyModel.findById(propertyId);
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    const alreadySaved = await this.userSavedPropertyModel.findOne({
+      user: user.id,
+      property: new Types.ObjectId(propertyId),
+    });
+    if (alreadySaved) {
+      throw new BadRequestException('This property has already been saved');
+    }
+    const savedProperty = await this.userSavedPropertyModel.create({
+      user: user.id,
+      property: new Types.ObjectId(propertyId),
+    });
+    return savedProperty.save();
   }
 
   async getAgentUpcomingTours(paginationDto: PaginationDto, agent: Agent) {
@@ -187,39 +235,49 @@ export class PropertyService {
   }
 
   async addAgentToProperty(
+    user: User,
     user_role: AccountTypeEnum,
     data: AddAgentToPropertyDto,
-  ): Promise<Property> {
+  ): Promise<AgentPropertyInvite> {
+    const alreadyInvited = await this.agentPropertyInviteModel.find({
+      invitedBy: user.id,
+      property: data.propertyId,
+      agent: data.agentId,
+    });
+    if (alreadyInvited) {
+      throw new BadRequestException(
+        'An invite has already been sent to this agent',
+      );
+    }
     const property = await this.propertyModel.findById(data.propertyId);
     if (!property) {
       throw new NotFoundException('Property not found');
+    }
+    if (property.sellerAgent && user_role == AccountTypeEnum.SELLER) {
+      throw new BadRequestException(
+        'An agent has already been added to this property',
+      );
+    } else if (property.buyerAgent && user_role == AccountTypeEnum.BUYER) {
+      throw new BadRequestException(
+        'An agent has already been added to this property',
+      );
     }
     const agent = await this.agentModel.findById(data.agentId);
     if (!agent) {
       throw new NotFoundException('Agent not found');
     }
-    const update: any = {};
-    if (user_role === AccountTypeEnum.SELLER) {
-      update.sellerAgent = agent;
-      property.status.push({
-        status: PropertyStatusEnum.sellerAgentAdded,
-        eventTime: new Date(),
-      });
-      update.status = property.status;
-    } else if (user_role === AccountTypeEnum.BUYER) {
-      update.buyerAgent = agent;
-      property.status.push({
-        status: PropertyStatusEnum.buyerAgentAdded,
-        eventTime: new Date(),
-      });
-      update.status = property.status;
-    }
-    const updatedProperty = await this.propertyModel.findByIdAndUpdate(
-      property._id,
-      { ...update },
-      { new: true },
-    );
-    return updatedProperty;
+
+    const newPropertyInvite = {
+      inviteAccountType: user_role,
+      invitedBy: user,
+      property: property,
+      agent: Agent,
+    };
+
+    const propertyAgentinvite =
+      await this.agentPropertyInviteModel.create(newPropertyInvite);
+    //TODO: send notifications at this point
+    return propertyAgentinvite.save();
   }
 
   async getUserProperties(paginationDto: PaginationDto, user: User) {
@@ -392,56 +450,84 @@ export class PropertyService {
     return { tours, total, page, limit };
   }
 
-  async agentAcceptInviteToProperty(
-    agent: Agent,
-    data: AgentAcceptInviteDto,
-  ): Promise<Property> {
-    const property = await this.propertyModel
-      .findById(data.propertyId)
-      .populate('seller')
-      .populate('buyer')
-      .exec();
-    if (!property) {
-      throw new NotFoundException('Property not found');
-    }
-    let user;
-    const update: any = {};
-    if (property?.seller._id.toString() === data.userId) {
-      property.status.push({
-        status: PropertyStatusEnum.sellerAgentAcceptedInvite,
-        eventTime: new Date(),
-      });
-      update.sellerAgent = agent;
-      update.status = property.status;
-      user = property.seller;
-    } else if (property?.buyer._id.toString() === data.userId) {
-      update.buyerAgent = agent;
-      property.status.push({
-        status: PropertyStatusEnum.buyerAgentAcceptedInvite,
-        eventTime: new Date(),
-      });
-      update.status = property.status;
-      user = property.buyer;
-    } else {
-      throw new BadRequestException(
-        'You are not authorized to accept this invite',
-      );
-    }
-    const updatedProperty = await this.propertyModel.findByIdAndUpdate(
-      property._id,
-      { ...update },
-      { new: true },
-    );
-    await this.emailService.sendEmail({
-      email: user!.email,
-      subject: 'Agent Accepted Invitation',
-      template: 'agent_accepted_invite_to_user',
-      body: {
-        name: user!.fullname,
-        property: property.propertyName,
-      },
+  async agentAcceptInviteToProperty(agent: Agent, dto: AgentAcceptInviteDto) {
+    const invite = await this.agentPropertyInviteModel.findOne({
+      _id: new Types.ObjectId(dto.inviteId),
+      agent: agent.id,
+      currentStatus: AgentPropertyInviteStatusEnum.pending,
     });
-    return updatedProperty;
+
+    if (!invite) {
+      throw new NotFoundException('invite not found');
+    }
+
+    const property = await this.propertyModel.findById(invite.property);
+    const update: any = {};
+    let user;
+    if (dto.response == 'accepted') {
+      if (invite?.inviteAccountType === AccountTypeEnum.SELLER) {
+        property.status.push({
+          status: PropertyStatusEnum.sellerAgentAcceptedInvite,
+          eventTime: new Date(),
+        });
+        update.sellerAgent = agent;
+        update.status = property.status;
+        user = property.seller;
+      } else if (invite?.inviteAccountType === AccountTypeEnum.BUYER) {
+        update.buyerAgent = agent;
+        property.status.push({
+          status: PropertyStatusEnum.buyerAgentAcceptedInvite,
+          eventTime: new Date(),
+        });
+        update.status = property.status;
+        user = property.buyer;
+      }
+      await this.propertyModel.findByIdAndUpdate(
+        property._id,
+        { ...update },
+        { new: true },
+      );
+      const updatedInvite = await this.agentPropertyInviteModel.findById(
+        dto.inviteId,
+        {
+          currentStatus: AgentPropertyInviteStatusEnum.accepted,
+        },
+      );
+      await this.emailService.sendEmail({
+        email: user!.email,
+        subject: 'Agent Accepted Your Invitation',
+        template: 'agent_accepted_invite_to_user',
+        body: {
+          name: user!.fullname,
+          property: property.propertyName,
+          agentName: agent.fullname,
+        },
+      });
+      return updatedInvite;
+    } else if (dto.response == 'rejected') {
+      if (invite?.inviteAccountType === AccountTypeEnum.SELLER) {
+        user = property.seller;
+      } else if (invite?.inviteAccountType === AccountTypeEnum.BUYER) {
+        user = property.buyer;
+      }
+      await this.emailService.sendEmail({
+        email: user!.email,
+        subject: 'Agent Rejected Your Invitation',
+        template: 'agent_rejected_invite_to_user',
+        body: {
+          name: user!.fullname,
+          property: property.propertyName,
+          agentName: agent.fullname,
+        },
+      });
+      const updatedInvite = await this.agentPropertyInviteModel.findById(
+        dto.inviteId,
+        {
+          currentStatus: AgentPropertyInviteStatusEnum.rejected,
+        },
+      );
+      return updatedInvite;
+    }
   }
 
   async getSingleProperty(id: string): Promise<Property> {
@@ -580,4 +666,65 @@ export class PropertyService {
   //   );
   //   return response.data;
   // }
+
+  private mapPropertyQueryToProperty(query: PropertyQuery) {
+    const images = [];
+    const propertyDocument = [];
+    query.Media.forEach((x) => {
+      if (
+        [
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          ' image/bmp',
+          'image/tiff',
+        ].includes(x.MimeType)
+      )
+        images.push({
+          url: x.MediaURL,
+        });
+      if (
+        [
+          'text/plain',
+          'text/csv',
+          'application/rtf',
+          'application/pdf',
+          'text/html',
+          'application/msword',
+          'application/vnd.ms-excel',
+          'application/vnd.ms-powerpoint',
+          'application/vnd.openxmlformats-officedocument',
+        ].includes(x.MimeType)
+      ) {
+        propertyDocument.push({
+          url: x.MediaURL,
+        });
+      }
+    });
+    const property = {
+      propertyAddressDetails: {
+        formattedAddress: query.UnparsedAddress,
+        streetNumber: query.StreetNumber,
+        streetName: query.StreetName,
+        city: query.City,
+        state: query.StateOrProvince,
+        province: query.StateOrProvince,
+        postalCode: query.PostalCode,
+        country: query.Country,
+      },
+      images: images,
+      propertyDocument,
+      propertyName: query.UnparsedAddress,
+      longitude: query.Longitude,
+      latitude: query.Latitude,
+      lotSizeValue: query.LotSizeAcres,
+      lotSizeUnit: query.LotSizeUnits,
+      numBathroom: query.BathroomsTotalInteger,
+      numBedroom: query.BedroomsTotal,
+      price: { amount: query.ListPrice, currency: 'USD' },
+      propertyType: query.PropertyType,
+    };
+
+    return property;
+  }
 }

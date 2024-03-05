@@ -34,13 +34,13 @@ export class UsersController {
     });
   }
 
-  @Put('/user/update/profile')
+  @Put('/update/profile')
   async updateUserProfile(
     @Body() profile: UpdateUserDto,
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    const data = await this.userService.updateUserProfile(req.user.id, profile);
+    const data = await this.userService.updateUserProfile(req.user, profile);
     this._sendResponse({
       res,
       data,

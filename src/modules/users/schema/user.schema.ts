@@ -1,6 +1,6 @@
 // user.model.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument } from 'mongoose';
+import { Document, HydratedDocument, SchemaTypes } from 'mongoose';
 import { AccountTypeEnum } from 'src/constants';
 // import * as moment from 'moment';
 
@@ -28,6 +28,20 @@ export class User extends Document {
     number_body: string;
     mobile_extension: string;
     raw_mobile: string;
+  };
+
+  @Prop({
+    type: Boolean,
+    default: false,
+  })
+  preApproval: boolean;
+
+  @Prop({
+    type: SchemaTypes.Mixed,
+  })
+  preApprovalDocument: {
+    url: string;
+    expiryDate: Date;
   };
 
   @Prop()
