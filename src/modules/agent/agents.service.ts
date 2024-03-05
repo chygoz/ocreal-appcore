@@ -90,33 +90,35 @@ export class AgentsService {
 
   async searchForAgents(paginationDto: PaginationDto) {
     const { page = 1, limit = 10, search } = paginationDto;
-    if (!search) {
-      throw new BadRequestException('Search query is required');
-    }
-    const skip = (page - 1) * limit;
-    const query = {
-      $or: [
-        {
-          fullname: new RegExp(new RegExp(search, 'i'), 'i'),
-        },
-        {
-          licence_number: new RegExp(new RegExp(search, 'i'), 'i'),
-        },
-        {
-          region: new RegExp(new RegExp(search, 'i'), 'i'),
-        },
-        {
-          email: new RegExp(new RegExp(search, 'i'), 'i'),
-        },
-        {
-          'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
-        },
-        {
-          'address.address': new RegExp(new RegExp(search, 'i'), 'i'),
-        },
-      ],
-    };
 
+    const skip = (page - 1) * limit;
+    let searchQuery;
+    if (search) {
+      searchQuery = {
+        $or: [
+          {
+            fullname: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            licence_number: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            region: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            email: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'address.address': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+        ],
+      };
+    }
+
+    const query = search ? searchQuery : {};
     const [result, total] = await Promise.all([
       this.agentModel.find(query).skip(skip).limit(limit).exec(),
       this.agentModel.countDocuments(query),
