@@ -11,6 +11,15 @@ import { User, UserSchema } from '../users/schema/user.schema';
 import { Property, PropertySchema } from './schema/property.schema';
 import { Agent, AgentSchema } from '../agent/schema/agent.schema';
 import { PropertyTourSchema, PropertyTour } from './schema/propertyTour.schema';
+import { Offer, OfferSchema } from './schema/offer.schema';
+import {
+  AgentPropertyInvite,
+  AgentPropertyInviteSchema,
+} from './schema/agentPropertyInvite.schema';
+import {
+  UserSavedProperty,
+  UserSavedPropertySchema,
+} from './schema/userFavoriteProperties.schema';
 
 @Module({
   imports: [
@@ -20,6 +29,9 @@ import { PropertyTourSchema, PropertyTour } from './schema/propertyTour.schema';
       { name: PropertyQuery.name, schema: PropertyQuerySchema },
       { name: Agent.name, schema: AgentSchema },
       { name: PropertyTour.name, schema: PropertyTourSchema },
+      { name: Offer.name, schema: OfferSchema },
+      { name: AgentPropertyInvite.name, schema: AgentPropertyInviteSchema },
+      { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
     ]),
     EmailModule,
   ],

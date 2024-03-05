@@ -8,6 +8,7 @@ import {
   IsEnum,
   IsArray,
   IsNumber,
+  IsBoolean,
 } from 'class-validator';
 import { AccountTypeEnum } from 'src/constants';
 
@@ -29,6 +30,14 @@ export class AddAddress {
 
   @IsString()
   city: string;
+}
+
+export class PreApprovalDocumentDto {
+  @IsString()
+  expiryDate: Date;
+
+  @IsString()
+  url: string;
 }
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[a-zA-Z0-9]).{8,}$/;
@@ -56,8 +65,12 @@ export class CreateUserDto {
   @IsNotEmpty()
   firstname: string;
 
+  @IsBoolean()
+  @IsOptional()
+  preApproval: boolean;
+
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   lastname: string;
 
   @IsEnum(AccountTypeEnum, { message: 'Invalid account type' })
@@ -66,20 +79,20 @@ export class CreateUserDto {
   @IsOptional()
   @Type(() => AddAddress)
   address?: AddAddress;
+
+  @IsOptional()
+  @Type(() => PreApprovalDocumentDto)
+  preApprovalDocument?: PreApprovalDocumentDto;
 }
 
 export class UpdateUserDto {
-  // @IsEmail()
-  // @IsOptional()
-  // email?: string;
+  @IsOptional()
+  @Type(() => PreApprovalDocumentDto)
+  preApprovalDocument: PreApprovalDocumentDto;
 
-  // @IsString()
-  // @IsOptional()
-  // licence_number?: string;
-
-  // @IsString()
-  // @IsOptional()
-  // fullname: string;
+  @IsBoolean()
+  @IsNotEmpty()
+  preApproval: boolean;
 
   @IsObject()
   @IsOptional()

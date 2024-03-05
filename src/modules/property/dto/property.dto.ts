@@ -187,11 +187,11 @@ export class AddAgentToPropertyDto {
 export class AgentAcceptInviteDto {
   @IsNotEmpty()
   @IsMongoId()
-  userId: string;
+  inviteId: string;
 
   @IsNotEmpty()
-  @IsMongoId()
-  propertyId: string;
+  @IsString()
+  response: string;
 }
 
 export class CreatePropertyDto {

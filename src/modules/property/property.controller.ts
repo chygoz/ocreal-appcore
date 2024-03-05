@@ -64,21 +64,32 @@ export class PropertyController {
     });
   }
 
-  @UseGuards(JwtAgentAuthGuard)
+  @Get('query/propeties-details/:unparsedAddress')
+  async queryPropertiesByAddress(@Req() req: Request, @Res() res: Response) {
+    const unparsedAddress = req.params.UnparsedAddress;
+    const result =
+      await this.propertyService.queryPropertiesByAddress(unparsedAddress);
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Properties Found',
+      statusCode: 200,
+    });
+  }
+
   @Post('create/offer')
   async createPropertyOffer(
-    // @Body() dto: CreateOfferDto,
+    @Body() dto: CreateOfferDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    console.log('Something');
-    const offer = await this.propertyService.createPropertyOffer(
-      // dto,
+    const result = await this.propertyService.createPropertyOffer(
+      dto,
       req.agent,
     );
     this._sendResponse({
       res,
-      data: { offer },
+      data: { result },
       message: 'Offer Created',
       statusCode: 201,
     });
@@ -96,6 +107,18 @@ export class PropertyController {
       res,
       data: { tour },
       message: 'Tour Scheduled',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('user/save-property/:id')
+  async saveUserProperty(@Req() req: Request, @Res() res: Response) {
+    const id = req.params.id;
+    const result = await this.propertyService.saveUserProperty(id, req.user);
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Property Saved',
     });
   }
 
@@ -192,6 +215,7 @@ export class PropertyController {
     @Res() res: Response,
   ) {
     const property = await this.propertyService.addAgentToProperty(
+      req.user,
       req.active_user_role,
       data,
     );
@@ -203,7 +227,7 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAgentAuthGuard)
-  @Put('agent/accept/invite')
+  @Put('agent/response/property-invite/')
   async agentAcceptInviteToProperty(
     @Body() data: AgentAcceptInviteDto,
     @Req() req: Request,
@@ -234,28 +258,6 @@ export class PropertyController {
       message: 'Property Found',
     });
   }
-
-  // @Get('property/query/:search')
-  // async searchForProperty(@Req() req: Request, @Res() res: Response) {
-  //   const search = req.params.search;
-
-  //   const data = this.PropertyService.searchForProperty(search, req.user);
-  //   this._sendResponse({
-  //     res,
-  //     data,
-  //     message: 'Plan Created',
-  //   });
-  // }
-
-  // @Get(':PropertyId')
-  // async getPropertyById(@Param('PropertyId') PropertyId: string) {
-  //   return this.PropertyService.getPropertyById(PropertyId);
-  // }
-
-  // @Delete(':PropertyId')
-  // async deleteProperty(@Param('PropertyId') PropertyId: string) {
-  //   return this.PropertyService.deleteProperty(PropertyId);
-  // }
 
   private _sendResponse({
     res,

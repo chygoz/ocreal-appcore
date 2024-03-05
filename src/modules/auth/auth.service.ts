@@ -43,6 +43,7 @@ export class AuthService {
         fullname: user.fullname,
         account_type: user.account_type,
         emailVerified: user.emailVerified,
+        preApproval: user.preApproval,
       },
       configs.JWT_SECRET,
       10 * 24 * 60 * 60,
@@ -56,6 +57,7 @@ export class AuthService {
         lastname: user.lastname,
         fullname: user.fullname,
         account_type: user.account_type,
+        preApproval: user.preApproval,
       },
       token,
     };

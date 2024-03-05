@@ -108,4 +108,4 @@ export class Offer extends Document {
   updatedAt: Date;
 }
 
-export const PropertySchema = SchemaFactory.createForClass(Property);
+export const OfferSchema = SchemaFactory.createForClass(Offer);
