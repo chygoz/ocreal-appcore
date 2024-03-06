@@ -58,6 +58,7 @@ export class AgentsService {
       licence_number: agent.licence_number,
       region: agent.region,
       emailVerified: agent.emailVerified,
+      avatar: agent.avatar,
     });
     return {
       agent: {

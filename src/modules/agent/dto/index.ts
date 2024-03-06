@@ -55,6 +55,9 @@ export class OnboardAgentDto {
   @IsNotEmpty()
   region: string;
 
+  @IsString()
+  avatar: string;
+
   @IsObject()
   @Type(() => CreateMobileDto)
   mobile: CreateMobileDto;

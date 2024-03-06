@@ -258,3 +258,72 @@ export class CreatePropertyDto {
   // @IsString()
   // propertyType: string;
 }
+
+export class AgentCreatePropertyDto {
+  @ValidateNested()
+  @Type(() => PropertyAddressDetailsDto)
+  propertyAddressDetails: PropertyAddressDetailsDto;
+
+  @IsString()
+  @IsNotEmpty()
+  seller: string;
+
+  // @IsArray()
+  // @IsString({ each: true })
+  // images: string[];
+
+  // @IsArray()
+  // @IsString({ each: true })
+  // videos: string[];
+
+  // @ValidateNested()
+  // @Type(() => PropertyDocumentDto)
+  // propertyDocument: Array<{
+  //   name: string;
+  //   url: string;
+  // }>;
+
+  // @ValidateNested()
+  // @Type(() => BrokerDto)
+  // brokers: Array<{
+  //   agent: string;
+  //   role: string;
+  // }>;
+
+  // @IsArray()
+  // @IsString({ each: true })
+  // features: Array<string>;
+
+  // @IsString()
+  // propertyName: string;
+
+  // @IsString()
+  // lotSizeValue: string;
+
+  // @IsString()
+  // lotSizeUnit: string;
+
+  // @IsString()
+  // numBathroom: string;
+
+  // @IsString()
+  // numBedroom: string;
+
+  // @ValidateNested()
+  // @Type(() => PriceDto)
+  // prices: {
+  //   amount: number;
+  //   currency: string;
+  // };
+
+  // @ValidateNested()
+  // @Type(() => PropertyTaxDto)
+  // propertyTaxes: Array<{
+  //   amount: number;
+  //   currency: number;
+  //   dateSeen: [Date];
+  // }>;
+
+  // @IsString()
+  // propertyType: string;
+}
