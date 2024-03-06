@@ -14,6 +14,7 @@ import { PropertyQuery } from './schema/propertyQuery.schema';
 import {
   AddAgentToPropertyDto,
   AgentAcceptInviteDto,
+  AgentCreatePropertyDto,
   CreatePropertyDto,
   UpdatePropertyDto,
 } from './dto/property.dto';
@@ -69,6 +70,21 @@ export class PropertyService {
       propertyName: data.propertyAddressDetails.formattedAddress,
       seller: user.id,
       propertyAddressDetails: data.propertyAddressDetails,
+    };
+    const createdProperty = new this.propertyModel(newData);
+    const result = createdProperty.save();
+    return result;
+  }
+
+  async agentCreateProperty(
+    data: AgentCreatePropertyDto,
+    user: Agent,
+  ): Promise<Property> {
+    const newData = {
+      propertyName: data.propertyAddressDetails.formattedAddress,
+      sellerAgent: user.id,
+      propertyAddressDetails: data.propertyAddressDetails,
+      seller: new Types.ObjectId(data.seller),
     };
     const createdProperty = new this.propertyModel(newData);
     const result = createdProperty.save();
@@ -161,6 +177,9 @@ export class PropertyService {
   async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
     const property = await this.propertyModel.findById(data.property);
     if (!property) throw new NotFoundException('Property not found');
+    if (property.seller.toString() == user.id.toString()) {
+      throw new BadRequestException('You can not perform this action');
+    }
     const currentDate = new Date();
     if (data.tourDate < currentDate) {
       throw new BadRequestException('You can not book a date in the past');
@@ -202,32 +221,33 @@ export class PropertyService {
     const skip = (page - 1) * limit;
     const [result, total] = await Promise.all([
       this.propertyTourModel
-        .find({ agent: agent._id })
+        .find({ sellerAgent: agent.id })
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.propertyTourModel.countDocuments({ agent: agent._id }),
+      this.propertyTourModel.countDocuments({ sellerAgent: agent.id }),
     ]);
-    if (result.length === 0) {
-      throw new BadRequestException('No tour found');
-    }
+
     return { result, total, page, limit };
   }
 
   async updateProperty(
     data: UpdatePropertyDto,
-    user: User,
+    user: any,
     id: string,
   ): Promise<Property> {
     const property = await this.propertyModel.findOne({
       _id: new mongoose.Types.ObjectId(id),
-      seller: user.id,
+      $or: [{ seller: user.id }, { sellerAgent: user.id }],
     });
     if (!property) {
       throw new NotFoundException('Property not found');
     }
     const updatedProperty = await this.propertyModel.findByIdAndUpdate(
-      property._id,
+      property.id,
       data,
       { new: true },
     );
@@ -406,6 +426,127 @@ export class PropertyService {
     if (result.length === 0) {
       throw new BadRequestException('No property found');
     }
+    return { result, total, page, limit };
+  }
+
+  async getAgentProperties(paginationDto: PaginationDto, user: Agent) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      priceMin,
+      priceMax,
+      sqTfMin,
+      sqTfMax,
+      bedRooms,
+      features,
+      propertyType,
+    } = paginationDto;
+
+    const skip = (page - 1) * limit;
+    let query;
+    if (search) {
+      query = {
+        $or: [
+          {
+            numBathroom: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            lotSizeUnit: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+
+          {
+            propertyType: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'features.feature': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            propertyName: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'propertyAddressDetails.formattedAddress': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.city': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.state': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.streetName': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+        ],
+      };
+    }
+
+    const queryData = search
+      ? {
+          $or: [{ sellerAgent: user.id }, { buyerAgent: user.id }],
+          ...query,
+        }
+      : {
+          $or: [{ sellerAgent: user.id }, { buyerAgent: user.id }],
+        };
+
+    const queryParam: any = {
+      $or: [
+        {
+          buyer: user._id,
+        },
+        {
+          seller: user._id,
+        },
+      ],
+      ...queryData,
+    };
+    if (propertyType) {
+      queryParam.propertyType = propertyType;
+    }
+    if (priceMax) {
+      queryParam.price.$gte = priceMax;
+    }
+    if (priceMin) {
+      queryParam.price.$lte = priceMin;
+    }
+    if (sqTfMax) {
+      queryParam.lotSizeValue.$gte = sqTfMax;
+    }
+    if (sqTfMin) {
+      queryParam.lotSizeValue.$lte = sqTfMin;
+    }
+    if (bedRooms) {
+      queryParam.numBedroom.$gte = bedRooms;
+    }
+    if (features) {
+      const featuresArray = features.split(',');
+      queryParam['features'] = {
+        $elemMatch: {
+          feature: { $in: featuresArray },
+        },
+      };
+    }
+
+    const [result, total] = await Promise.all([
+      this.propertyModel.find(queryParam).skip(skip).limit(limit).exec(),
+      this.propertyModel.countDocuments(queryParam),
+    ]);
+
     return { result, total, page, limit };
   }
 

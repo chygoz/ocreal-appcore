@@ -82,6 +82,7 @@ export class AuthService {
       emailVerified: user.emailVerified,
       region: user.region,
       licence_number: user.licence_number,
+      avatar: user.avatar,
     });
 
     return {
@@ -93,6 +94,7 @@ export class AuthService {
         fullname: user.fullname,
         region: user.region,
         licence_number: user.licence_number,
+        avatar: user.avatar,
       },
       token,
     };

@@ -15,6 +15,7 @@ import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
 import {
   AddAgentToPropertyDto,
   AgentAcceptInviteDto,
+  AgentCreatePropertyDto,
   CreatePropertyDto,
   UpdatePropertyDto,
 } from './dto/property.dto';
@@ -25,6 +26,7 @@ import { PaginationDto } from 'src/constants/pagination.dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { CreateTourDto } from './dto/tour.dto';
 import { CreateOfferDto } from './dto/offer.dto';
+import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 
 @Controller('property')
 export class PropertyController {
@@ -64,6 +66,26 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(JwtAgentAuthGuard)
+  @Post('agent/create')
+  async agentCreateProperty(
+    @Body() createPropertyDto: AgentCreatePropertyDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const property = await this.propertyService.agentCreateProperty(
+      createPropertyDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      data: { property },
+      message: 'Property Created',
+      statusCode: 201,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
   @Get('query/propeties-details/:unparsedAddress')
   async queryPropertiesByAddress(@Req() req: Request, @Res() res: Response) {
     const unparsedAddress = req.params.UnparsedAddress;
@@ -95,7 +117,7 @@ export class PropertyController {
     });
   }
 
-  @UseGuards(JwtAuthGuard, SellerAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('schedule/tour')
   async scheduleTour(
     @Body() dto: CreateTourDto,
@@ -122,7 +144,7 @@ export class PropertyController {
     });
   }
 
-  @UseGuards(JwtAuthGuard, SellerAuthGuard)
+  @UseGuards(AgentOrSellerAuthGuard)
   @Put('update/:id')
   async updateProperty(
     @Param('id') id: string,
@@ -132,7 +154,7 @@ export class PropertyController {
   ) {
     const property = await this.propertyService.updateProperty(
       updatePropertyDto,
-      req.user,
+      req?.user || req?.agent,
       id,
     );
     this._sendResponse({
@@ -144,7 +166,7 @@ export class PropertyController {
 
   @UseGuards(JwtAuthGuard)
   @Get('/user/properties')
-  async searchForAgents(
+  async getUserProperties(
     @Res() res: Response,
     @Req() req: Request,
     @Query() paginationDto: PaginationDto,
@@ -152,6 +174,23 @@ export class PropertyController {
     const data = await this.propertyService.getUserProperties(
       paginationDto,
       req.user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Properties Found',
+      data,
+    });
+  }
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/properties')
+  async getAgentProperties(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentProperties(
+      paginationDto,
+      req.agent,
     );
     this._sendResponse({
       res,

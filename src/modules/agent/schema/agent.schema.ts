@@ -54,6 +54,9 @@ export class Agent extends Document {
   lastname: string;
 
   @Prop()
+  avatar: string;
+
+  @Prop()
   verification_code: string;
 
   @Prop({ type: Date })
