@@ -23,10 +23,17 @@ import { Agent } from '../agent/schema/agent.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { PropertyTour } from './schema/propertyTour.schema';
 import { CreateTourDto } from './dto/tour.dto';
-import { CreateOfferDto } from './dto/offer.dto';
+import {
+  CreateAgentPropertyOfferDto,
+  CreateUserOfferDto,
+} from './dto/offer.dto';
 import { configs } from 'src/configs';
 import axios, { AxiosInstance } from 'axios';
-import { Offer } from './schema/offer.schema';
+import {
+  Offer,
+  OfferCreatorTypeEnum,
+  OfferStatusEnum,
+} from './schema/offer.schema';
 import {
   AgentPropertyInvite,
   AgentPropertyInviteStatusEnum,
@@ -90,18 +97,87 @@ export class PropertyService {
     const result = createdProperty.save();
     return result;
   }
-  async createPropertyOffer(
-    data: CreateOfferDto,
-    agent: Agent,
+
+  async createUserPropertyOffer(
+    data: CreateUserOfferDto,
+    user: User,
   ): Promise<Offer> {
+    const offerCreated = await this.offerModel.find({
+      $or: [
+        { property: data.property, buyer: user },
+        { property: data.property, buyerAgent: data.buyerAgent },
+      ],
+    });
+    if (offerCreated.length > 0) {
+      throw new BadRequestException(
+        'An offer has already been created for this property',
+      );
+    }
     const property = await this.propertyModel
       .findById(data.property)
-      .populate('buyer')
+      .populate(['buyer', 'seller', 'sellerAgent'])
       .exec();
-    if (
-      property.currentStatus != PropertyStatusEnum.pending &&
-      property.currentStatus !== PropertyStatusEnum.sold
-    ) {
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    const canCreateOffer = [
+      PropertyStatusEnum.pending,
+      PropertyStatusEnum.nowShowing,
+    ].includes(property.currentStatus as PropertyStatusEnum);
+    if (!canCreateOffer) {
+      throw new BadRequestException(
+        'You can not make an offer for this property at this time.',
+      );
+    }
+    if (data.submitWithOutAgentApproval && !data.buyerAgent) {
+      throw new BadRequestException(
+        'Please add a property agent before completing this action',
+      );
+    }
+    const newData = {
+      ...data,
+      // seller: property?.seller,
+      // sellerAgent: property.sellerAgent,
+      buyer: user,
+      buyerAgent: new Types.ObjectId(data.buyerAgent),
+      offerCreator: OfferCreatorTypeEnum.buyer,
+    };
+    const createdProperty = new this.offerModel(newData);
+    const result = createdProperty.save();
+
+    //TODO: Notify all perties at this point
+    console.log(result);
+    return result;
+  }
+
+  async createAgentPropertyOffer(
+    data: CreateAgentPropertyOfferDto,
+    agent: Agent,
+  ): Promise<Offer> {
+    const offerCreated = await this.offerModel.find({
+      $or: [
+        { property: data.property, buyerAgent: agent },
+        { property: data.property, buy: data.buyer },
+      ],
+    });
+    if (offerCreated.length > 0) {
+      throw new BadRequestException(
+        'An offer has already been created fo rthis property',
+      );
+    }
+    const property = await this.propertyModel
+      .findById(data.property)
+      .populate(['buyer', 'seller', 'sellerAgent'])
+      .exec();
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    const canCreateOffer = [
+      PropertyStatusEnum.pending,
+      PropertyStatusEnum.nowShowing,
+    ].includes(property.currentStatus as PropertyStatusEnum);
+    if (!canCreateOffer) {
+      console.log(canCreateOffer, property.currentStatus);
       throw new BadRequestException(
         'You can not make an offer for this property at this time.',
       );
@@ -109,15 +185,66 @@ export class PropertyService {
 
     const newData = {
       ...data,
-      seller: property?.seller,
-      sellerAgent: agent,
-      buyer: property.buyer,
-      buyerAgent: property.buyerAgent,
+      // seller: property?.seller,
+      // sellerAgent: property.sellerAgent,
+      buyer: new Types.ObjectId(data.buyer),
+      buyerAgent: agent,
+      offerCreator: OfferCreatorTypeEnum.agent,
     };
     const createdProperty = new this.offerModel(newData);
-    const result = createdProperty.save();
+    const result = await createdProperty.save();
+
+    //TODO: Notify all perties at this point
     console.log(result);
     return result;
+  }
+
+  async agentSubmitPropertyOffer(agent: Agent, id: string): Promise<Offer> {
+    const offer = await this.offerModel.findOne({
+      _id: new Types.ObjectId(id),
+      buyerAgent: agent,
+      submitWithOutAgentApproval: { $ne: true },
+    });
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+    if (offer.agentApproval) {
+      throw new BadRequestException('Offer already submitted');
+    }
+    if (offer.currentStatus !== OfferStatusEnum.pending) {
+      throw new BadRequestException('You can not subtmit this offer');
+    }
+    const property = await this.propertyModel
+      .findById(offer.property)
+      .populate(['buyer', 'seller', 'sellerAgent'])
+      .exec();
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    const canCreateOffer = [
+      PropertyStatusEnum.pending,
+      PropertyStatusEnum.nowShowing,
+    ].includes(property.currentStatus as PropertyStatusEnum);
+    if (!canCreateOffer) {
+      console.log(canCreateOffer, property.currentStatus);
+      throw new BadRequestException(
+        'You can not make an offer for this property at this time.',
+      );
+    }
+    const update = await this.offerModel.findByIdAndUpdate(
+      offer.id,
+      {
+        seller: property?.seller,
+        sellerAgent: property.sellerAgent,
+        agentApproval: true,
+        agentApprovalDate: new Date().toUTCString(),
+      },
+      {
+        new: true,
+      },
+    );
+    //TODO: Notify all perties at this point
+    return update;
   }
 
   async queryPropertiesByAddress(UnparsedAddress: string) {
@@ -429,7 +556,7 @@ export class PropertyService {
     return { result, total, page, limit };
   }
 
-  async getAgentProperties(paginationDto: PaginationDto, user: Agent) {
+  async getAgentBuyerProperties(paginationDto: PaginationDto, user: Agent) {
     const {
       page = 1,
       limit = 10,
@@ -497,22 +624,15 @@ export class PropertyService {
 
     const queryData = search
       ? {
-          $or: [{ sellerAgent: user.id }, { buyerAgent: user.id }],
+          buyerAgent: user.id,
           ...query,
         }
       : {
-          $or: [{ sellerAgent: user.id }, { buyerAgent: user.id }],
+          buyerAgent: user.id,
         };
 
     const queryParam: any = {
-      $or: [
-        {
-          buyer: user._id,
-        },
-        {
-          seller: user._id,
-        },
-      ],
+      buyerAgent: user.id,
       ...queryData,
     };
     if (propertyType) {
@@ -543,7 +663,250 @@ export class PropertyService {
     }
 
     const [result, total] = await Promise.all([
-      this.propertyModel.find(queryParam).skip(skip).limit(limit).exec(),
+      this.propertyModel
+        .find(queryParam)
+        .skip(skip)
+        .limit(limit)
+        .populate(['sellerAgent', 'buyerAgent', 'buyer', 'seller'])
+        .exec(),
+      this.propertyModel.countDocuments(queryParam),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
+  async getAgentSellerProperties(paginationDto: PaginationDto, user: Agent) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      priceMin,
+      priceMax,
+      sqTfMin,
+      sqTfMax,
+      bedRooms,
+      features,
+      propertyType,
+    } = paginationDto;
+
+    const skip = (page - 1) * limit;
+    let query;
+    if (search) {
+      query = {
+        $or: [
+          {
+            numBathroom: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            lotSizeUnit: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+
+          {
+            propertyType: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'features.feature': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            propertyName: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'propertyAddressDetails.formattedAddress': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.city': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.state': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.streetName': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+        ],
+      };
+    }
+
+    const queryData = search
+      ? {
+          sellerAgent: user.id,
+          ...query,
+        }
+      : {
+          sellerAgent: user.id,
+        };
+
+    const queryParam: any = {
+      sellerAgent: user.id,
+      ...queryData,
+    };
+    if (propertyType) {
+      queryParam.propertyType = propertyType;
+    }
+    if (priceMax) {
+      queryParam.price.$gte = priceMax;
+    }
+    if (priceMin) {
+      queryParam.price.$lte = priceMin;
+    }
+    if (sqTfMax) {
+      queryParam.lotSizeValue.$gte = sqTfMax;
+    }
+    if (sqTfMin) {
+      queryParam.lotSizeValue.$lte = sqTfMin;
+    }
+    if (bedRooms) {
+      queryParam.numBedroom.$gte = bedRooms;
+    }
+    if (features) {
+      const featuresArray = features.split(',');
+      queryParam['features'] = {
+        $elemMatch: {
+          feature: { $in: featuresArray },
+        },
+      };
+    }
+
+    const [result, total] = await Promise.all([
+      this.propertyModel
+        .find(queryParam)
+        .skip(skip)
+        .limit(limit)
+        .populate(['sellerAgent', 'buyerAgent', 'buyer', 'seller'])
+        .exec(),
+      this.propertyModel.countDocuments(queryParam),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
+  async getAgentPropertyOffers(paginationDto: PaginationDto, user: Agent) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      priceMin,
+      priceMax,
+      sqTfMin,
+      sqTfMax,
+      bedRooms,
+      features,
+      propertyType,
+    } = paginationDto;
+
+    const skip = (page - 1) * limit;
+    let query;
+    if (search) {
+      query = {
+        $or: [
+          {
+            numBathroom: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            lotSizeUnit: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+
+          {
+            propertyType: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'features.feature': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            propertyName: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'propertyAddressDetails.formattedAddress': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.city': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.state': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.streetName': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+        ],
+      };
+    }
+
+    const queryData = search
+      ? {
+          sellerAgent: user.id,
+          ...query,
+        }
+      : {
+          sellerAgent: user.id,
+        };
+
+    const queryParam: any = {
+      sellerAgent: user.id,
+      ...queryData,
+    };
+    if (propertyType) {
+      queryParam.propertyType = propertyType;
+    }
+    if (priceMax) {
+      queryParam.price.$gte = priceMax;
+    }
+    if (priceMin) {
+      queryParam.price.$lte = priceMin;
+    }
+    if (sqTfMax) {
+      queryParam.lotSizeValue.$gte = sqTfMax;
+    }
+    if (sqTfMin) {
+      queryParam.lotSizeValue.$lte = sqTfMin;
+    }
+    if (bedRooms) {
+      queryParam.numBedroom.$gte = bedRooms;
+    }
+    if (features) {
+      const featuresArray = features.split(',');
+      queryParam['features'] = {
+        $elemMatch: {
+          feature: { $in: featuresArray },
+        },
+      };
+    }
+
+    const [result, total] = await Promise.all([
+      this.propertyModel
+        .find(queryParam)
+        .skip(skip)
+        .limit(limit)
+        .populate(['sellerAgent', 'buyerAgent', 'buyer', 'seller'])
+        .exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
 
@@ -811,20 +1174,13 @@ export class PropertyService {
   private mapPropertyQueryToProperty(query: PropertyQuery) {
     const images = [];
     const propertyDocument = [];
-    query.Media.forEach((x) => {
-      if (
-        [
-          'image/jpeg',
-          'image/png',
-          'image/gif',
-          ' image/bmp',
-          'image/tiff',
-        ].includes(x.MimeType)
-      )
+    console.log(query);
+    for (const x of query.Media as any) {
+      if (x.MediaCategory == 'Photo') {
         images.push({
           url: x.MediaURL,
         });
-      if (
+      } else if (
         [
           'text/plain',
           'text/csv',
@@ -839,9 +1195,42 @@ export class PropertyService {
       ) {
         propertyDocument.push({
           url: x.MediaURL,
+          thumbNail: x.Thumbnail,
         });
       }
-    });
+    }
+    console.log(images, propertyDocument);
+    // query.Media.forEach((x) => {
+    //   if (
+    //     [
+    //       'image/jpeg',
+    //       'image/png',
+    //       'image/gif',
+    //       ' image/bmp',
+    //       'image/tiff',
+    //     ].includes(x.MimeType)
+    //   )
+    //     images.push({
+    //       url: x.MediaURL,
+    //     });
+    //   if (
+    //     [
+    //       'text/plain',
+    //       'text/csv',
+    //       'application/rtf',
+    //       'application/pdf',
+    //       'text/html',
+    //       'application/msword',
+    //       'application/vnd.ms-excel',
+    //       'application/vnd.ms-powerpoint',
+    //       'application/vnd.openxmlformats-officedocument',
+    //     ].includes(x.MimeType)
+    //   ) {
+    //     propertyDocument.push({
+    //       url: x.MediaURL,
+    //     });
+    //   }
+    // });
     const property = {
       propertyAddressDetails: {
         formattedAddress: query.UnparsedAddress,
@@ -864,6 +1253,7 @@ export class PropertyService {
       numBedroom: query.BedroomsTotal,
       price: { amount: query.ListPrice, currency: 'USD' },
       propertyType: query.PropertyType,
+      yearBuild: query.YearBuilt,
     };
 
     return property;

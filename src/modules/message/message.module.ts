@@ -6,6 +6,7 @@ import { ChatSchema, Chat } from './schema/chat.shcema';
 import { MessageController } from './message.controller';
 import { UserSchema, User } from '../users/schema/user.schema';
 import { AgentSchema, Agent } from '../agent/schema/agent.schema';
+import { MessageGateway } from './schema/messageGateway.service';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { AgentSchema, Agent } from '../agent/schema/agent.schema';
     ]),
   ],
   exports: [MessageService],
-  providers: [MessageService],
+  providers: [MessageService, MessageGateway],
   controllers: [MessageController],
 })
 export class MessageModule {}
