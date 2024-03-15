@@ -4,12 +4,14 @@ import { Model, Types } from 'mongoose';
 import { Chat } from './schema/chat.shcema';
 import { Message } from './schema/message.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
+import { MessageGateway } from './schema/messageGateway.service';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectModel(Message.name) private readonly messageRepo: Model<Message>,
     @InjectModel(Chat.name) private readonly chatRepo: Model<Chat>,
+    private readonly messageGateway: MessageGateway,
   ) {}
 
   async createMessage(message: Partial<Message>): Promise<Message> {
@@ -25,11 +27,14 @@ export class MessageService {
     }
     const messageModel = await this.messageRepo.create(message);
     const savedMessage = await messageModel.save();
-    return await this.messageRepo
+
+    const result = await this.messageRepo
       .findById(savedMessage._id)
       .populate(['chats', 'chats.sender'])
       .populate('user')
       .populate('agent');
+    this.messageGateway.server.emit('message', result);
+    return result;
   }
 
   async createChat(chat: Partial<Chat>): Promise<Chat> {

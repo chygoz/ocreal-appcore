@@ -25,7 +25,10 @@ import { IsPublic } from 'src/guards/isPublic.gaurd';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { CreateTourDto } from './dto/tour.dto';
-import { CreateOfferDto } from './dto/offer.dto';
+import {
+  CreateAgentPropertyOfferDto,
+  CreateUserOfferDto,
+} from './dto/offer.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 
 @Controller('property')
@@ -99,13 +102,33 @@ export class PropertyController {
     });
   }
 
-  @Post('create/offer')
-  async createPropertyOffer(
-    @Body() dto: CreateOfferDto,
+  @UseGuards(JwtAuthGuard)
+  @Post('/buyer/create/offer')
+  async createUserPropertyOffer(
+    @Body() dto: CreateUserOfferDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const result = await this.propertyService.createPropertyOffer(
+    const result = await this.propertyService.createUserPropertyOffer(
+      dto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Offer Created',
+      statusCode: 201,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Post('/agent/create/offer')
+  async createAgentPropertyOffer(
+    @Body() dto: CreateAgentPropertyOfferDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const result = await this.propertyService.createAgentPropertyOffer(
       dto,
       req.agent,
     );
@@ -114,6 +137,22 @@ export class PropertyController {
       data: { result },
       message: 'Offer Created',
       statusCode: 201,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Post('/agent/submit/offer/:id')
+  async agentSubmitPropertyOffer(@Req() req: Request, @Res() res: Response) {
+    const id = req.params.id;
+    const result = await this.propertyService.agentSubmitPropertyOffer(
+      req.agent,
+      id,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Offer Submitted',
+      statusCode: 200,
     });
   }
 
@@ -181,20 +220,57 @@ export class PropertyController {
       data,
     });
   }
+
   @UseGuards(JwtAgentAuthGuard)
-  @Get('/agent/properties')
-  async getAgentProperties(
+  @Get('/agent/buyer/properties')
+  async getAgentBuyerProperties(
     @Res() res: Response,
     @Req() req: Request,
     @Query() paginationDto: PaginationDto,
   ) {
-    const data = await this.propertyService.getAgentProperties(
+    const data = await this.propertyService.getAgentBuyerProperties(
       paginationDto,
       req.agent,
     );
     this._sendResponse({
       res,
       message: 'Properties Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/seller/properties')
+  async getAgentSellerProperties(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentSellerProperties(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Properties Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/incoming/offers')
+  async getAgentPropertyOffers(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentPropertyOffers(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offers Found',
       data,
     });
   }

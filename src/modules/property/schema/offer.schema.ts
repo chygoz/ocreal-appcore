@@ -19,6 +19,18 @@ export enum FinanceTypeEnum {
   loan = 'loan',
   cash = 'cash',
   contingent = 'contingent',
+  nonContingent = 'non-contingent',
+  fha_a_loan = 'FHA-VA loan',
+}
+
+export enum OfferCreatorTypeEnum {
+  buyer = 'buyer',
+  agent = 'agent',
+}
+
+export interface IContingency {
+  amount: number;
+  unit: string;
 }
 
 @Schema({ timestamps: true, versionKey: false })
@@ -42,19 +54,44 @@ export class Offer extends Document {
     enum: Object.values(OfferStatusEnum),
     default: OfferStatusEnum.pending,
   })
-  currentStatus: Property;
+  currentStatus: string;
 
   @Prop({
     type: SchemaTypes.String,
-    enum: Object.values(OfferStatusEnum),
+    enum: Object.values(FinanceTypeEnum),
   })
   financeType: FinanceTypeEnum;
 
   @Prop({
-    type: SchemaTypes.Boolean,
+    type: SchemaTypes.String,
+    enum: Object.values(OfferCreatorTypeEnum),
+    default: OfferCreatorTypeEnum.agent,
+  })
+  offerCreator: OfferCreatorTypeEnum;
+
+  @Prop({
+    type: SchemaTypes.Mixed,
     default: false,
   })
-  apprasalContingency: boolean;
+  apprasalContingency: boolean | IContingency;
+
+  @Prop({
+    type: SchemaTypes.Mixed,
+    default: false,
+  })
+  financeContingency: boolean | IContingency;
+
+  @Prop({
+    type: SchemaTypes.Mixed,
+    default: false,
+  })
+  inspectionContingency: boolean | IContingency;
+
+  @Prop({
+    type: SchemaTypes.Mixed,
+    default: false,
+  })
+  closeEscrow: boolean | IContingency;
 
   @Prop({
     type: SchemaTypes.Mixed,
@@ -80,11 +117,28 @@ export class Offer extends Document {
     currency: string;
   };
 
+  @Prop([{ name: SchemaTypes.String, url: SchemaTypes.String }])
+  documents: Array<{
+    name: string;
+    url: string;
+  }>;
+
   @Prop({
     type: SchemaTypes.Boolean,
     default: false,
   })
-  inspectionContingency: boolean;
+  submitWithOutAgentApproval: boolean;
+
+  @Prop({
+    type: SchemaTypes.Boolean,
+    default: false,
+  })
+  agentApproval: boolean;
+  @Prop({
+    type: SchemaTypes.Date,
+    default: null,
+  })
+  agentApprovalDate?: Date;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Property' })
   property: Property;

@@ -105,7 +105,7 @@ export class Property extends Document {
 
   @Prop({
     type: SchemaTypes.String,
-    default: 'pending',
+    default: 'Pending',
   })
   currentStatus: string;
 
@@ -128,6 +128,11 @@ export class Property extends Document {
     type: SchemaTypes.Mixed,
   })
   price: { amount: number; currency: string };
+
+  @Prop({
+    type: SchemaTypes.String,
+  })
+  yearBuilt: string;
 
   @Prop([
     {
