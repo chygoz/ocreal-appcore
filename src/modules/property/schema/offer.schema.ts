@@ -58,6 +58,11 @@ export class Offer extends Document {
 
   @Prop({
     type: SchemaTypes.String,
+  })
+  coverLetter: string;
+
+  @Prop({
+    type: SchemaTypes.String,
     enum: Object.values(FinanceTypeEnum),
   })
   financeType: FinanceTypeEnum;

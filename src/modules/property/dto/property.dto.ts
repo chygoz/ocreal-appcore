@@ -7,6 +7,7 @@ import {
   IsString,
   ValidateNested,
   IsMongoId,
+  IsEmail,
 } from 'class-validator';
 
 class PropertyAddressDetailsDto {
@@ -141,8 +142,8 @@ export class UpdatePropertyDto {
   @Type(() => PropertyFeaturesDto)
   features: Array<{ feature: string; icon: string; description: string }>;
 
-  // @IsString()
-  // propertyName: string;
+  @IsString()
+  propertyDescription: string;
 
   @IsString()
   lotSizeValue: string;
@@ -175,9 +176,9 @@ export class UpdatePropertyDto {
   propertyType: string;
 }
 export class AddAgentToPropertyDto {
+  @IsEmail()
   @IsNotEmpty()
-  @IsMongoId()
-  agentId: string;
+  agentEmail: string;
 
   @IsNotEmpty()
   @IsMongoId()
@@ -264,9 +265,9 @@ export class AgentCreatePropertyDto {
   @Type(() => PropertyAddressDetailsDto)
   propertyAddressDetails: PropertyAddressDetailsDto;
 
-  @IsString()
-  @IsNotEmpty()
-  seller: string;
+  // @IsString()
+  // @IsNotEmpty()
+  // seller: string;
 
   // @IsArray()
   // @IsString({ each: true })

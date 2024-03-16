@@ -41,6 +41,11 @@ export class AgentPropertyInvite extends Document {
 
   @Prop({
     type: SchemaTypes.String,
+  })
+  email: string;
+
+  @Prop({
+    type: SchemaTypes.String,
     enum: Object.values(AccountTypeEnum),
   })
   inviteAccountType: AccountTypeEnum;
@@ -51,8 +56,8 @@ export class AgentPropertyInvite extends Document {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Property' })
   property: Property;
 
-  @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
-  agent: Agent;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent', default: null })
+  agent?: Agent;
 }
 
 export const AgentPropertyInviteSchema =

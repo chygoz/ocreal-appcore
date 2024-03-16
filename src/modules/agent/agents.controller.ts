@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AgentsService } from './agents.service';
-import { InviteAgentDto, OnboardAgentDto, UpdateAgentDto } from './dto';
+import { OnboardAgentDto, UpdateAgentDto } from './dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { PaginationDto } from '../../constants/pagination.dto';
 import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
@@ -71,20 +71,24 @@ export class AgentsController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('/invite')
-  async inviteAgent(
-    @Res() res: Response,
-    @Req() req: Request,
-    @Body() dto: InviteAgentDto,
-  ) {
-    const data = await this.agentsService.inviteAgent(dto, req.user);
-    this._sendResponse({
-      res,
-      message: 'Agent Invited',
-      data,
-    });
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Post('/invite')
+  // async inviteAgent(
+  //   @Res() res: Response,
+  //   @Req() req: Request,
+  //   @Body() dto: InviteAgentDto,
+  // ) {
+  //   const data = await this.agentsService.inviteAgent(
+  //     dto,
+  //     req.user,
+  //     req.active_user_role,
+  //   );
+  //   this._sendResponse({
+  //     res,
+  //     message: 'Agent Invited',
+  //     data,
+  //   });
+  // }
 
   @UseGuards(JwtAgentAuthGuard)
   @Put('/profile/update')

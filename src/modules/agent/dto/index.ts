@@ -8,6 +8,7 @@ import {
   IsArray,
   IsNumber,
   IsEmail,
+  IsEnum,
 } from 'class-validator';
 
 export class AddAddress {
@@ -114,8 +115,18 @@ export class InviteAgentDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
+}
 
-  @IsString()
+enum ActionType {
+  Accept = 'accept',
+  Reject = 'reject',
+  Pending = 'pending',
+}
+
+export class AgentInviteActionDto {
   @IsNotEmpty()
-  propertyId: string;
+  agentInvite: string;
+
+  @IsEnum(ActionType)
+  action: ActionType;
 }
