@@ -5,13 +5,11 @@ import { DuplicateException } from 'src/custom_errors';
 import { createAgentJwtToken } from 'src/utils/jwt.util';
 import { EmailService } from 'src/services/email/email.service';
 import { Agent } from './schema/agent.schema';
-import { InviteAgentDto, OnboardAgentDto } from './dto';
+import { OnboardAgentDto } from './dto';
 import * as crypto from 'crypto';
 import { PaginationDto } from '../../constants/pagination.dto';
 
-import { configs } from 'src/configs';
 import { Property } from '../property/schema/property.schema';
-import { User } from '../users/schema/user.schema';
 
 @Injectable()
 export class AgentsService {
@@ -130,38 +128,83 @@ export class AgentsService {
     return { result, total, page, limit };
   }
 
-  async inviteAgent(dto: InviteAgentDto, user: User) {
-    const agent = await this.agentModel.findOne({ email: dto.email }).exec();
-    const property = await this.propertyModel.findById(dto.propertyId).exec();
-    const tokenPayload = {
-      invitedBy: user,
-      property: property,
-      agent: agent,
-    };
-    const token = createAgentJwtToken(tokenPayload);
-    if (agent) {
-      await this.emailService.sendEmail({
-        email: agent.email,
-        subject: 'Agent Invitation',
-        template: 'agent_invite',
-        body: {
-          inviterName: user.fullname,
-          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?propertyId=${property._id.toString()}&userId=${user._id.toString()}`,
-        },
-      });
-    } else {
-      await this.emailService.sendEmail({
-        email: dto.email,
-        subject: 'Agent Invitation',
-        template: 'agent_invite',
-        body: {
-          inviterName: user.fullname,
-          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?propertyId=${property._id}&userId=${user._id}`,
-        },
-      });
-    }
-    return { token };
-  }
+  // async inviteAgent(
+  //   dto: InviteAgentDto,
+  //   user: User,
+  //   userRole: AccountTypeEnum,
+  // ) {
+  //   const agent = await this.agentModel.findOne({ email: dto.email }).exec();
+
+  //   const invitePayload = {
+  //     email: dto.email,
+  //     inviteAccountType: userRole,
+  //     invitedBy: user,
+  //   };
+
+  //   const alreadyInvited = await this.agentInviteModel
+  //     .findOne({ email: dto.email, invitedBy: user })
+  //     .exec();
+
+  //   if (agent && !alreadyInvited) {
+  //     const invite = await this.agentInviteModel.create(invitePayload);
+  //     const createdInvite = await invite.save();
+  //     await this.emailService.sendEmail({
+  //       email: dto.email,
+  //       subject: 'Agent Invitation',
+  //       template: 'agent_invite',
+  //       body: {
+  //         inviterName: user.fullname,
+  //         lactionUrl: `${configs.BASE_URL}/agent/accept-invite?agentInviteId=${createdInvite._id.toString()}`,
+  //       },
+  //     });
+  //     return createdInvite;
+  //   } else if (alreadyInvited) {
+  //     await this.emailService.sendEmail({
+  //       email: dto.email,
+  //       subject: 'Agent Invitation',
+  //       template: 'agent_invite',
+  //       body: {
+  //         inviterName: user.fullname,
+  //         lactionUrl: `${configs.BASE_URL}/agent/accept-invite?agentInviteId=${alreadyInvited._id.toString()}`,
+  //       },
+  //     });
+  //     return alreadyInvited;
+  //   }
+
+  //   const invite = await this.agentInviteModel.create(invitePayload);
+  //   await invite.save();
+
+  //   await this.emailService.sendEmail({
+  //     email: dto.email,
+  //     subject: 'Agent Invitation',
+  //     template: 'agent_invite',
+  //     body: {
+  //       inviterName: user.fullname,
+  //       lactionUrl: `${configs.BASE_URL}/auth/signup?email=${dto.email}`,
+  //     },
+  //   });
+
+  //   return { result: invite };
+  // }
+
+  // async acceptUserInvite(user: User, dto: AgentInviteActionDto) {
+  //   const invite = await this.agentInviteModel.findById(dto.agentInvite).exec();
+  //   if (!invite) {
+  //     throw new NotFoundException('Agent invite not found');
+  //   }
+  //   if (invite.currentStatus !== AgentInviteStatusEnum.pending) {
+  //     throw new BadRequestException('You have already reacted to this invite');
+  //   }
+
+  //   const action =
+  //     dto.action == AgentInviteStatusEnum.accepted
+  //       ? AgentInviteStatusEnum.accepted
+  //       : AgentInviteStatusEnum.rejected;
+  //   const update = await this.agentInviteModel.findByIdAndUpdate(invite.id, {
+  //     currentStatus: action,
+  //   });
+  //   return { result: invite };
+  // }
 
   async updateAgentProfile(Agent: Agent, data: Partial<Agent>) {
     if (data?.mobile) {

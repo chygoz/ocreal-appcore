@@ -103,6 +103,9 @@ export class Property extends Document {
   @Prop()
   propertyName: string;
 
+  @Prop()
+  propertyDescription: string;
+
   @Prop({
     type: SchemaTypes.String,
     default: 'Pending',

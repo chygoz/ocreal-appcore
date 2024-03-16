@@ -83,6 +83,9 @@ export class CreateUserOfferDto {
   @IsString()
   buyerAgent: string;
 
+  @IsString()
+  coverLetter: string;
+
   // @IsString()
   // buyer: string;
 
@@ -147,4 +150,7 @@ export class CreateAgentPropertyOfferDto {
   @IsNotEmpty()
   @IsString()
   buyer: string;
+
+  @IsString()
+  coverLetter: string;
 }

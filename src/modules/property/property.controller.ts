@@ -204,13 +204,31 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('/user/properties')
-  async getUserProperties(
+  @Get('/user/buying/properties')
+  async getUserBuyingProperties(
     @Res() res: Response,
     @Req() req: Request,
     @Query() paginationDto: PaginationDto,
   ) {
-    const data = await this.propertyService.getUserProperties(
+    const data = await this.propertyService.getUserBuyingProperties(
+      paginationDto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Properties Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/user/selling/properties')
+  async getUserSellingProperties(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getUserSellingProperties(
       paginationDto,
       req.user,
     );
@@ -259,12 +277,30 @@ export class PropertyController {
 
   @UseGuards(JwtAgentAuthGuard)
   @Get('/agent/incoming/offers')
-  async getAgentPropertyOffers(
+  async getAgentIncomingPropertyOffers(
     @Res() res: Response,
     @Req() req: Request,
     @Query() paginationDto: PaginationDto,
   ) {
-    const data = await this.propertyService.getAgentPropertyOffers(
+    const data = await this.propertyService.getAgentIncomingPropertyOffers(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offers Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/outgoing/offers')
+  async getAgentOutGoingPropertyOffers(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentOutGoingPropertyOffers(
       paginationDto,
       req.agent,
     );
@@ -322,21 +358,39 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/invites')
+  async getAgentInvites(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentInvites(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Invites Found',
+      data,
+    });
+  }
+
   @UseGuards(JwtAuthGuard)
-  @Put('add/agent')
+  @Post('add/agent')
   async addAgentToProperty(
     @Body() data: AddAgentToPropertyDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const property = await this.propertyService.addAgentToProperty(
+    const result = await this.propertyService.addAgentToProperty(
       req.user,
       req.active_user_role,
       data,
     );
     this._sendResponse({
       res,
-      data: { property },
+      data: { result },
       message: 'Agent Added',
     });
   }
