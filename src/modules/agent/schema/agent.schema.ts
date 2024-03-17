@@ -17,11 +17,8 @@ export class Agent extends Document {
   @Prop()
   fullname: string;
 
-  @Prop({
-    type: { type: SchemaTypes.ObjectId, ref: 'User' },
-    default: [],
-  })
-  connectedUsers: User[];
+  @Prop([{ type: SchemaTypes.ObjectId, ref: 'User', default: [] }])
+  connectedUsers: Array<User>;
 
   @Prop({
     type: { type: SchemaTypes.ObjectId, ref: 'User' },
@@ -29,11 +26,7 @@ export class Agent extends Document {
   invitedBy?: User;
 
   @Prop({
-    type: {
-      number_body: String,
-      mobile_extension: String,
-      raw_mobile: String,
-    },
+    type: SchemaTypes.Mixed,
   })
   mobile: {
     number_body: string;
