@@ -351,10 +351,29 @@ export class PropertyService {
         .populate('buyer')
         .populate('seller')
         .populate('property')
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
       this.propertyTourModel.countDocuments({ sellerAgent: agent.id }),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
+  async getAgentPropertyinvites(paginationDto: PaginationDto, agent: Agent) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const [result, total] = await Promise.all([
+      this.agentPropertyInviteModel
+        .find({ email: agent.email })
+        .populate('invitedBy')
+        .populate('property')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.agentPropertyInviteModel.countDocuments({ email: agent.email }),
     ]);
 
     return { result, total, page, limit };
@@ -408,6 +427,18 @@ export class PropertyService {
       email: data.agentEmail,
       property: new Types.ObjectId(data.propertyId),
     });
+
+    const agentAlreadyAccepted = await this.agentPropertyInviteModel.findOne({
+      invitedBy: user.id,
+      currentStatus: AgentPropertyInviteStatusEnum.accepted,
+      property: new Types.ObjectId(data.propertyId),
+    });
+
+    if (agentAlreadyAccepted) {
+      throw new BadRequestException(
+        'Another Agent has already accepted an invite to this property',
+      );
+    }
 
     if (alreadyInvited) {
       throw new BadRequestException(
@@ -1161,6 +1192,7 @@ export class PropertyService {
         .find(query)
         .sort({ tourDate: 1 })
         .populate('property')
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -1182,17 +1214,26 @@ export class PropertyService {
   }
 
   async agentAcceptInviteToProperty(agent: Agent, dto: AgentAcceptInviteDto) {
-    const invite = await this.agentPropertyInviteModel.findOne({
-      _id: new Types.ObjectId(dto.inviteId),
-      agent: agent.id,
-      currentStatus: AgentPropertyInviteStatusEnum.pending,
-    });
+    const invite = await this.agentPropertyInviteModel
+      .findOne({
+        _id: new Types.ObjectId(dto.inviteId),
+        agent: agent.id,
+        // currentStatus: AgentPropertyInviteStatusEnum.pending,
+      })
+      .populate('invitedBy');
 
     if (!invite) {
       throw new NotFoundException('invite not found');
     }
+    if (invite.currentStatus !== AgentPropertyInviteStatusEnum.pending) {
+      throw new BadRequestException(
+        `This invited has already been ${invite.currentStatus}.`,
+      );
+    }
 
-    const property = await this.propertyModel.findById(invite.property);
+    const property = await this.propertyModel
+      .findById(invite.property)
+      .populate(['seller', 'buyer']);
     const update: any = {};
     let user;
     if (dto.response == 'accepted') {
@@ -1218,22 +1259,44 @@ export class PropertyService {
         { ...update },
         { new: true },
       );
-      const updatedInvite = await this.agentPropertyInviteModel.findById(
-        dto.inviteId,
-        {
-          currentStatus: AgentPropertyInviteStatusEnum.accepted,
-        },
-      );
-      await this.emailService.sendEmail({
-        email: user!.email,
-        subject: 'Agent Accepted Your Invitation',
-        template: 'agent_accepted_invite_to_user',
-        body: {
-          name: user!.fullname,
-          property: property.propertyName,
-          agentName: agent.fullname,
-        },
-      });
+      const updatedInvite =
+        await this.agentPropertyInviteModel.findByIdAndUpdate(
+          dto.inviteId,
+          {
+            currentStatus: AgentPropertyInviteStatusEnum.accepted,
+            $push: {
+              status: {
+                status: AgentPropertyInviteStatusEnum.accepted,
+                eventTime: new Date(),
+              },
+            },
+          },
+          {
+            new: true,
+          },
+        );
+      if (user) {
+        await this.emailService.sendEmail({
+          email: user!.email,
+          subject: 'Agent Accepted Your Invitation',
+          template: 'agent_accepted_invite_to_user',
+          body: {
+            name: user!.fullname,
+            property: property.propertyName,
+            agentName: agent.fullname,
+          },
+        });
+      }
+
+      const alreadyAdded = agent.connectedUsers.includes(invite.invitedBy.id);
+      if (!alreadyAdded) {
+        await this.agentModel.findByIdAndUpdate(agent.id, {
+          $push: {
+            connectedUsers: invite.invitedBy.id,
+          },
+        });
+      }
+
       return updatedInvite;
     } else if (dto.response == 'rejected') {
       if (invite?.inviteAccountType === AccountTypeEnum.SELLER) {
@@ -1241,22 +1304,34 @@ export class PropertyService {
       } else if (invite?.inviteAccountType === AccountTypeEnum.BUYER) {
         user = property.buyer;
       }
-      await this.emailService.sendEmail({
-        email: user!.email,
-        subject: 'Agent Rejected Your Invitation',
-        template: 'agent_rejected_invite_to_user',
-        body: {
-          name: user!.fullname,
-          property: property.propertyName,
-          agentName: agent.fullname,
-        },
-      });
-      const updatedInvite = await this.agentPropertyInviteModel.findById(
-        dto.inviteId,
-        {
-          currentStatus: AgentPropertyInviteStatusEnum.rejected,
-        },
-      );
+      if (user) {
+        await this.emailService.sendEmail({
+          email: user!.email,
+          subject: 'Agent Rejected Your Invitation',
+          template: 'agent_rejected_invite_to_user',
+          body: {
+            name: user!.fullname,
+            property: property.propertyName,
+            agentName: agent.fullname,
+          },
+        });
+      }
+      const updatedInvite =
+        await this.agentPropertyInviteModel.findByIdAndUpdate(
+          dto.inviteId,
+          {
+            currentStatus: AgentPropertyInviteStatusEnum.rejected,
+            $push: {
+              status: {
+                status: AgentPropertyInviteStatusEnum.rejected,
+                eventTime: new Date(),
+              },
+            },
+          },
+          {
+            new: true,
+          },
+        );
       return updatedInvite;
     }
   }

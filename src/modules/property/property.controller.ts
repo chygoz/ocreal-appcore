@@ -360,6 +360,24 @@ export class PropertyController {
 
   @UseGuards(JwtAgentAuthGuard)
   @Get('/agent/invites')
+  async getAgentPropertyinvites(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentPropertyinvites(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/invites')
   async getAgentInvites(
     @Res() res: Response,
     @Req() req: Request,
@@ -402,13 +420,13 @@ export class PropertyController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const property = await this.propertyService.agentAcceptInviteToProperty(
+    const result = await this.propertyService.agentAcceptInviteToProperty(
       req.agent,
       data,
     );
     this._sendResponse({
       res,
-      data: { property },
+      data: { result },
       message: 'Agent Accepted Invite',
     });
   }
