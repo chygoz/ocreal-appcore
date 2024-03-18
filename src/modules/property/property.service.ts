@@ -362,11 +362,17 @@ export class PropertyService {
   }
 
   async getAgentPropertyinvites(paginationDto: PaginationDto, agent: Agent) {
-    const { page = 1, limit = 10 } = paginationDto;
+    const { page = 1, limit = 10, invitedBy } = paginationDto;
+    if (!invitedBy) {
+      throw new BadRequestException(
+        'invitedBy query params missing in your request.',
+      );
+    }
     const skip = (page - 1) * limit;
+    const query = invitedBy ? { inviteAccountType: invitedBy } : {};
     const [result, total] = await Promise.all([
       this.agentPropertyInviteModel
-        .find({ email: agent.email })
+        .find({ email: agent.email, ...query })
         .populate('invitedBy')
         .populate('property')
         .sort({ createdAt: -1 })
