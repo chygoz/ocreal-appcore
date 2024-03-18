@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { AccountTypeEnum } from '.';
 
 export class PaginationDto {
   @IsOptional()
@@ -23,6 +24,10 @@ export class PaginationDto {
 
   @IsOptional()
   sqTfMin?: number;
+
+  @IsOptional()
+  @IsEnum(AccountTypeEnum)
+  invitedBy?: AccountTypeEnum;
 
   @IsOptional()
   sqTfMax?: number;

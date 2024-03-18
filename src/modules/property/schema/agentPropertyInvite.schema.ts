@@ -16,6 +16,11 @@ export enum AgentPropertyInviteStatusEnum {
   rejected = 'rejected',
 }
 
+export enum InvitedByEnum {
+  seller = 'seller',
+  buyer = 'buyer',
+}
+
 @Schema({ timestamps: true, versionKey: false })
 export class AgentPropertyInvite extends Document {
   @Prop([
