@@ -372,14 +372,22 @@ export class PropertyService {
     const query = invitedBy ? { inviteAccountType: invitedBy } : {};
     const [result, total] = await Promise.all([
       this.agentPropertyInviteModel
-        .find({ email: agent.email, ...query })
+        .find({
+          currentStatus: AgentPropertyInviteStatusEnum.pending,
+          email: agent.email,
+          ...query,
+        })
         .populate('invitedBy')
         .populate('property')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.agentPropertyInviteModel.countDocuments({ email: agent.email }),
+      this.agentPropertyInviteModel.countDocuments({
+        currentStatus: AgentPropertyInviteStatusEnum.pending,
+        email: agent.email,
+        ...query,
+      }),
     ]);
 
     return { result, total, page, limit };
