@@ -371,7 +371,7 @@ export class PropertyController {
     );
     this._sendResponse({
       res,
-      message: 'Tours Found',
+      message: 'Invites Found',
       data,
     });
   }
