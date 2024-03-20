@@ -1355,6 +1355,7 @@ export class PropertyService {
       .findById(id)
       .populate('brokers.agent')
       .populate('sellerAgent', 'firstname lastname')
+      .populate('buyerAgent', 'firstname lastname')
       .exec();
 
     if (!property) {
