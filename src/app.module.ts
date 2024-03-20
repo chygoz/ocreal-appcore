@@ -15,7 +15,8 @@ import { StripeModule } from './services/stripe/stripe.module';
 import { PropertyModule } from './modules/property/property.module';
 import { MessageModule } from './modules/message/message.module';
 import { InviteModule } from './modules/Agentinvite/agentInvite.module';
-import { SocketModule } from './modules/socket/socket.module';
+// import { SocketModule } from './modules/socket/socket.module';
+import { SocketGateway } from './modules/socket/socket.gateway';
 
 @Module({
   imports: [
@@ -34,9 +35,8 @@ import { SocketModule } from './modules/socket/socket.module';
     PropertyModule,
     MessageModule,
     InviteModule,
-    SocketModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SocketGateway],
 })
 export class AppModule {}

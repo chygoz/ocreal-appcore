@@ -303,7 +303,7 @@ export class PropertyService {
   async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
     const property = await this.propertyModel.findById(data.property);
     if (!property) throw new NotFoundException('Property not found');
-    if (property.seller.toString() == user.id.toString()) {
+    if (property.buyer.toString() == user.id.toString()) {
       throw new BadRequestException('You can not perform this action');
     }
     const currentDate = new Date();

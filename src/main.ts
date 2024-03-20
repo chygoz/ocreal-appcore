@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import * as sanitizer from 'express-mongo-sanitize';
 import ExceptionsHandler from './utils/exception-handler.util';
 import { ValidationPipe } from '@nestjs/common';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 // import { NestExpressApplication } from '@nestjs/platform-express';
 // import serverlessExpress from '@vendia/serverless-express';
 // import { Callback, Context, Handler } from 'aws-lambda';
@@ -24,6 +25,7 @@ async function bootstrap() {
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH');
       res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+      // res.header('*', '*');
       next();
     });
 
@@ -32,6 +34,7 @@ async function bootstrap() {
       origin: '*',
     });
   }
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.use(sanitizer());
   app.setGlobalPrefix('api/v1');
   app.useGlobalFilters(new ExceptionsHandler());
