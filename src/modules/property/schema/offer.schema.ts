@@ -11,6 +11,7 @@ export interface Price {
 
 export enum OfferStatusEnum {
   pending = 'pending',
+  submitted = 'submitted',
   accepted = 'accepted',
   rejected = 'rejected',
 }

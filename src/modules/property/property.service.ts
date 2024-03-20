@@ -1252,20 +1252,32 @@ export class PropertyService {
     let user;
     if (dto.response == 'accepted') {
       if (invite?.inviteAccountType === AccountTypeEnum.SELLER) {
+        if (property.sellerAgentAcceptance) {
+          throw new BadRequestException(
+            `A selling agent has already been added to to this property.`,
+          );
+        }
         property.status.push({
           status: PropertyStatusEnum.sellerAgentAcceptedInvite,
           eventTime: new Date(),
         });
         update.sellerAgent = agent;
         update.status = property.status;
+        update.sellerAgentAcceptance = true;
         user = property.seller;
       } else if (invite?.inviteAccountType === AccountTypeEnum.BUYER) {
+        if (property.buyerAgentAcceptance) {
+          throw new BadRequestException(
+            `A buying agent has already been added to to this property.`,
+          );
+        }
         update.buyerAgent = agent;
         property.status.push({
           status: PropertyStatusEnum.buyerAgentAcceptedInvite,
           eventTime: new Date(),
         });
         update.status = property.status;
+        update.buyerAgentAcceptance = true;
         user = property.buyer;
       }
       await this.propertyModel.findByIdAndUpdate(
@@ -1354,8 +1366,8 @@ export class PropertyService {
     const property = await this.propertyModel
       .findById(id)
       .populate('brokers.agent')
-      .populate('sellerAgent', 'firstname lastname')
-      .populate('buyerAgent', 'firstname lastname')
+      .populate('sellerAgent', 'firstname lastname avatar')
+      .populate('buyerAgent', 'firstname lastname avatar')
       .exec();
 
     if (!property) {
