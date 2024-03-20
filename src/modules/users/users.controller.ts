@@ -12,11 +12,11 @@ import {
 import { Response, Request } from 'express';
 import { CreateUserDto, UpdateUserDto } from './dto';
 
-@UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post('/onboard-user')
   async onBoardNewuser(
     @Body() createUserDto: CreateUserDto,
@@ -34,6 +34,7 @@ export class UsersController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put('/update/profile')
   async updateUserProfile(
     @Body() profile: UpdateUserDto,
