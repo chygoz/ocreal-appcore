@@ -49,13 +49,13 @@ export class SocketGuard implements CanActivate {
 
     if (user) {
       // if (
-      //   !request.headers.active_user_role ||
+      //   !request.headers.role ||
       //   !Object.values(AccountTypeEnum).includes(
-      //     request.headers.active_user_role as AccountTypeEnum,
+      //     request.headers.role as AccountTypeEnum,
       //   )
       // ) {
       //   throw new BadRequestException(
-      //     'Please provde an active_user_role in the header.',
+      //     'Please provde an role in the header.',
       //   );
       // }
       request['user'] = user;

@@ -24,9 +24,9 @@ export class SellerAuthGuard implements CanActivate {
       );
     }
 
-    if (request?.active_user_role !== AccountTypeEnum.SELLER) {
+    if (request.headers?.role !== AccountTypeEnum.SELLER) {
       throw new BadRequestException(
-        'This active_user_role can not perform this action.',
+        'This user role can not perform this action.',
       );
     }
     return true;
