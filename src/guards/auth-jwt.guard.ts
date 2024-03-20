@@ -39,17 +39,15 @@ export class JwtAuthGuard implements CanActivate {
         'Please provde bearer token in authorization header.',
       );
     }
-    if (!request.headers.active_user_role) {
-      throw new BadRequestException(
-        'Please provide an active_user_role in the header.',
-      );
+    if (!request.headers.role) {
+      throw new BadRequestException('Please provide an role in the header.');
     }
     const inclduded = Object.values(AccountTypeEnum).includes(
-      request.headers.active_user_role as AccountTypeEnum,
+      request.headers.role as AccountTypeEnum,
     );
     if (!inclduded) {
       throw new BadRequestException(
-        'Please provide a valid user role as active_user_role in the header.',
+        'Please provide a valid user role as role in the header.',
       );
     }
     const token = request.headers.authorization.split(' ')[1];
