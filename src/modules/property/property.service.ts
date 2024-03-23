@@ -39,6 +39,9 @@ import {
   AgentPropertyInviteStatusEnum,
 } from './schema/agentPropertyInvite.schema';
 import { UserSavedProperty } from './schema/userFavoriteProperties.schema';
+import NotificationService from '../notification/notitifcation.service';
+import { NotificationUserType } from '../notification/schema/notification.schema';
+import * as moment from 'moment';
 
 @Injectable()
 export class PropertyService {
@@ -57,6 +60,7 @@ export class PropertyService {
     @InjectModel(UserSavedProperty.name)
     private userSavedPropertyModel: Model<UserSavedProperty>,
     private readonly emailService: EmailService,
+    private readonly notificationService: NotificationService,
     // private readonly axiosInstance: AxiosInstance,
   ) {
     this.axiosInstance = axios.create({
@@ -144,7 +148,12 @@ export class PropertyService {
     const createdProperty = new this.offerModel(newData);
     const result = createdProperty.save();
 
-    //TODO: Notify all perties at this point
+    await this.notificationService.createNotification({
+      body: `${user.fullname},  just created a new offer for a ${property.propertyName} property.`,
+      title: `New property offer from ${user.fullname}`,
+      user: new Types.ObjectId(data.buyerAgent) as any,
+      userType: NotificationUserType.agent,
+    });
     console.log(result);
     return result;
   }
@@ -176,10 +185,9 @@ export class PropertyService {
         'You can not make an offer for this property at this time.',
       );
     }
-    const canCreateOffer = [
-      PropertyStatusEnum.pending,
-      PropertyStatusEnum.nowShowing,
-    ].includes(property.currentStatus as PropertyStatusEnum);
+    const canCreateOffer =
+      (property.currentStatus as PropertyStatusEnum) ===
+      PropertyStatusEnum.nowShowing;
     if (!canCreateOffer) {
       console.log(canCreateOffer, property.currentStatus);
       throw new BadRequestException(
@@ -198,8 +206,27 @@ export class PropertyService {
     const createdProperty = new this.offerModel(newData);
     const result = await createdProperty.save();
 
-    //TODO: Notify all perties at this point
-    console.log(result);
+    await this.notificationService.createNotification({
+      body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
+      title: `New submitted offer for ${property.propertyName}`,
+      user: property.sellerAgent as any,
+      userType: NotificationUserType.agent,
+    });
+
+    if (property.seller) {
+      await this.notificationService.createNotification({
+        body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
+        title: `New submitted offer for ${property.propertyName}`,
+        user: property.seller as any,
+      });
+    }
+
+    await this.notificationService.createNotification({
+      body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, on your behalf for ${property.propertyName} property.`,
+      title: `New submitted offer for ${property.propertyName}`,
+      user: property.buyer as any,
+    });
+
     return result;
   }
 
@@ -254,7 +281,26 @@ export class PropertyService {
         new: true,
       },
     );
-    //TODO: Notify all perties at this point
+    await this.notificationService.createNotification({
+      body: `${agent.fullname}, just submitted an offer of $${offer.offerPrice.amount}, for your ${property.propertyName} property.`,
+      title: `New submitted offer for ${property.propertyName}`,
+      user: property.sellerAgent as any,
+      userType: NotificationUserType.agent,
+    });
+
+    if (property.seller) {
+      await this.notificationService.createNotification({
+        body: `${agent.fullname}, just submitted an offer of $${offer.offerPrice.amount}, for your ${property.propertyName} property.`,
+        title: `New submitted offer for ${property.propertyName}`,
+        user: property.seller as any,
+      });
+    }
+
+    await this.notificationService.createNotification({
+      body: `${agent.fullname}, just approved and submitted your offer of $${offer.offerPrice.amount}, for ${property.propertyName} property.`,
+      title: `New submitted offer for ${property.propertyName}`,
+      user: property.buyer as any,
+    });
     return update;
   }
 
@@ -331,9 +377,30 @@ export class PropertyService {
       sellerAgent: property.sellerAgent,
     };
     const propertyTour = new this.propertyTourModel(tourPayload);
-    const savedTour = propertyTour.save();
-    //TODO: send notifications to the seller and seller Agent here as also the buyer and BuyerAgent
+    const savedTour = await propertyTour.save();
 
+    const formattedDate = moment(savedTour.tourDate).format('ddd D MMM YYYY');
+    await this.notificationService.createNotification({
+      body: `${user.fullname}, just scheduled a tour of your ${property.propertyName} property, for ${formattedDate}`,
+      title: `New Property Tour Schduled for ${property.propertyName}`,
+      user: property.sellerAgent as any,
+      userType: NotificationUserType.agent,
+    });
+
+    if (property.seller) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just scheduled a tour of your ${property.propertyName} property, for ${formattedDate}`,
+        title: `New Property Tour Schduled for ${property.propertyName}`,
+        user: property.seller as any,
+      });
+    }
+
+    await this.notificationService.createNotification({
+      body: `${user.fullname}, just scheduled a tour of your ${property.propertyName} property, for ${formattedDate}`,
+      title: `New Property Tour Schduled for ${property.propertyName}`,
+      user: property.buyerAgent as any,
+      userType: NotificationUserType.agent,
+    });
     return savedTour;
   }
 
@@ -474,6 +541,8 @@ export class PropertyService {
       );
     }
     const property = await this.propertyModel.findById(data.propertyId);
+    const agentRole =
+      user_role == AccountTypeEnum.BUYER ? 'Buying Agent' : 'Selling Agent';
     if (!property) {
       throw new NotFoundException('Property not found');
     }
@@ -507,6 +576,15 @@ export class PropertyService {
       },
     });
     //TODO: send notifications at this point
+
+    if (agent) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just just invited you act as their ${agentRole} on ${property.propertyName} property.`,
+        title: `New ${agentRole} Property Invite`,
+        user: agent.id as any,
+        userType: NotificationUserType.agent,
+      });
+    }
     return propertyAgentinvite.save();
   }
 
@@ -1326,6 +1404,13 @@ export class PropertyService {
             agentName: agent.fullname,
           },
         });
+
+        await this.notificationService.createNotification({
+          body: `${agent.fullname}, just accepted to act as your purchasing agent on this ${property.propertyName} property.`,
+          title: `${agent.fullname}, just accepted your property invite.`,
+          user: property.buyerAgent as any,
+          // userType: NotificationUserType.agent,
+        });
       }
 
       const alreadyAdded = agent.connectedUsers.includes(invite.invitedBy.id);
@@ -1336,7 +1421,6 @@ export class PropertyService {
           },
         });
       }
-
       return updatedInvite;
     } else if (dto.response == 'rejected') {
       if (invite?.inviteAccountType === AccountTypeEnum.SELLER) {
@@ -1372,6 +1456,12 @@ export class PropertyService {
             new: true,
           },
         );
+      await this.notificationService.createNotification({
+        body: `${agent.fullname}, just rejected to act as your selling agent on this ${property.propertyName} property.`,
+        title: `${agent.fullname}, just rejected your property invite.`,
+        user: property.buyerAgent as any,
+        // userType: NotificationUserType.agent,
+      });
       return updatedInvite;
     }
   }
@@ -1403,8 +1493,14 @@ export class PropertyService {
         new: true,
       },
     );
-
-    //TODO: Notify the seller that the property has been published
+    if (property.seller) {
+      await this.notificationService.createNotification({
+        body: `${agent.fullname}, just published your property, you can not expect offers on your ${property.propertyName} property.`,
+        title: `${agent.fullname}, just published your property.`,
+        user: property.buyerAgent as any,
+        // userType: NotificationUserType.agent,
+      });
+    }
     return update;
   }
 

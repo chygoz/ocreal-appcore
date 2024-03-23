@@ -20,6 +20,7 @@ import {
   UserSavedProperty,
   UserSavedPropertySchema,
 } from './schema/userFavoriteProperties.schema';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import {
       { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
     ]),
     EmailModule,
+    NotificationModule,
   ],
   controllers: [PropertyController],
   providers: [PropertyService],
