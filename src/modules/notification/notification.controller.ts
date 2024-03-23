@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import NotificationService from './notitifcation.service';
-import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 import { PaginationDto } from 'src/constants/pagination.dto';
+import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 
 @UseGuards(AgentOrSellerAuthGuard)
 @Controller('Notifications')
@@ -19,38 +19,38 @@ export class NotificationController {
 
   @Get()
   async getUserNotifications(
-    @Res() res: Response,
     @Req() req: Request,
+    @Res() res: Response,
     @Query() paginationDto: PaginationDto,
   ) {
-    const data = await this.notificationService.getUserNotifications(
-      req.user.id || req.agent.id,
+    const result = await this.notificationService.getAccountNotifications(
       paginationDto,
+      req.user.id || req.agent.id,
     );
-    return this._sendResponse({
+    this._sendResponse({
       res,
-      data,
-      message: 'Notifications Found',
+      data: { result },
+      message: 'Notifications result.',
     });
   }
 
   @Put('read/one/:id')
-  async markOneAsRead(@Res() res: Response, @Req() req: Request) {
-    const data = await this.notificationService.markOneAsRead(req.params.id);
-    return this._sendResponse({
+  async markOneAsRead(@Req() req: Request, @Res() res: Response) {
+    const result = await this.notificationService.markOneAsRead(req.params.id);
+    this._sendResponse({
       res,
-      data,
-      message: 'Narked as read.',
+      data: { result },
+      message: 'Marked',
     });
   }
 
   @Put('read/all/')
-  markAllAsRead(@Res() res: Response, @Req() req: Request) {
-    const data = this.notificationService.markAllAsRead(req.user.id);
-    return this._sendResponse({
+  async markAllAsRead(@Req() req: Request, @Res() res: Response) {
+    const result = await this.notificationService.markAllAsRead(req.user.id);
+    this._sendResponse({
       res,
-      data,
-      message: 'Notifications marked as read',
+      data: { result },
+      message: 'Notifications Marked',
     });
   }
 
