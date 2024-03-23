@@ -10,8 +10,8 @@ export interface Price {
 
 export enum PropertyStatusEnum {
   pending = 'Pending',
-  nowShowing = 'NowShowing',
-  underContract = 'UnderContract',
+  nowShowing = 'Now Showing',
+  underContract = 'Under Contract',
   sold = 'Sold',
   buyerAgentAdded = 'Buyer Agent Added',
   buyerAgentAcceptedInvite = 'Buyer Agent Accepted Invite',

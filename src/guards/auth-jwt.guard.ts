@@ -69,8 +69,7 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid token. Please login again.');
     }
     request['user'] = user;
-    request['active_user_role'] = request.headers
-      .active_user_role as AccountTypeEnum;
+    request['active_user_role'] = request.headers.role as AccountTypeEnum;
 
     return true;
   }
