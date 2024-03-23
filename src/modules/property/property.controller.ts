@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -30,6 +31,7 @@ import {
   CreateUserOfferDto,
 } from './dto/offer.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
+import { AccountTypeEnum } from 'src/constants';
 
 @Controller('property')
 export class PropertyController {
@@ -163,6 +165,9 @@ export class PropertyController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    if (req.active_user_role !== AccountTypeEnum.BUYER) {
+      throw new BadRequestException('Only Buyers can schedule tours');
+    }
     const tour = await this.propertyService.scheduleTour(dto, req.user);
     this._sendResponse({
       res,
@@ -428,6 +433,18 @@ export class PropertyController {
       res,
       data: { result },
       message: 'Agent Accepted Invite',
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Put('agent/response/:id')
+  async publishProperty(@Req() req: Request, @Res() res: Response) {
+    const id = req.params.id;
+    const result = await this.propertyService.publishProperty(req.agent, id);
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Property published.',
     });
   }
 

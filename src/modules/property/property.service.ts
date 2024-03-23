@@ -171,6 +171,11 @@ export class PropertyService {
     if (!property) {
       throw new NotFoundException('Property not found');
     }
+    if (property.currentStatus !== PropertyStatusEnum.pending) {
+      throw new BadRequestException(
+        'You can not make an offer for this property at this time.',
+      );
+    }
     const canCreateOffer = [
       PropertyStatusEnum.pending,
       PropertyStatusEnum.nowShowing,
@@ -237,6 +242,13 @@ export class PropertyService {
         sellerAgent: property.sellerAgent,
         agentApproval: true,
         agentApprovalDate: new Date().toUTCString(),
+        currentStatus: OfferStatusEnum.submitted,
+        $push: {
+          status: {
+            status: OfferStatusEnum.submitted,
+            eventTime: new Date(),
+          },
+        },
       },
       {
         new: true,
@@ -303,8 +315,10 @@ export class PropertyService {
   async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
     const property = await this.propertyModel.findById(data.property);
     if (!property) throw new NotFoundException('Property not found');
-    if (property.buyer.toString() == user.id.toString()) {
-      throw new BadRequestException('You can not perform this action');
+    if (property.currentStatus !== PropertyStatusEnum.nowShowing) {
+      throw new BadRequestException(
+        'You can no longer tour this property as it currently under contract',
+      );
     }
     const currentDate = new Date();
     if (data.tourDate < currentDate) {
@@ -1362,6 +1376,38 @@ export class PropertyService {
     }
   }
 
+  async publishProperty(agent: Agent, id: string) {
+    const property = await this.propertyModel.findOne({
+      _id: new Types.ObjectId(id),
+      sellerAgent: agent.id,
+      currentStatus: PropertyStatusEnum.pending,
+    });
+
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+
+    const update = await this.propertyModel.findByIdAndUpdate(
+      property.id,
+      {
+        currentStatus: PropertyStatusEnum.nowShowing,
+        $push: {
+          status: {
+            status: PropertyStatusEnum.nowShowing,
+            eventTime: new Date(),
+          },
+        },
+        listed: true,
+      },
+      {
+        new: true,
+      },
+    );
+
+    //TODO: Notify the seller that the property has been published
+    return update;
+  }
+
   async getSingleProperty(id: string): Promise<Property> {
     const property = await this.propertyModel
       .findById(id)
@@ -1403,11 +1449,14 @@ export class PropertyService {
         },
       ];
     }
-    const queryObject = search ? { ...query } : {};
+    const queryObject = search
+      ? { ...query, currentStatus: PropertyStatusEnum.nowShowing }
+      : { currentStatus: PropertyStatusEnum.nowShowing };
 
     const [result, total] = await Promise.all([
       this.propertyModel
         .find(queryObject)
+        .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('sellerAgent', 'firstname lastname')
