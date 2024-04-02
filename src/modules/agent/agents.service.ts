@@ -129,7 +129,7 @@ export class AgentsService {
     return { result, total, page, limit };
   }
 
-  async updateAgentProfile(Agent: Agent, data: Partial<Agent>) {
+  async updateAgentProfile(agent: Agent, data: Partial<Agent>) {
     if (data?.mobile) {
       const agentExistis = await this.agentModel.findOne({
         'mobile.raw_mobile': data.mobile.raw_mobile,
@@ -145,9 +145,15 @@ export class AgentsService {
     if (data?.firstname && data?.lastname) {
       payload['fullname'] = `${data.firstname} ${data.lastname}`;
     }
+    if (data?.firstname && !data?.lastname) {
+      payload['fullname'] = `${data.firstname} ${agent.lastname}`;
+    }
+    if (!data?.firstname && data?.lastname) {
+      payload['fullname'] = `${agent.firstname} ${data.lastname}`;
+    }
 
     const updatedAgent = await this.agentModel.findByIdAndUpdate(
-      Agent._id,
+      agent._id,
       payload,
     );
 

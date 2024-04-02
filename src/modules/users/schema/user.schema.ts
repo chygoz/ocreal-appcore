@@ -17,6 +17,9 @@ export class User extends Document {
   @Prop()
   fullname: string;
 
+  @Prop()
+  socketId: string;
+
   @Prop({
     type: {
       number_body: String,

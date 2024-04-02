@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Chat } from './schema/chat.shcema';
+import { Chat } from './schema/chat.schema';
 import { Message } from './schema/message.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { MessageGateway } from './schema/messageGateway.service';

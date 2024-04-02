@@ -93,7 +93,7 @@ export class PropertyController {
   @UseGuards(AgentOrSellerAuthGuard)
   @Get('query/propeties-details/:unparsedAddress')
   async queryPropertiesByAddress(@Req() req: Request, @Res() res: Response) {
-    const unparsedAddress = req.params.UnparsedAddress;
+    const unparsedAddress = req.params.unparsedAddress.replace(/\s/g, '%');
     const result =
       await this.propertyService.queryPropertiesByAddress(unparsedAddress);
     this._sendResponse({
