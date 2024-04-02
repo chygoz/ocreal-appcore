@@ -4,7 +4,7 @@ import { Document, HydratedDocument, SchemaTypes } from 'mongoose';
 import { Agent } from 'src/modules/agent/schema/agent.schema';
 import { Property } from 'src/modules/property/schema/property.schema';
 import { User } from 'src/modules/users/schema/user.schema';
-import { Chat } from './chat.shcema';
+import { Chat } from './chat.schema';
 
 export type MessageDocument = HydratedDocument<Message>;
 export enum MessageTypeEnum {

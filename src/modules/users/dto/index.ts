@@ -91,7 +91,7 @@ export class UpdateUserDto {
   preApprovalDocument: PreApprovalDocumentDto;
 
   @IsBoolean()
-  @IsNotEmpty()
+  @IsOptional()
   preApproval: boolean;
 
   @IsObject()

@@ -81,9 +81,17 @@ export class UpdateAgentDto {
   // @IsOptional()
   // email?: string;
 
-  // @IsString()
-  // @IsOptional()
-  // fullname: string;
+  @IsString()
+  @IsOptional()
+  firstname: string;
+
+  @IsString()
+  @IsOptional()
+  lastname: string;
+
+  @IsString()
+  @IsOptional()
+  avatar: string;
 
   @IsString()
   @IsOptional()
@@ -97,14 +105,6 @@ export class UpdateAgentDto {
   @IsOptional()
   @Type(() => CreateMobileDto)
   mobile: CreateMobileDto;
-
-  @IsString()
-  @IsOptional()
-  firstname: string;
-
-  @IsString()
-  @IsOptional()
-  lastname: string;
 
   @IsOptional()
   @Type(() => AddAddress)

@@ -108,6 +108,7 @@ class PropertyImageDto {
 class PropertyVideoDto {
   @IsString()
   url: string;
+
   @IsString()
   thumbNail: string;
 }
@@ -269,13 +270,11 @@ export class AgentCreatePropertyDto {
   // @IsNotEmpty()
   // seller: string;
 
-  // @IsArray()
-  // @IsString({ each: true })
-  // images: string[];
+  @IsArray()
+  images: PropertyImageDto[];
 
-  // @IsArray()
-  // @IsString({ each: true })
-  // videos: string[];
+  @IsArray()
+  videos: PropertyVideoDto[];
 
   // @ValidateNested()
   // @Type(() => PropertyDocumentDto)
@@ -295,27 +294,30 @@ export class AgentCreatePropertyDto {
   // @IsString({ each: true })
   // features: Array<string>;
 
-  // @IsString()
-  // propertyName: string;
+  @IsString()
+  propertyName: string;
 
-  // @IsString()
-  // lotSizeValue: string;
+  @IsString()
+  lotSizeValue: string;
 
-  // @IsString()
-  // lotSizeUnit: string;
+  @IsString()
+  lotSizeUnit: string;
 
-  // @IsString()
-  // numBathroom: string;
+  @IsString()
+  numBathroom: string;
 
-  // @IsString()
-  // numBedroom: string;
+  @IsString()
+  numBedroom: string;
 
-  // @ValidateNested()
-  // @Type(() => PriceDto)
-  // prices: {
-  //   amount: number;
-  //   currency: string;
-  // };
+  @IsString()
+  propertyDescription: string;
+
+  @ValidateNested()
+  @Type(() => PriceDto)
+  price: {
+    amount: number;
+    currency: string;
+  };
 
   // @ValidateNested()
   // @Type(() => PropertyTaxDto)
@@ -325,6 +327,6 @@ export class AgentCreatePropertyDto {
   //   dateSeen: [Date];
   // }>;
 
-  // @IsString()
-  // propertyType: string;
+  @IsString()
+  propertyType: string;
 }

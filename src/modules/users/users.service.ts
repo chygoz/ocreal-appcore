@@ -66,8 +66,11 @@ export class UsersService {
         );
     }
     const payload = { ...data };
-    if (data?.firstname && data?.lastname) {
-      payload['fullname'] = `${data.firstname} ${data.lastname}`;
+    if (data?.firstname && !data?.lastname) {
+      payload['fullname'] = `${data.firstname} ${user.lastname}`;
+    }
+    if (!data?.firstname && data?.lastname) {
+      payload['fullname'] = `${user.firstname} ${data.lastname}`;
     }
     const updatedUser = await this.userModel.findByIdAndUpdate(
       user.id,

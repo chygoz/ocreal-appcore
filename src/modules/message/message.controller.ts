@@ -19,7 +19,7 @@ import {
 import { MessageTypeEnum } from './schema/message.schema';
 import { Types } from 'mongoose';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
-import { UserTypeEnum } from './schema/chat.shcema';
+import { UserTypeEnum } from './schema/chat.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
 
 @Controller('message')

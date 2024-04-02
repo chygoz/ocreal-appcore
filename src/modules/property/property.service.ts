@@ -1559,9 +1559,9 @@ export class PropertyService {
         .exec(),
       this.propertyModel.countDocuments(query),
     ]);
-    if (result.length === 0) {
-      throw new BadRequestException('No properties at the moment');
-    }
+    // if (result.length === 0) {
+    //   throw new BadRequestException('No properties at the moment');
+    // }
     return { result, total, page, limit };
   }
 
@@ -1648,63 +1648,34 @@ export class PropertyService {
   private mapPropertyQueryToProperty(query: PropertyQuery) {
     const images = [];
     const propertyDocument = [];
-    console.log(query);
-    for (const x of query.Media as any) {
-      if (x.MediaCategory == 'Photo') {
-        images.push({
-          url: x.MediaURL,
-        });
-      } else if (
-        [
-          'text/plain',
-          'text/csv',
-          'application/rtf',
-          'application/pdf',
-          'text/html',
-          'application/msword',
-          'application/vnd.ms-excel',
-          'application/vnd.ms-powerpoint',
-          'application/vnd.openxmlformats-officedocument',
-        ].includes(x.MimeType)
-      ) {
-        propertyDocument.push({
-          url: x.MediaURL,
-          thumbNail: x.Thumbnail,
-        });
+    if (query.Media) {
+      for (const x of query.Media as any) {
+        if (x.MediaCategory == 'Photo') {
+          images.push({
+            url: x.MediaURL,
+            thumbNail: x.Thumbnail,
+          });
+        } else if (
+          [
+            'text/plain',
+            'text/csv',
+            'application/rtf',
+            'application/pdf',
+            'text/html',
+            'application/msword',
+            'application/vnd.ms-excel',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument',
+          ].includes(x.MimeType)
+        ) {
+          propertyDocument.push({
+            url: x.MediaURL,
+            thumbNail: x.Thumbnail,
+          });
+        }
       }
     }
-    console.log(images, propertyDocument);
-    // query.Media.forEach((x) => {
-    //   if (
-    //     [
-    //       'image/jpeg',
-    //       'image/png',
-    //       'image/gif',
-    //       ' image/bmp',
-    //       'image/tiff',
-    //     ].includes(x.MimeType)
-    //   )
-    //     images.push({
-    //       url: x.MediaURL,
-    //     });
-    //   if (
-    //     [
-    //       'text/plain',
-    //       'text/csv',
-    //       'application/rtf',
-    //       'application/pdf',
-    //       'text/html',
-    //       'application/msword',
-    //       'application/vnd.ms-excel',
-    //       'application/vnd.ms-powerpoint',
-    //       'application/vnd.openxmlformats-officedocument',
-    //     ].includes(x.MimeType)
-    //   ) {
-    //     propertyDocument.push({
-    //       url: x.MediaURL,
-    //     });
-    //   }
-    // });
+
     const property = {
       propertyAddressDetails: {
         formattedAddress: query.UnparsedAddress,

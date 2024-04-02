@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MessageService } from './message.service';
 import { MessageSchema, Message } from './schema/message.schema';
-import { ChatSchema, Chat } from './schema/chat.shcema';
+import { ChatSchema, Chat } from './schema/chat.schema';
 import { MessageController } from './message.controller';
 import { UserSchema, User } from '../users/schema/user.schema';
 import { AgentSchema, Agent } from '../agent/schema/agent.schema';
