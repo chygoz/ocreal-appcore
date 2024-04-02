@@ -123,9 +123,7 @@ export class AgentsService {
       this.agentModel.find(query).skip(skip).limit(limit).exec(),
       this.agentModel.countDocuments(query),
     ]);
-    if (result.length === 0) {
-      throw new BadRequestException('No agent found');
-    }
+
     return { result, total, page, limit };
   }
 

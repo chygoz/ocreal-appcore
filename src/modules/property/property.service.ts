@@ -698,9 +698,7 @@ export class PropertyService {
       this.propertyModel.find(queryParam).skip(skip).limit(limit).exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
-    if (result.length === 0) {
-      throw new BadRequestException('No property found');
-    }
+
     return { result, total, page, limit };
   }
 
@@ -814,9 +812,7 @@ export class PropertyService {
       this.propertyModel.find(queryParam).skip(skip).limit(limit).exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
-    if (result.length === 0) {
-      throw new BadRequestException('No property found');
-    }
+
     return { result, total, page, limit };
   }
 
@@ -1313,9 +1309,7 @@ export class PropertyService {
         ],
       }),
     ]);
-    if (tours.length === 0) {
-      throw new BadRequestException('No tour found');
-    }
+
     return { tours, total, page, limit };
   }
 
