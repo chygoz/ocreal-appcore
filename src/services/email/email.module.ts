@@ -8,17 +8,16 @@ import { configs } from 'src/configs';
   imports: [
     MailerModule.forRoot({
       transport: {
-        host: configs.MAILER_HOST,
-        service: 'gmail',
+        host: configs.AMAZON_SES_SMTP_ENDPOINT,
         port: 465,
         secure: true,
         auth: {
-          user: configs.MAILER_USERNAME,
-          pass: configs.MAILER_PASSWORD,
+          user: configs.AMAZON_SES_USERNAME,
+          pass: configs.AMAZON_SES_PASSWORD,
         },
       },
       defaults: {
-        from: '"OCReal Help Desk" <helpdesk@OCReal.io>',
+        from: 'ocreal.us@gmail.com',
       },
       template: {
         adapter: new HandlebarsAdapter(),
