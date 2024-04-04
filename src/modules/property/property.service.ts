@@ -432,7 +432,7 @@ export class PropertyService {
         .populate('buyer')
         .populate('seller')
         .populate('property')
-        .sort({ createdAt: -1 })
+        .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -460,7 +460,7 @@ export class PropertyService {
         })
         .populate('invitedBy')
         .populate('property')
-        .sort({ createdAt: -1 })
+        .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -1294,7 +1294,7 @@ export class PropertyService {
         .find(query)
         .sort({ tourDate: 1 })
         .populate('property')
-        .sort({ createdAt: -1 })
+        .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -1551,7 +1551,7 @@ export class PropertyService {
         .limit(limit)
         .populate('sellerAgent', 'firstname lastname')
         .exec(),
-      this.propertyModel.countDocuments(query),
+      this.propertyModel.countDocuments(queryObject),
     ]);
     // if (result.length === 0) {
     //   throw new BadRequestException('No properties at the moment');
@@ -1564,7 +1564,7 @@ export class PropertyService {
       .findOne({
         sellerAgent: agent.id,
       })
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .populate('buyer')
       .exec();
     if (!tour) {
@@ -1586,7 +1586,7 @@ export class PropertyService {
   //   };
   //   const query = await this.propertyQueryModel.findOne(queryData);
   //   if (query) {
-  //     const days = calculateDaysBetweenDates(query.createdAt, new Date());
+  //     const days = calculateDaysBetweenDates(query.updatedAt, new Date());
   //     if (days <= 30) {
   //       return { record: query };
   //     }

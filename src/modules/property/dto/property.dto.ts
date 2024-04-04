@@ -15,9 +15,11 @@ class PropertyAddressDetailsDto {
   formattedAddress: string;
 
   @IsString()
+  @IsOptional()
   latitude: string;
 
   @IsString()
+  @IsOptional()
   longitude: string;
 
   @IsString()
