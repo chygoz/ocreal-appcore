@@ -45,6 +45,11 @@ export const configs =
         MLS__RAPID_API_REQUEST_HOST:
           process.env.MLS__RAPID_API_REQUEST_HOST || '',
         S3_BUCKET_NAME: process.env.S3_BUCKET_NAME || '',
+        AMAZON_SES_SMTP_ENDPOINT: process.env.AMAZON_SES_SMTP_ENDPOINT || '',
+        ACCESS_AWS_KEY: process.env.ACCESS_AWS_KEY || '',
+        SECRET_AWS__ACCESS_KEY: process.env.SECRET_AWS__ACCESS_KEY || '',
+        AMAZON_SES_USERNAME: process.env.AMAZON_SES_USERNAME || '',
+        AMAZON_SES_PASSWORD: process.env.AMAZON_SES_PASSWORD || '',
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -90,6 +95,11 @@ export const configs =
           MLS__RAPID_API_REQUEST_HOST:
             process.env.MLS__RAPID_API_REQUEST_HOST || '',
           S3_BUCKET_NAME: process.env.S3_BUCKET_NAME || '',
+          AMAZON_SES_SMTP_ENDPOINT: process.env.AMAZON_SES_SMTP_ENDPOINT || '',
+          ACCESS_AWS_KEY: process.env.ACCESS_AWS_KEY || '',
+          SECRET_AWS__ACCESS_KEY: process.env.SECRET_AWS__ACCESS_KEY || '',
+          AMAZON_SES_USERNAME: process.env.AMAZON_SES_USERNAME || '',
+          AMAZON_SES_PASSWORD: process.env.AMAZON_SES_PASSWORD || '',
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -133,4 +143,9 @@ export const configs =
           MLS__RAPID_API_REQUEST_HOST:
             process.env.MLS__RAPID_API_REQUEST_HOST || '',
           S3_BUCKET_NAME: process.env.S3_BUCKET_NAME || '',
+          AMAZON_SES_SMTP_ENDPOINT: process.env.AMAZON_SES_SMTP_ENDPOINT || '',
+          ACCESS_AWS_KEY: process.env.ACCESS_AWS_KEY || '',
+          SECRET_AWS__ACCESS_KEY: process.env.SECRET_AWS__ACCESS_KEY || '',
+          AMAZON_SES_USERNAME: process.env.AMAZON_SES_USERNAME || '',
+          AMAZON_SES_PASSWORD: process.env.AMAZON_SES_PASSWORD || '',
         };
