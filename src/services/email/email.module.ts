@@ -10,6 +10,8 @@ import { configs } from 'src/configs';
       transport: {
         host: configs.MAILER_HOST,
         service: 'gmail',
+        port: 465,
+        secure: true,
         auth: {
           user: configs.MAILER_USERNAME,
           pass: configs.MAILER_PASSWORD,
