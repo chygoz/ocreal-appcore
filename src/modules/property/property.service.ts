@@ -511,6 +511,62 @@ export class PropertyService {
     return updatedProperty;
   }
 
+  async getSingleOffer(id: string) {
+    const offer = await this.offerModel
+      .findById(id)
+      .populate('buyer')
+      .populate('seller')
+      .populate('property')
+      .populate('sellerAgent')
+      .populate('buyerAgent');
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+    return offer;
+  }
+
+  async getAPropertyOffers(paginationDto: PaginationDto, id: string) {
+    const { page = 1, limit = 10, financeType, min, max } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const query: any = { property: new Types.ObjectId(id) };
+
+    if (min && max) {
+      query['offerPrice.amount'] = {
+        $gte: +min,
+        $lte: +max,
+      };
+    } else if (max && !min) {
+      query['offerPrice.amount'] = {
+        $lte: +max,
+      };
+    } else if (min && !max) {
+      query['offerPrice.amount'] = {
+        $gte: +min,
+      };
+    }
+
+    if (financeType) {
+      query.financeType = financeType;
+    }
+    const [result, total] = await Promise.all([
+      this.offerModel
+        .find(query)
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .populate('sellerAgent')
+        .populate('buyerAgent')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.offerModel.countDocuments(query),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
   async addAgentToProperty(
     user: User,
     user_role: AccountTypeEnum,

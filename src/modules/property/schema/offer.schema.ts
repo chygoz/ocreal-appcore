@@ -41,8 +41,9 @@ export class Offer extends Document {
       status: {
         type: SchemaTypes.String,
         enum: Object.values(OfferStatusEnum),
+        default: OfferStatusEnum.pending,
       },
-      eventTime: SchemaTypes.Date,
+      eventTime: { type: SchemaTypes.Date, default: new Date() },
     },
   ])
   status: {
