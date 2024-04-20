@@ -208,6 +208,39 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Get('/single/offer/:id')
+  async getSingleOffer(@Res() res: Response, @Req() req: Request) {
+    const id = req.params.id;
+
+    const data = await this.propertyService.getSingleOffer(id);
+    this._sendResponse({
+      res,
+      message: 'Offer Found',
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Get('/all/property/offers/:id')
+  async getAPropertyOffers(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const id = req.params.id;
+
+    const data = await this.propertyService.getAPropertyOffers(
+      paginationDto,
+      id,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offer Found',
+      data,
+    });
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('/user/buying/properties')
   async getUserBuyingProperties(

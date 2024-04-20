@@ -1,5 +1,6 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { AccountTypeEnum } from '.';
+import { FinanceTypeEnum } from 'src/modules/property/schema/offer.schema';
 
 export class PaginationDto {
   @IsOptional()
@@ -37,4 +38,13 @@ export class PaginationDto {
 
   @IsOptional()
   features: string;
+
+  @IsOptional()
+  financeType?: FinanceTypeEnum;
+
+  @IsOptional()
+  min: string;
+
+  @IsOptional()
+  max: string;
 }
