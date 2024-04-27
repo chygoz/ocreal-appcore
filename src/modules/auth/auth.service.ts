@@ -131,8 +131,9 @@ export class AuthService {
       verification_code: token,
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
+    const email = emailDto.email;
     await this.emailService.sendEmail({
-      email: emailDto.email,
+      email: email,
       subject: 'Password Reset Request',
       template: 'forgot_password',
       body: {
