@@ -8,16 +8,16 @@ import { configs } from 'src/configs';
   imports: [
     MailerModule.forRoot({
       transport: {
-        host: configs.AMAZON_SES_SMTP_ENDPOINT,
+        host: 'smtp.zoho.com',
         port: 465,
-        secure: true,
+        // secure: true,
         auth: {
-          user: configs.AMAZON_SES_USERNAME,
-          pass: configs.AMAZON_SES_PASSWORD,
+          user: configs.EMAIL_USERNAME,
+          pass: configs.EMAIL_PASSWORD,
         },
       },
       defaults: {
-        from: 'ocreal.us@gmail.com',
+        from: 'contact@ocreal.online',
       },
       template: {
         adapter: new HandlebarsAdapter(),

@@ -15,7 +15,7 @@ export class EmailService {
     try {
       await this.mailService.sendMail({
         to: data.email,
-        from: 'ocreal.us@gmail.com',
+        from: 'contact@ocreal.online',
         subject: data.subject,
         template: this.getTemplatePath(data.template),
         context: data.body,

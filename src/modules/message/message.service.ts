@@ -4,7 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Chat } from './schema/chat.schema';
 import { Message } from './schema/message.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
-import { MessageGateway } from './schema/messageGateway.service';
+import { MessageGateway } from '../socket/message.gateway';
 
 @Injectable()
 export class MessageService {

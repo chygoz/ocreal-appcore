@@ -76,6 +76,52 @@ export class PropertyService {
     });
   }
 
+  async confirmUserPropertyConnection(userId: string, propertyId: string) {
+    let canJoin = await this.propertyModel.findOne({
+      $or: [
+        {
+          _id: new Types.ObjectId(propertyId),
+          seller: new Types.ObjectId(userId),
+        },
+        {
+          _id: new Types.ObjectId(propertyId),
+          buyer: new Types.ObjectId(userId),
+        },
+        {
+          _id: new Types.ObjectId(propertyId),
+          sellerAgent: new Types.ObjectId(userId),
+        },
+        {
+          _id: new Types.ObjectId(propertyId),
+          buyerAgent: new Types.ObjectId(userId),
+        },
+      ],
+    });
+    if (canJoin) return true;
+    canJoin = await this.offerModel.findOne({
+      $or: [
+        {
+          _id: new Types.ObjectId(propertyId),
+          seller: new Types.ObjectId(userId),
+        },
+        {
+          _id: new Types.ObjectId(propertyId),
+          buyer: new Types.ObjectId(userId),
+        },
+        {
+          _id: new Types.ObjectId(propertyId),
+          sellerAgent: new Types.ObjectId(userId),
+        },
+        {
+          _id: new Types.ObjectId(propertyId),
+          buyerAgent: new Types.ObjectId(userId),
+        },
+      ],
+    });
+    if (canJoin) return true;
+    return false;
+  }
+
   async createProperty(data: CreatePropertyDto, user: User): Promise<Property> {
     const newData = {
       propertyName: data.propertyAddressDetails.formattedAddress,
