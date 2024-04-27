@@ -9,22 +9,27 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ISocketEvent, Room } from './interfaces/message.interface';
+import { Room } from './interfaces/message.interface';
 import { Chat } from '../message/schema/chat.schema';
 import { User } from '../users/schema/user.schema';
+import { BadRequestException } from '@nestjs/common';
 // import { SocketGuard } from 'src/guards/socket.guard';
 // import { Server, Socket } from 'socket.io';
 // import { SocketService } from './socket.service';
 
 @WebSocketGateway()
-export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class MessageGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
-  server: Server<any, ISocketEvent>;
+  server: Server;
+  // server: Server<any, ISocketEvent>;
   private rooms: Room[] = [];
   // @UseGuards(SocketGuard)
+
   @SubscribeMessage('newChat')
   handleNewChat(client: any, payload: any) {
-    // this.server.emit('message', payload);
+    // this.server.emit('newChat', payload);
     return 'Hello World';
   }
 
@@ -45,12 +50,24 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // this.logger.log(
       //   `${payload.user.socketId} is joining ${payload.roomName}`,
       // );
-      await this.server.in(payload.user.socketId).socketsJoin(payload.roomName);
+      // const canJoin = await this.propertyService.confirmUserPropertyConnection(
+      //   payload.user.id,
+      //   payload.roomName,
+      // );
+      // if (!canJoin) {
+      //   throw new BadRequestException('You can not join this room');
+      // }
+      this.server.in(payload.user.socketId).socketsJoin(payload.roomName);
       await this.addUserToRoom(payload.roomName, payload.user);
     }
   }
 
+  sendMessage(payload: any) {
+    this.server.emit('newMessage', payload);
+  }
+
   async handleConnection(socket: Socket): Promise<void> {
+    // const roomName = socket.handshake.query.room;
     // this.logger.log(`Socket connected: ${socket.id}`);
   }
 

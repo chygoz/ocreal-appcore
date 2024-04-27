@@ -15,8 +15,31 @@ import { StripeModule } from './services/stripe/stripe.module';
 import { PropertyModule } from './modules/property/property.module';
 import { MessageModule } from './modules/message/message.module';
 import { InviteModule } from './modules/Agentinvite/agentInvite.module';
-import { SocketGateway } from './modules/socket/socket.gateway';
+import { MessageGateway } from './modules/socket/message.gateway';
 import { NotificationModule } from './modules/notification/notification.module';
+import { PropertyService } from './modules/property/property.service';
+import {
+  Property,
+  PropertySchema,
+} from './modules/property/schema/property.schema';
+import {
+  PropertyTour,
+  PropertyTourSchema,
+} from './modules/property/schema/propertyTour.schema';
+import {
+  AgentPropertyInvite,
+  AgentPropertyInviteSchema,
+} from './modules/property/schema/agentPropertyInvite.schema';
+import { Offer, OfferSchema } from './modules/property/schema/offer.schema';
+import {
+  PropertyQuery,
+  PropertyQuerySchema,
+} from './modules/property/schema/propertyQuery.schema';
+import {
+  UserSavedProperty,
+  UserSavedPropertySchema,
+} from './modules/property/schema/userFavoriteProperties.schema';
+import { EmailModule } from './services/email/email.module';
 
 @Module({
   imports: [
@@ -24,6 +47,12 @@ import { NotificationModule } from './modules/notification/notification.module';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Agent.name, schema: AgentSchema },
+      { name: Property.name, schema: PropertySchema },
+      { name: PropertyTour.name, schema: PropertyTourSchema },
+      { name: AgentPropertyInvite.name, schema: AgentPropertyInviteSchema },
+      { name: Offer.name, schema: OfferSchema },
+      { name: PropertyQuery.name, schema: PropertyQuerySchema },
+      { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
     ]),
     UsersModule,
     AuthModule,
@@ -36,8 +65,9 @@ import { NotificationModule } from './modules/notification/notification.module';
     MessageModule,
     InviteModule,
     NotificationModule,
+    EmailModule,
   ],
   controllers: [AppController],
-  providers: [AppService, SocketGateway],
+  providers: [AppService, MessageGateway, PropertyService],
 })
 export class AppModule {}
