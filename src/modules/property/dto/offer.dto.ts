@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -81,7 +82,8 @@ export class CreateUserOfferDto {
   property: string;
 
   @IsString()
-  buyerAgent: string;
+  @IsOptional()
+  buyerAgent?: string;
 
   @IsString()
   coverLetter: string;
