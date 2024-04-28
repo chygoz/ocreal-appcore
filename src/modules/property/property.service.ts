@@ -154,7 +154,7 @@ export class PropertyService {
     const offerCreated = await this.offerModel.find({
       $or: [
         { property: data.property, buyer: user },
-        { property: data.property, buyerAgent: data.buyerAgent },
+        { property: data.property, buyerAgent: data?.buyerAgent },
       ],
     });
     if (offerCreated.length > 0) {
@@ -178,29 +178,28 @@ export class PropertyService {
         'You can not make an offer for this property at this time.',
       );
     }
-    if (data.submitWithOutAgentApproval && !data.buyerAgent) {
-      throw new BadRequestException(
-        'Please add a property agent before completing this action',
-      );
-    }
+    // if (data.submitWithOutAgentApproval && !data.buyerAgent) {
+    //   throw new BadRequestException(
+    //     'Please add a property agent before completing this action',
+    //   );
+    // }
     const newData = {
       ...data,
-      // seller: property?.seller,
-      // sellerAgent: property.sellerAgent,
       buyer: user,
-      buyerAgent: new Types.ObjectId(data.buyerAgent),
+      buyerAgent: data.buyerAgent ? new Types.ObjectId(data.buyerAgent) : null,
       offerCreator: OfferCreatorTypeEnum.buyer,
     };
     const createdProperty = new this.offerModel(newData);
     const result = createdProperty.save();
 
-    await this.notificationService.createNotification({
-      body: `${user.fullname},  just created a new offer for a ${property.propertyName} property.`,
-      title: `New property offer from ${user.fullname}`,
-      user: new Types.ObjectId(data.buyerAgent) as any,
-      userType: NotificationUserType.agent,
-    });
-    console.log(result);
+    if (data?.buyerAgent) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname},  just created a new offer for a ${property.propertyName} property.`,
+        title: `New property offer from ${user.fullname}`,
+        user: new Types.ObjectId(data.buyerAgent) as any,
+        userType: NotificationUserType.agent,
+      });
+    }
     return result;
   }
 
@@ -756,19 +755,12 @@ export class PropertyService {
       };
     }
 
-    const queryData = search
+    const queryParam: any = search
       ? {
-          buyer: user._id.toString(),
           ...query,
         }
-      : {
-          buyer: user._id.toString(),
-        };
+      : {};
 
-    const queryParam: any = {
-      buyer: user._id,
-      ...queryData,
-    };
     if (propertyType) {
       queryParam.propertyType = propertyType;
     }
@@ -796,12 +788,81 @@ export class PropertyService {
       };
     }
 
-    const [result, total] = await Promise.all([
-      this.propertyModel.find(queryParam).skip(skip).limit(limit).exec(),
-      this.propertyModel.countDocuments(queryParam),
-    ]);
+    const dataPipeline = [
+      {
+        $match: {
+          invitedBy: user._id,
+          inviteAccountType: 'buyer',
+        },
+      },
+      {
+        $lookup: {
+          from: 'properties',
+          localField: 'property',
+          foreignField: '_id',
+          as: 'property',
+        },
+      },
+      {
+        $unwind: {
+          path: '$property',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: { ...queryParam },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ];
+    const countPipeline = [
+      {
+        $match: {
+          invitedBy: user._id,
+          inviteAccountType: 'buyer',
+        },
+      },
+      {
+        $lookup: {
+          from: 'properties',
+          localField: 'property',
+          foreignField: '_id',
+          as: 'property',
+        },
+      },
+      {
+        $unwind: {
+          path: '$property',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: { ...queryParam },
+      },
+      { $group: { _id: null, total: { $sum: 1 } } },
+    ];
 
-    return { result, total, page, limit };
+    const facet = [
+      {
+        $facet: {
+          data: dataPipeline,
+          total: countPipeline,
+        },
+      },
+    ];
+
+    const result = await this.agentPropertyInviteModel.aggregate(facet);
+    const { data, total } = result[0];
+    return {
+      result: data.map((x) => x.property),
+      total: total[0]?.total ?? 0,
+      page,
+      limit,
+    };
   }
 
   async getUserSellingProperties(paginationDto: PaginationDto, user: User) {
@@ -1384,6 +1445,7 @@ export class PropertyService {
       $or: [
         {
           buyer: user._id,
+          tourDate: { $gte: new Date() },
         },
         {
           seller: user._id,
