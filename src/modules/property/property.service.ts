@@ -858,7 +858,7 @@ export class PropertyService {
     const result = await this.agentPropertyInviteModel.aggregate(facet);
     const { data, total } = result[0];
     return {
-      result: data.map((x) => x.property),
+      result: data.map((x: AgentPropertyInvite) => x.property),
       total: total[0]?.total ?? 0,
       page,
       limit,
