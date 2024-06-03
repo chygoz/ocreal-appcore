@@ -2,6 +2,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument, SchemaTypes } from 'mongoose';
 import { User } from '../../users/schema/user.schema';
+import { AgentDocument as AgentOfficialDocument } from './agent_documents';
 // import * as moment from 'moment';
 
 export type AgentDocument = HydratedDocument<Agent>;
@@ -24,6 +25,11 @@ export class Agent extends Document {
     type: { type: SchemaTypes.ObjectId, ref: 'User' },
   })
   invitedBy?: User;
+
+  @Prop({
+    type: { type: SchemaTypes.ObjectId, ref: AgentOfficialDocument.name },
+  })
+  documents?: AgentOfficialDocument;
 
   @Prop({
     type: SchemaTypes.Mixed,

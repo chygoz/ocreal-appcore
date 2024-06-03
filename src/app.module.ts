@@ -40,6 +40,12 @@ import {
   UserSavedPropertySchema,
 } from './modules/property/schema/userFavoriteProperties.schema';
 import { EmailModule } from './services/email/email.module';
+import { S3Module } from './modules/s3/s3.module';
+import {
+  PropertyDocumentRepo,
+  PropertyDocumentRepoSchema,
+} from './modules/propertyRepo/schema/propertyDocumentRepo.schema';
+import { PropertyRepoModule } from './modules/propertyRepo/propertyRepo.module';
 
 @Module({
   imports: [
@@ -53,6 +59,7 @@ import { EmailModule } from './services/email/email.module';
       { name: Offer.name, schema: OfferSchema },
       { name: PropertyQuery.name, schema: PropertyQuerySchema },
       { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
+      { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
     ]),
     UsersModule,
     AuthModule,
@@ -66,6 +73,8 @@ import { EmailModule } from './services/email/email.module';
     InviteModule,
     NotificationModule,
     EmailModule,
+    S3Module,
+    PropertyRepoModule,
   ],
   controllers: [AppController],
   providers: [AppService, MessageGateway, PropertyService],

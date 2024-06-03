@@ -18,13 +18,22 @@ export class PropertyTour {
   seller: User;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
-  sellerAgent: Agent;
+  sellerAgent?: Agent;
 
   @Prop({ type: String })
   notes?: string;
 
-  @Prop({ type: SchemaTypes.Date })
-  tourDate: Date;
+  @Prop({ type: String })
+  fullName?: string;
+
+  @Prop({ eventDate: Date, tourTime: SchemaTypes.String })
+  eventDate: Array<{
+    eventDate: Date;
+    tourTime: string;
+  }>;
+
+  @Prop({ type: String })
+  phoneNumber?: string;
 }
 
 export const PropertyTourSchema = SchemaFactory.createForClass(PropertyTour);
