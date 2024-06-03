@@ -21,6 +21,10 @@ import {
   UserSavedPropertySchema,
 } from './schema/userFavoriteProperties.schema';
 import { NotificationModule } from '../notification/notification.module';
+import {
+  PropertyDocumentRepo,
+  PropertyDocumentRepoSchema,
+} from '../propertyRepo/schema/propertyDocumentRepo.schema';
 
 @Module({
   imports: [
@@ -33,6 +37,7 @@ import { NotificationModule } from '../notification/notification.module';
       { name: Offer.name, schema: OfferSchema },
       { name: AgentPropertyInvite.name, schema: AgentPropertyInviteSchema },
       { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
+      { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
     ]),
     EmailModule,
     NotificationModule,

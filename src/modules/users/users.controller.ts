@@ -8,9 +8,14 @@ import {
   Put,
   Req,
   UseGuards,
+  Get,
+  Query,
+  Delete,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { CreateUserDto, UpdateUserDto } from './dto';
+import { SaveUserDocumentsDto } from './dto/saveDocuments.dto';
+import { PaginationDto } from 'src/constants/pagination.dto';
 
 @Controller('user')
 export class UsersController {
@@ -31,6 +36,53 @@ export class UsersController {
       res,
       data,
       message: 'Email sent successfully',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/save/user-documents')
+  async saveUserDocuments(
+    @Body() dto: SaveUserDocumentsDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ): Promise<any> {
+    const data = await this.userService.saveUserDocuments(req.user, dto);
+    this._sendResponse({
+      res,
+      data,
+      message: 'User Documents Saved',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('get/user-documents')
+  async getUserDocuments(
+    @Query() paginationDto: PaginationDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ): Promise<any> {
+    const data = await this.userService.getUserDocuments(
+      req.user,
+      paginationDto,
+    );
+    this._sendResponse({
+      res,
+      data,
+      message: 'User Documents Found',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('delete/user-document/:id')
+  async deleteUserDocuments(
+    @Res() res: Response,
+    @Req() req: Request,
+  ): Promise<any> {
+    await this.userService.deleteUserDocuments(req.user, req.params.id);
+    this._sendResponse({
+      res,
+      data: {},
+      message: 'Document Deleted',
     });
   }
 

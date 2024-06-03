@@ -2,6 +2,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument, SchemaTypes } from 'mongoose';
 import { AccountTypeEnum } from 'src/constants';
+import { UserDocument as UserOfficialDocument } from './user_documents';
 // import * as moment from 'moment';
 
 export type UserDocument = HydratedDocument<User>;
@@ -10,6 +11,9 @@ export type UserDocument = HydratedDocument<User>;
 export class User extends Document {
   @Prop({ unique: true, trim: true, required: true, lowercase: true })
   email: string;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: UserOfficialDocument.name })
+  documents: UserOfficialDocument;
 
   @Prop({ select: false })
   password: string;

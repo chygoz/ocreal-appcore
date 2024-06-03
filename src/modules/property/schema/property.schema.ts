@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes } from 'mongoose';
 import { Agent } from 'src/modules/agent/schema/agent.schema';
 import { User } from 'src/modules/users/schema/user.schema';
+import { PropertyDocumentRepo } from '../../propertyRepo/schema/propertyDocumentRepo.schema';
 
 export interface Price {
   amount: number;
@@ -61,12 +62,6 @@ export class Property extends Document {
 
   @Prop([{ url: SchemaTypes.String, thumbNail: SchemaTypes.String }])
   videos: Array<IPropertyVideo>;
-
-  @Prop([{ name: SchemaTypes.String, url: SchemaTypes.String }])
-  propertyDocument: Array<{
-    name: string;
-    url: string;
-  }>;
 
   @Prop([
     {
@@ -174,6 +169,9 @@ export class Property extends Document {
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
   buyerAgent: Agent;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: PropertyDocumentRepo.name })
+  documentRepo: PropertyDocumentRepo;
 
   @Prop({ type: SchemaTypes.Boolean, default: false })
   sellerAgentAcceptance: boolean;

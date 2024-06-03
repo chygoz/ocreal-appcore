@@ -111,6 +111,14 @@ export class Offer extends Document {
   @Prop({
     type: SchemaTypes.Mixed,
   })
+  previousOffers: Array<{
+    amount: number;
+    currency: string;
+  }>;
+
+  @Prop({
+    type: SchemaTypes.Mixed,
+  })
   downPayment: {
     amount: number;
     currency: string;

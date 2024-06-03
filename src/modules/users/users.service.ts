@@ -10,11 +10,16 @@ import * as crypto from 'crypto';
 import { UpdatePasswordDto } from '../auth/dto/auth.dto';
 import * as jwt from 'jsonwebtoken';
 import { configs } from 'src/configs';
+import { SaveUserDocumentsDto } from './dto/saveDocuments.dto';
+import { UserDocument } from './schema/user_documents';
+import { PaginationDto } from 'src/constants/pagination.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(UserDocument.name)
+    private readonly userDocumentModel: Model<UserDocument>,
     private readonly emailService: EmailService,
   ) {}
 
@@ -55,6 +60,47 @@ export class UsersService {
     };
   }
 
+  async saveUserDocuments(user: User, dto: SaveUserDocumentsDto) {
+    const docs = dto.documents.map((x: any) => {
+      return {
+        ...x,
+        user: user._id,
+      };
+    });
+    const documents = await this.userDocumentModel.insertMany(docs);
+    return documents;
+  }
+
+  async deleteUserDocuments(user: User, id: string) {
+    await this.userDocumentModel.findByIdAndDelete(id);
+    return true;
+  }
+
+  async getUserDocuments(user: User, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10, search } = paginationDto;
+    const skip = (page - 1) * limit;
+    const query: any = {};
+    if (search) {
+      query['$or'] = [
+        {
+          name: new RegExp(new RegExp(search, 'i'), 'i'),
+        },
+        {
+          documentType: new RegExp(new RegExp(search, 'i'), 'i'),
+        },
+      ];
+    }
+    const queryObject = search
+      ? { ...query, user: user._id }
+      : { user: user._id };
+    console.log(queryObject);
+    const [result, total] = await Promise.all([
+      this.userDocumentModel.find(queryObject).skip(skip).limit(limit).exec(),
+      this.userDocumentModel.countDocuments(queryObject),
+    ]);
+
+    return { result, total, page, limit };
+  }
   async updateUserProfile(user: User, data: UpdateUserDto) {
     if (data?.mobile) {
       const userExistis = await this.userModel.findOne({

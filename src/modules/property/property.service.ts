@@ -42,12 +42,16 @@ import { UserSavedProperty } from './schema/userFavoriteProperties.schema';
 import NotificationService from '../notification/notitifcation.service';
 import { NotificationUserType } from '../notification/schema/notification.schema';
 import * as moment from 'moment';
+import { PropertyDocumentRepo } from '../propertyRepo/schema/propertyDocumentRepo.schema';
+import { CreatePropertyDocumentDto } from './dto/AddProperty.dto';
 
 @Injectable()
 export class PropertyService {
   private readonly axiosInstance: AxiosInstance;
   constructor(
     @InjectModel(Property.name) private propertyModel: Model<Property>,
+    @InjectModel(PropertyDocumentRepo.name)
+    private propertyDocumentRepo: Model<PropertyDocumentRepo>,
     @InjectModel(Agent.name) private agentModel: Model<Agent>,
     @InjectModel(PropertyTour.name)
     private propertyTourModel: Model<PropertyTour>,
@@ -412,9 +416,14 @@ export class PropertyService {
       );
     }
     const currentDate = new Date();
-    if (data.tourDate < currentDate) {
-      throw new BadRequestException('You can not book a date in the past');
+    for (const date of data.eventDate) {
+      if (date.eventDate < currentDate) {
+        throw new BadRequestException(
+          `You can not book ${date.eventDate}, as it is a date in the past`,
+        );
+      }
     }
+
     const tourPayload = {
       ...data,
       buyer: user,
@@ -424,7 +433,9 @@ export class PropertyService {
     const propertyTour = new this.propertyTourModel(tourPayload);
     const savedTour = await propertyTour.save();
 
-    const formattedDate = moment(savedTour.tourDate).format('ddd D MMM YYYY');
+    const formattedDate = moment(savedTour.eventDate[0].eventDate).format(
+      'ddd D MMM YYYY',
+    );
     await this.notificationService.createNotification({
       body: `${user.fullname}, just scheduled a tour of your ${property.propertyName} property, for ${formattedDate}`,
       title: `New Property Tour Schduled for ${property.propertyName}`,
@@ -1209,7 +1220,7 @@ export class PropertyService {
         .find(queryParam)
         .skip(skip)
         .limit(limit)
-        .populate(['sellerAgent', 'buyerAgent', 'buyer', 'seller'])
+        .populate(['sellerAgent', 'buyerAgent', 'buyer', 'seller', ''])
         .exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
@@ -1677,6 +1688,73 @@ export class PropertyService {
     return property;
   }
 
+  async getAllPropertyDocuments(
+    user: User | Agent,
+    propertyId: string,
+    paginationDto: PaginationDto,
+  ) {
+    // confirm user access here
+    const { page = 1, limit = 10, search } = paginationDto;
+    const skip = (page - 1) * limit;
+    const query: any = {};
+    if (search) {
+      query['$or'] = [
+        {
+          name: new RegExp(new RegExp(search, 'i'), 'i'),
+        },
+        {
+          documentType: new RegExp(new RegExp(search, 'i'), 'i'),
+        },
+      ];
+    }
+    const queryObject = search
+      ? { ...query, property: new Types.ObjectId(propertyId) }
+      : { property: new Types.ObjectId(propertyId) };
+    console.log(queryObject);
+    const [result, total] = await Promise.all([
+      this.propertyDocumentRepo
+        .find(queryObject)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyDocumentRepo.countDocuments(queryObject),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
+  async addToPropertyRepo(
+    user: User | Agent,
+    userOrAgentModel: string,
+    propertyId: string,
+    dto: CreatePropertyDocumentDto,
+  ) {
+    const property = await this.propertyModel.findById(propertyId);
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    const newDocument = await this.propertyDocumentRepo.create({
+      ...dto,
+      userOrAgentModel,
+      userOrAgent: user._id,
+      property: new Types.ObjectId(propertyId),
+    });
+    const saved = await newDocument.save();
+    return saved;
+  }
+
+  async deletePropertyDocument(user: User | Agent, documentId: string) {
+    const propertyDoc = await this.propertyDocumentRepo.findOne({
+      _id: new Types.ObjectId(documentId),
+      userOrAgent: user._id,
+    });
+    if (!propertyDoc) {
+      throw new NotFoundException('Property Document not found');
+    }
+    await this.propertyDocumentRepo.findByIdAndDelete(propertyDoc._id);
+    return true;
+  }
+
   async getProperties(paginationDto: PaginationDto) {
     const { page = 1, limit = 10, search } = paginationDto;
     const skip = (page - 1) * limit;
@@ -1837,7 +1915,7 @@ export class PropertyService {
     const property = {
       propertyAddressDetails: {
         formattedAddress: query.UnparsedAddress,
-        streetNumber: query.StreetNumber,
+        streetNumber: query.StreetNumberNumeric,
         streetName: query.StreetName,
         city: query.City,
         state: query.StateOrProvince,
@@ -1850,8 +1928,9 @@ export class PropertyService {
       propertyName: query.UnparsedAddress,
       longitude: query.Longitude,
       latitude: query.Latitude,
-      lotSizeValue: query.LotSizeAcres,
-      lotSizeUnit: query.LotSizeUnits,
+      lotSizeValue:
+        query.LotSizeAcres || query.LotSizeSquareFeet || query.LotSizeArea,
+      lotSizeUnit: query.LotSizeDimensions,
       numBathroom: query.BathroomsTotalInteger,
       numBedroom: query.BedroomsTotal,
       price: { amount: query.ListPrice, currency: 'USD' },
