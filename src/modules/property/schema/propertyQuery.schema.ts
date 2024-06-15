@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, SchemaTypes } from 'mongoose';
+import { User } from 'src/modules/users/schema/user.schema';
+import { Agent } from 'supertest';
 
 @Schema()
 export class Media extends Document {
@@ -35,6 +37,12 @@ export const MediaSchema = SchemaFactory.createForClass(Media);
 
 @Schema()
 export class PropertyQuery extends Document {
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', required: true })
+  user: User;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
+  agent: Agent;
+
   @Prop()
   ListingKey: string;
 

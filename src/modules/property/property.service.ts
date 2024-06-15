@@ -15,7 +15,10 @@ import {
   AddAgentToPropertyDto,
   AgentAcceptInviteDto,
   AgentCreatePropertyDto,
+  CreatePropertyDTO,
   CreatePropertyDto,
+  PropertyOfferComment,
+  SavePropertyQueryDTO,
   UpdatePropertyDto,
 } from './dto/property.dto';
 import { AccountTypeEnum } from 'src/constants';
@@ -44,6 +47,7 @@ import { NotificationUserType } from '../notification/schema/notification.schema
 import * as moment from 'moment';
 import { PropertyDocumentRepo } from '../propertyRepo/schema/propertyDocumentRepo.schema';
 import { CreatePropertyDocumentDto } from './dto/AddProperty.dto';
+import { OfferComment } from './schema/offerComment.schema';
 
 @Injectable()
 export class PropertyService {
@@ -63,6 +67,8 @@ export class PropertyService {
     private propertyQueryModel: Model<PropertyQuery>,
     @InjectModel(UserSavedProperty.name)
     private userSavedPropertyModel: Model<UserSavedProperty>,
+    @InjectModel(OfferComment.name)
+    private offerCommentModel: Model<OfferComment>,
     private readonly emailService: EmailService,
     private readonly notificationService: NotificationService,
     // private readonly axiosInstance: AxiosInstance,
@@ -78,6 +84,44 @@ export class PropertyService {
       //   'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
       // },
     });
+  }
+
+  async verifyPropertyOwnerShip(
+    user: User | Agent,
+    dto: CreatePropertyDTO,
+    propertyId: string,
+    userOrAgentModel: string,
+  ) {
+    const propertyExists = await this.propertyModel.findOne({
+      $or: [
+        {
+          _id: new Types.ObjectId(propertyId),
+          seller: new Types.ObjectId(user._id),
+        },
+        {
+          _id: new Types.ObjectId(propertyId),
+          sellerAgent: new Types.ObjectId(user._id),
+        },
+      ],
+    });
+    if (!propertyExists) {
+      throw new NotFoundException('Property not found');
+    }
+    if (propertyExists.propertyOwnershipDetails.actionTime) {
+      throw new BadRequestException('Property ownership already captured.');
+    }
+
+    const propertyDocs = dto.proofOfOwnership;
+    for (const doc of propertyDocs) {
+      const newDoc = {
+        ...doc,
+        userOrAgentModel,
+        userOrAgent: user._id,
+        property: new Types.ObjectId(propertyId),
+      };
+      const newDocument = await this.propertyDocumentRepo.create(newDoc);
+      await newDocument.save();
+    }
   }
 
   async confirmUserPropertyConnection(userId: string, propertyId: string) {
@@ -137,6 +181,60 @@ export class PropertyService {
     return result;
   }
 
+  async addOfferComment(dto: PropertyOfferComment, user: User | Agent) {
+    const offerExist = await this.offerModel.findById(dto.offerId);
+    if (!offerExist) {
+      throw new NotFoundException('Offer not found');
+    }
+    const newComment = {
+      comment: dto.comment,
+      offer: new Types.ObjectId(dto.offerId),
+      user: user._id,
+      agent: user._id,
+    };
+    const saved = await this.offerCommentModel.create(newComment);
+    await saved.save();
+    const comment = await this.offerCommentModel
+      .findById(saved._id)
+      .populate('user')
+      .populate('agent')
+      .populate('offer')
+      .exec();
+    return comment;
+  }
+
+  async getOfferComment(
+    paginationDto: PaginationDto,
+    id: string,
+    user: User | Agent,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const query = {
+      offer: new Types.ObjectId(id),
+      $or: [
+        {
+          user: user._id,
+        },
+        {
+          agent: user._id,
+        },
+      ],
+    };
+    const [result, total] = await Promise.all([
+      this.offerCommentModel
+        .find(query)
+        .populate('user')
+        .populate('agent')
+        .populate('offer')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.offerCommentModel.countDocuments(query),
+    ]);
+    return { result, total, page, limit };
+  }
+
   async agentCreateProperty(
     data: AgentCreatePropertyDto,
     user: Agent,
@@ -149,6 +247,18 @@ export class PropertyService {
     const createdProperty = new this.propertyModel(newData);
     const result = createdProperty.save();
     return result;
+  }
+
+  async savePropertySearchResult(
+    dto: SavePropertyQueryDTO,
+    user: Agent | User,
+  ) {
+    const model = await this.propertyQueryModel.create({
+      ...dto,
+      user: user._id,
+      agent: user._id,
+    });
+    await model.save();
   }
 
   async createUserPropertyOffer(
@@ -174,7 +284,7 @@ export class PropertyService {
       throw new NotFoundException('Property not found');
     }
     const canCreateOffer = [
-      PropertyStatusEnum.pending,
+      PropertyStatusEnum.pendingVerification,
       PropertyStatusEnum.nowShowing,
     ].includes(property.currentStatus as PropertyStatusEnum);
     if (!canCreateOffer) {
@@ -229,7 +339,7 @@ export class PropertyService {
     if (!property) {
       throw new NotFoundException('Property not found');
     }
-    if (property.currentStatus !== PropertyStatusEnum.pending) {
+    if (property.currentStatus !== PropertyStatusEnum.pendingVerification) {
       throw new BadRequestException(
         'You can not make an offer for this property at this time.',
       );
@@ -302,7 +412,7 @@ export class PropertyService {
       throw new NotFoundException('Property not found');
     }
     const canCreateOffer = [
-      PropertyStatusEnum.pending,
+      PropertyStatusEnum.pendingVerification,
       PropertyStatusEnum.nowShowing,
     ].includes(property.currentStatus as PropertyStatusEnum);
     if (!canCreateOffer) {
@@ -1447,19 +1557,19 @@ export class PropertyService {
     return { result, total, page, limit };
   }
 
-  async getUserTours(paginationDto: PaginationDto, user: User) {
+  async getUserFutureTours(paginationDto: PaginationDto, user: User) {
     const { page = 1, limit = 10 } = paginationDto;
-
     const skip = (page - 1) * limit;
 
-    const query: any = {
+    const query = {
       $or: [
         {
           buyer: user._id,
-          tourDate: { $gte: new Date() },
+          'eventDate.eventDate': { $gte: new Date() },
         },
         {
           seller: user._id,
+          'eventDate.eventDate': { $gte: new Date() },
         },
       ],
     };
@@ -1467,22 +1577,49 @@ export class PropertyService {
     const [tours, total] = await Promise.all([
       this.propertyTourModel
         .find(query)
-        .sort({ tourDate: 1 })
+        .sort({ 'eventDate.eventDate': 1 })
         .populate('property')
+        .populate('buyer')
+        .populate('seller')
         .sort({ updatedAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.propertyTourModel.countDocuments({
-        $or: [
-          {
-            buyer: user._id,
-          },
-          {
-            seller: user._id,
-          },
-        ],
-      }),
+      this.propertyTourModel.countDocuments(query),
+    ]);
+
+    return { tours, total, page, limit };
+  }
+
+  async getUserPastTours(paginationDto: PaginationDto, user: User) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const query = {
+      $or: [
+        {
+          buyer: user._id,
+          'eventDate.eventDate': { $lte: new Date() },
+        },
+        {
+          seller: user._id,
+          'eventDate.eventDate': { $lte: new Date() },
+        },
+      ],
+    };
+
+    const [tours, total] = await Promise.all([
+      this.propertyTourModel
+        .find(query)
+        .sort({ 'eventDate.eventDate': 1 })
+        .populate('property')
+        .populate('buyer')
+        .populate('seller')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyTourModel.countDocuments(query),
     ]);
 
     return { tours, total, page, limit };
@@ -1639,7 +1776,7 @@ export class PropertyService {
     const property = await this.propertyModel.findOne({
       _id: new Types.ObjectId(id),
       sellerAgent: agent.id,
-      currentStatus: PropertyStatusEnum.pending,
+      currentStatus: PropertyStatusEnum.pendingVerification,
     });
 
     if (!property) {

@@ -17,7 +17,10 @@ import {
   AddAgentToPropertyDto,
   AgentAcceptInviteDto,
   AgentCreatePropertyDto,
+  CreatePropertyDTO,
   CreatePropertyDto,
+  PropertyOfferComment,
+  SavePropertyQueryDTO,
   UpdatePropertyDto,
 } from './dto/property.dto';
 import { PropertyService } from './property.service';
@@ -71,6 +74,44 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('offer/comment')
+  async addOfferComment(
+    @Body() dto: PropertyOfferComment,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const user = req.agent || req.user;
+    const comment = await this.propertyService.addOfferComment(dto, user);
+    this._sendResponse({
+      res,
+      data: { comment },
+      message: 'Property Offer Comment Created',
+      statusCode: 201,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Get('/all/offer/comments/:id')
+  async getOfferComment(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const id = req.params.id;
+    const user = req.agent || req.user;
+    const data = await this.propertyService.getOfferComment(
+      paginationDto,
+      id,
+      user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offer Found',
+      data,
+    });
+  }
+
   @UseGuards(JwtAgentAuthGuard)
   @Post('agent/create')
   async agentCreateProperty(
@@ -86,6 +127,25 @@ export class PropertyController {
       res,
       data: { property },
       message: 'Property Created',
+      statusCode: 201,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('save/property/search-result')
+  async savePropertySearchResult(
+    @Body() dto: SavePropertyQueryDTO,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const property = await this.propertyService.savePropertySearchResult(
+      dto,
+      req.agent || req.user,
+    );
+    this._sendResponse({
+      res,
+      data: { property },
+      message: 'Property search saved',
       statusCode: 201,
     });
   }
@@ -241,6 +301,28 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('/verify/property/ownership/:id')
+  async verifyPropertyOwnerShip(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() dto: CreatePropertyDTO,
+  ) {
+    const id = req.params.id;
+
+    const data = await this.propertyService.verifyPropertyOwnerShip(
+      req.user || req.agent,
+      dto,
+      id,
+      req.user ? 'User' : 'Agent',
+    );
+    this._sendResponse({
+      res,
+      message: 'Property verification process started.',
+      data,
+    });
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('/user/buying/properties')
   async getUserBuyingProperties(
@@ -361,13 +443,31 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('/user/tours')
-  async getUserTours(
+  @Get('/user/future/tours')
+  async getUserFutureTours(
     @Res() res: Response,
     @Req() req: Request,
     @Query() paginationDto: PaginationDto,
   ) {
-    const data = await this.propertyService.getUserTours(
+    const data = await this.propertyService.getUserFutureTours(
+      paginationDto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/user/past/tours')
+  async getUserPastTours(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getUserPastTours(
       paginationDto,
       req.user,
     );

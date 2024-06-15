@@ -3,6 +3,7 @@ import { Document, SchemaTypes } from 'mongoose';
 import { Agent } from 'src/modules/agent/schema/agent.schema';
 import { User } from 'src/modules/users/schema/user.schema';
 import { PropertyDocumentRepo } from '../../propertyRepo/schema/propertyDocumentRepo.schema';
+// import * as mongoose from 'mongoose';
 
 export interface Price {
   amount: number;
@@ -10,7 +11,9 @@ export interface Price {
 }
 
 export enum PropertyStatusEnum {
-  pending = 'Pending',
+  pendingVerification = 'Pending Verification',
+  properyOwnershipVerified = 'Verified',
+  notVerified = 'Not Verified',
   nowShowing = 'Now Showing',
   underContract = 'Under Contract',
   sold = 'Sold',
@@ -103,7 +106,7 @@ export class Property extends Document {
 
   @Prop({
     type: SchemaTypes.String,
-    default: 'Pending',
+    default: PropertyStatusEnum.pendingVerification,
   })
   currentStatus: string;
 
@@ -126,6 +129,19 @@ export class Property extends Document {
     type: SchemaTypes.Mixed,
   })
   price: { amount: number; currency: string };
+
+  @Prop({
+    type: {
+      nameOnProperty: SchemaTypes.String,
+      email: SchemaTypes.String,
+      actionTime: SchemaTypes.Date,
+    },
+  })
+  propertyOwnershipDetails: {
+    nameOnProperty: string;
+    email: string;
+    actionTime: Date;
+  };
 
   @Prop({
     type: SchemaTypes.String,

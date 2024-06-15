@@ -25,6 +25,7 @@ import {
   PropertyDocumentRepo,
   PropertyDocumentRepoSchema,
 } from '../propertyRepo/schema/propertyDocumentRepo.schema';
+import { OfferComment, OfferCommentSchema } from './schema/offerComment.schema';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import {
       { name: AgentPropertyInvite.name, schema: AgentPropertyInviteSchema },
       { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
       { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
+      { name: OfferComment.name, schema: OfferCommentSchema },
     ]),
     EmailModule,
     NotificationModule,

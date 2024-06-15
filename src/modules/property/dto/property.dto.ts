@@ -9,7 +9,7 @@ import {
   IsMongoId,
   IsEmail,
 } from 'class-validator';
-
+import { PropertyQuery } from '../schema/propertyQuery.schema';
 class PropertyAddressDetailsDto {
   @IsString()
   formattedAddress: string;
@@ -106,6 +106,48 @@ class PropertyImageDto {
   @IsString()
   thumbNail: string;
 }
+
+class PropertyOwnershipDetailsDTO {
+  @IsString()
+  nameOnProperty: string;
+
+  @IsEmail()
+  email: string;
+}
+
+class ProofOfOwnershipDTO {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @IsString()
+  thumbNail: string;
+
+  @IsNotEmpty()
+  @IsString()
+  documentType: string;
+}
+
+export class CreatePropertyDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => PropertyOwnershipDetailsDTO)
+  propertyOwnershipDetails: PropertyOwnershipDetailsDTO;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProofOfOwnershipDTO)
+  proofOfOwnership: ProofOfOwnershipDTO[];
+}
+
+export class PropertyOfferComment {
+  @IsString()
+  comment: string;
+  @IsString()
+  offerId: string;
+}
+
+export class SavePropertyQueryDTO implements Partial<PropertyQuery> {}
 
 class PropertyVideoDto {
   @IsString()
