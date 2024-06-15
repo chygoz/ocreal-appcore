@@ -26,7 +26,15 @@ export class PropertyTour {
   @Prop({ type: String })
   fullName?: string;
 
-  @Prop({ eventDate: Date, tourTime: SchemaTypes.String })
+  @Prop({
+    type: [
+      {
+        eventDate: { type: Date, required: true },
+        tourTime: { type: String, required: true },
+      },
+    ],
+    required: true,
+  })
   eventDate: Array<{
     eventDate: Date;
     tourTime: string;
