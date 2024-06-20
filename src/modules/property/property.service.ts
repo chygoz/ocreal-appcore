@@ -464,12 +464,12 @@ export class PropertyService {
   }
 
   async queryPropertiesByAddress(UnparsedAddress: string) {
-    const savedQueries = await this.propertyQueryModel.find({
-      UnparsedAddress: new RegExp(new RegExp(UnparsedAddress, 'i'), 'i'),
-    });
-    if (savedQueries.length > 0) {
-      return savedQueries.map((x) => this.mapPropertyQueryToProperty(x));
-    }
+    // const savedQueries = await this.propertyQueryModel.find({
+    //   UnparsedAddress: new RegExp(new RegExp(UnparsedAddress, 'i'), 'i'),
+    // });
+    // if (savedQueries.length > 0) {
+    //   return savedQueries.map((x) => this.mapPropertyQueryToProperty(x));
+    // }
 
     const encodedParams = new URLSearchParams();
     encodedParams.set('grant_type', 'client_credentials');
@@ -503,9 +503,9 @@ export class PropertyService {
         },
       );
       const properties = propertyResponse.data.value;
-      if (properties.length > 0) {
-        await this.propertyQueryModel.insertMany(properties);
-      }
+      // if (properties.length > 0) {
+      //   await this.propertyQueryModel.insertMany(properties);
+      // }
       return properties.map((x: PropertyQuery) =>
         this.mapPropertyQueryToProperty(x),
       );

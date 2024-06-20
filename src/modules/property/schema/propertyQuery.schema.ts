@@ -37,7 +37,7 @@ export const MediaSchema = SchemaFactory.createForClass(Media);
 
 @Schema()
 export class PropertyQuery extends Document {
-  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   user: User;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
