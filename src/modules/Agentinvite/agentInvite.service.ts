@@ -24,26 +24,31 @@ export class InviteService {
   ) {}
 
   async inviteAnAgent(user: User, { email }: { email: string }) {
-    const agent = await this.agentModel.findOne({ email });
-    let invite;
-    if (agent) {
-      const newInvite = await this.agentInviteModel.create({
-        email,
-        invitedBy: user,
-        status: AgentIviteStatus.pending,
-        agent,
+    const alreadyinvited = await this.agentInviteModel.findOne({
+      email,
+      invitedBy: user._id,
+    });
+    if (alreadyinvited) {
+      await this.emailService.sendEmail({
+        email: email,
+        subject: 'OCreal Agent Invitation',
+        template: 'invite_new_agent',
+        body: {
+          inviterName: user.fullname,
+          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?inviteId=${alreadyinvited._id.toString()}`,
+        },
       });
-      invite = newInvite.save();
+      return alreadyinvited;
     }
     const newInvite = await this.agentInviteModel.create({
       email,
       invitedBy: user,
       status: AgentIviteStatus.pending,
     });
-    invite = newInvite.save();
+    const invite = await newInvite.save();
     await this.emailService.sendEmail({
       email: email,
-      subject: 'Agent Accepted Invitation',
+      subject: 'OCreal Agent Invitation',
       template: 'invite_new_agent',
       body: {
         inviterName: user.fullname,
@@ -73,6 +78,7 @@ export class InviteService {
           status == AgentIviteStatus.accepted
             ? AgentIviteStatus.accepted
             : AgentIviteStatus.rejected,
+        agent: agent._id,
       },
       {
         new: true,
