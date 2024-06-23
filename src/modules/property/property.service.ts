@@ -122,6 +122,18 @@ export class PropertyService {
       const newDocument = await this.propertyDocumentRepo.create(newDoc);
       await newDocument.save();
     }
+    return await this.propertyModel.findByIdAndUpdate(
+      propertyExists._id,
+      {
+        propertyOwnershipDetails: {
+          ...dto.propertyOwnershipDetails,
+          actionTime: new Date(),
+        },
+      },
+      {
+        new: true,
+      },
+    );
   }
 
   async confirmUserPropertyConnection(userId: string, propertyId: string) {
