@@ -57,7 +57,7 @@ export class InviteController {
   }
 
   @UseGuards(JwtAgentAuthGuard)
-  @Get('/user/invited-agents')
+  @Get('/user/recent/invited-agents')
   async getRecentInvite(@Res() res: Response, @Req() req: Request) {
     const data = await this.inviteService.getRecentInvite(req.agent);
     this._sendResponse({

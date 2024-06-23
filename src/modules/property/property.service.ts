@@ -107,7 +107,7 @@ export class PropertyService {
     if (!propertyExists) {
       throw new NotFoundException('Property not found');
     }
-    if (propertyExists.propertyOwnershipDetails.actionTime) {
+    if (propertyExists?.propertyOwnershipDetails?.actionTime) {
       throw new BadRequestException('Property ownership already captured.');
     }
 
@@ -474,34 +474,67 @@ export class PropertyService {
     const encodedParams = new URLSearchParams();
     encodedParams.set('grant_type', 'client_credentials');
     encodedParams.set('app_client_id', configs.MLS_CLIENT_ID);
+    encodedParams.set('client_id', configs.MLS_CLIENT_ID);
+    encodedParams.set('client_secret', configs.MLS_CLIENT_ID);
+
     const config = {
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
-        'x-api-key': configs.MLS_API_AUTH_KEY,
-        'X-RapidAPI-Key': configs.MLS_RAPID_API_KEY,
-        'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
+        'accept-cncoding': 'gzip, deflate, br',
+        accept: '*/*',
+        // 'x-api-key': configs.MLS_API_AUTH_KEY,
+        // 'X-RapidAPI-Key': configs.MLS_RAPID_API_KEY,
+        // 'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
       },
     };
 
     const propertResponse = await this.axiosInstance.post(
-      'https://mls-router1.p.rapidapi.com/cognito-oauth2/token',
+      // 'https://mls-router1.p.rapidapi.com/cognito-oauth2/token',
+      'https://realtyfeed-sso.auth.us-east-1.amazoncognito.com/oauth2/token',
       encodedParams,
       config,
     );
+    console.log('🔋 🔋 🔋 🔋', propertResponse.data, '🔋 🔋 🔋 🔋');
     const access_token = propertResponse.data.access_token;
     try {
-      const propertyResponse = await this.axiosInstance.get(
-        `https://mls-router1.p.rapidapi.com/reso/odata/Property?UnparsedAddress eq "${UnparsedAddress}"&top=10`,
-        {
-          headers: {
-            'content-type': 'application/x-www-form-urlencoded',
-            'x-api-key': configs.MLS_X_API_REQUEST_KEY,
-            'X-RapidAPI-Key': configs.MLS__RAPID_API_REQUEST_KEY,
-            'X-RapidAPI-Host': configs.MLS__RAPID_API_REQUEST_HOST,
-            Authorization: access_token,
-          },
-        },
-      );
+      // Define the base URL and endpoint
+      const BASE_URL = 'https://api.realtyfeed.com/reso/odata/v1/';
+      const ENDPOINT = 'Property';
+
+      // Define the API key and headers
+      const headers = {
+        'x-api-key': configs.MLS_API_AUTH_KEY,
+        authorization: 'Bearer ' + access_token,
+      };
+
+      // Define the query parameters
+      const queryParams: any = {
+        $top: 10,
+        $filter: `ListingKey eq ${'P_5dba1fb94aa4055b9f296948'}`,
+        // Add other query parameters as needed
+      };
+
+      // Construct the full URL with query parameters
+      const url = `${BASE_URL}${ENDPOINT}`;
+      const params = new URLSearchParams(queryParams).toString();
+      const fullUrl = `${url}?${params}`;
+
+      // const propertyResponse = await this.axiosInstance.get(
+      //   // `https://api.realtyfeed.com/reso/geo/neighbourhood/city/Nashville`,
+      //   // `https://api.realtyfeed.com/reso/odata/v1/Property?UnparsedAddress eq "${UnparsedAddress}"&top=10`,
+      //   `https://api.realtyfeed.com/reso/odata/v1/Property?$top=10&$filter=UnparsedAddress eq${UnparsedAddress}`,
+      //   {
+      //     headers: {
+      //       'content-type': 'application/x-www-form-urlencoded',
+      //       // 'x-api-key': configs.MLS_X_API_REQUEST_KEY,
+      //       // 'X-RapidAPI-Key': configs.MLS__RAPID_API_REQUEST_KEY,
+      //       // 'X-RapidAPI-Host': configs.MLS__RAPID_API_REQUEST_HOST,
+      //       Authorization: access_token,
+      //     },
+      //   },
+      // );
+      const propertyResponse = await axios.get(fullUrl, { headers });
+      console.log('Response data:', propertyResponse.data);
       const properties = propertyResponse.data.value;
       // if (properties.length > 0) {
       //   await this.propertyQueryModel.insertMany(properties);
