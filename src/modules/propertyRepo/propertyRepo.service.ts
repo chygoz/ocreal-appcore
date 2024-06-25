@@ -8,14 +8,14 @@ import { CreatePropertyDocumentDto } from '../property/dto/AddProperty.dto';
 import { Property } from '../property/schema/property.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import * as docusign from 'docusign-esign';
-// import * as fs from 'fs';
-// import * as path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { configs } from 'src/configs';
 import { S3Service } from '../s3/s3.service';
 
 @Injectable()
 export class PropertyRepoService {
-  // private apiClient: docusign.ApiClient;
+  private apiClient: docusign.ApiClient;
   constructor(
     @InjectModel(PropertyDocumentRepo.name)
     private propertyDocumentRepo: Model<PropertyDocumentRepo>,
@@ -23,12 +23,12 @@ export class PropertyRepoService {
     private propertyModel: Model<Property>,
     private readonly s3Service: S3Service,
   ) {
-    // this.apiClient = new docusign.ApiClient();
-    // this.apiClient.setBasePath('https://demo.docusign.net/restapi');
-    // this.apiClient.addDefaultHeader(
-    //   'Authorization',
-    //   'Bearer ' + this.getAccessToken(),
-    // );
+    this.apiClient = new docusign.ApiClient();
+    this.apiClient.setBasePath(configs.DOCUSIGN_BASE_PATH);
+    this.apiClient.addDefaultHeader(
+      'Authorization',
+      'Bearer ' + this._getAccessToken(),
+    );
   }
 
   async getAllPropertyDocuments(
@@ -103,29 +103,52 @@ export class PropertyRepoService {
     apiClient.setBasePath('https://demo.docusign.net/restapi');
     apiClient.addDefaultHeader(
       'Authorization',
-      'Bearer ' + this.getAccessToken(),
+      'Bearer ' + this._getAccessToken(),
     );
   }
 
-  private async getAccessToken(): Promise<string> {
-    console.log(configs.DOCUSIGN_PRIVATE_KEY);
-    const results = await this.createDocuSignClient().requestJWTUserToken(
-      configs.DOCUSIGN_USER_ID,
-      configs.DOCUSIGN_USER_ID,
-      'signature',
-      Buffer.from(configs.DOCUSIGN_PRIVATE_KEY, 'base64').toString('utf-8'),
-      3600,
-    );
+  // private async getAccessToken(): Promise<string> {
+  //   console.log(configs.DOCUSIGN_PRIVATE_KEY);
+  //   const results = await this.createDocuSignClient().requestJWTUserToken(
+  //     configs.DOCUSIGN_USER_ID,
+  //     configs.DOCUSIGN_USER_ID,
+  //     'signature',
+  //     Buffer.from(configs.DOCUSIGN_PRIVATE_KEY, 'base64').toString('utf-8'),
+  //     3600,
+  //   );
 
-    const { access_token } = results.body;
-    return access_token;
+  //   const { access_token } = results.body;
+  //   return access_token;
+  // }
+
+  private async _getAccessToken(): Promise<string> {
+    const privateKeyPath = path.resolve(
+      __dirname,
+      '../../../keys/docusign_private.key',
+    );
+    const privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
+    try {
+      const results = await this.apiClient.requestJWTUserToken(
+        configs.DOCUSIGN_INTEGRATOR_KEY,
+        configs.DOCUSIGN_USERNAME,
+        null,
+        privateKey, //TODO: CONTINUE FROM HERE WITH SETTING UP THE DOCUSIGN KEY, REVIEW GPT CODE ALSO
+        3600,
+      );
+
+      console.log(results);
+      const accessToken = results.body.access_token;
+      return results.body.access_token;
+    } catch (e) {
+      console.error('Error getting access token:', e);
+    }
   }
 
   public async createEnvelope(
     recipient: User | Agent,
     documents: Array<PropertyDocumentRepo>,
   ) {
-    const accessToken = await this.getAccessToken();
+    const accessToken = await this._getAccessToken();
     this.createDocuSignClient().addDefaultHeader(
       'Authorization',
       'Bearer ' + accessToken,
@@ -152,17 +175,17 @@ export class PropertyRepoService {
     signer.recipientId = '1';
     signer.clientUserId = recipient._id;
 
-    const signHere = new docusign.SignHere();
-    signHere.documentId = '1';
-    signHere.pageNumber = '1';
-    signHere.recipientId = '1';
-    signHere.tabLabel = 'SignHereTab';
-    signHere.xPosition = '200';
-    signHere.yPosition = '400';
+    // const signHere = new docusign.SignHere();
+    // signHere.documentId = '1';
+    // signHere.pageNumber = '1';
+    // signHere.recipientId = '1';
+    // signHere.tabLabel = 'SignHereTab';
+    // signHere.xPosition = '200';
+    // signHere.yPosition = '400';
 
-    const tabs = new docusign.Tabs();
-    tabs.signHereTabs = [signHere];
-    signer.tabs = tabs;
+    // const tabs = new docusign.Tabs();
+    // tabs.signHereTabs = [signHere];
+    // signer.tabs = tabs;
 
     envelopeDefinition.recipients = new docusign.Recipients();
     envelopeDefinition.recipients.signers = [signer];
@@ -182,7 +205,7 @@ export class PropertyRepoService {
     recipientEmail: string,
     recipientName: string,
   ) {
-    const accessToken = await this.getAccessToken();
+    const accessToken = await this._getAccessToken();
     this.createDocuSignClient().addDefaultHeader(
       'Authorization',
       'Bearer ' + accessToken,
