@@ -50,3 +50,4 @@ docker-compose.yaml
 keys.sh
 
 /keys
+/keys/.docusign_private.key
