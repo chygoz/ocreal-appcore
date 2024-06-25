@@ -7,11 +7,11 @@ import {
 import { Observable } from 'rxjs';
 import { Request } from 'express';
 import { decodeAgentJwtToken, decodeJwtToken } from 'src/utils/jwt.util';
-import { User } from 'src/modules/users/schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AccountTypeEnum } from 'src/constants';
 import { Agent } from 'src/modules/agent/schema/agent.schema';
+import { User } from 'src/modules/users/schema/user.schema';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

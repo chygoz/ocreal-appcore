@@ -25,6 +25,78 @@ export class AuthService {
     @InjectModel(Agent.name) private readonly agentModel: Model<Agent>,
   ) {}
 
+  async googleUserLogin(req) {
+    if (!req?.user) {
+      throw new BadRequestException('No user from google');
+    }
+    const data = req.user;
+    const user = await this.userModel.findOne({
+      email: data.email,
+    });
+    if (!user) {
+      const newUser = await this.userModel.create({
+        email: data.email,
+        firstname: data.givenName,
+        lastname: data.familyName,
+      });
+      const savedUser = await newUser.save();
+      const token = this._generateToken(
+        {
+          id: savedUser._id,
+          email: savedUser.email,
+          firstname: savedUser.firstname,
+          lastname: savedUser.lastname,
+          fullname: savedUser.fullname,
+          account_type: savedUser.account_type,
+          emailVerified: savedUser.emailVerified,
+          preApproval: savedUser.preApproval,
+        },
+        configs.JWT_SECRET,
+        10 * 24 * 60 * 60,
+      );
+
+      return {
+        user: {
+          id: savedUser._id,
+          email: savedUser.email,
+          firstname: savedUser.firstname,
+          lastname: savedUser.lastname,
+          fullname: savedUser.fullname,
+          account_type: savedUser.account_type,
+          preApproval: savedUser.preApproval,
+        },
+        token,
+      };
+    }
+    const token = this._generateToken(
+      {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        fullname: user.fullname,
+        account_type: user.account_type,
+        emailVerified: user.emailVerified,
+        preApproval: user.preApproval,
+      },
+      configs.JWT_SECRET,
+      10 * 24 * 60 * 60,
+    );
+
+    return {
+      user: {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        fullname: user.fullname,
+        account_type: user.account_type,
+        preApproval: user.preApproval,
+      },
+      token,
+    };
+  }
+
   async userLogin(loginDto: LoginUserDto) {
     const user = await this.userModel.findOne({
       email: loginDto.email,
@@ -120,6 +192,45 @@ export class AuthService {
       },
     });
     return { token };
+  }
+
+  async googleValidateUser(user: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    picture: string;
+    accessToken: string;
+  }) {
+    const userExists = await this.userModel.findOne({ email: user.email });
+    if (userExists) {
+      const token = this._generateToken(
+        {
+          id: userExists._id,
+          email: userExists.email,
+          firstname: userExists.firstname,
+          lastname: userExists.lastname,
+          fullname: userExists.fullname,
+          account_type: userExists.account_type,
+          emailVerified: userExists.emailVerified,
+          preApproval: userExists.preApproval,
+        },
+        configs.JWT_SECRET,
+        10 * 24 * 60 * 60,
+      );
+
+      return {
+        user: {
+          id: userExists._id,
+          email: userExists.email,
+          firstname: userExists.firstname,
+          lastname: userExists.lastname,
+          fullname: userExists.fullname,
+          account_type: userExists.account_type,
+          preApproval: userExists.preApproval,
+        },
+        token,
+      };
+    }
   }
 
   async userForgotPassword(emailDto: { email: string }): Promise<any> {

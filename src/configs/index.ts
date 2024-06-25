@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 export const configs =
-  process.env.NODE_ENV == 'development'
+  process.env.ENVIRONMENT == 'development'
     ? {
         BASE_URL: process.env.DEV_BASE_URL || '',
         ENVIRONMENT: process.env.ENVIRONMENT,
@@ -56,12 +56,16 @@ export const configs =
         DOCUSIGN_USERNAME: process.env.DOCUSIGN_USERNAME || '',
         DOCUSIGN_PASSWORD: process.env.DOCUSIGN_PASSWORD || '',
         DOCUSIGN_ACCOUNT_ID: process.env.DOCUSIGN_ACCOUNT_ID || '',
+        DOCUSIGN_PRIVATE_KEY: process.env.DOCUSIGN_PRIVATE_KEY || '',
         DOCUSIGN_INTEGRATOR_KEY: process.env.DOCUSIGN_INTEGRATOR_KEY || '',
-        DOCUSIGN_BASE_URL: process.env.DOCUSIGN_BASE_URL || '',
+        DOCUSIGN_BASE_PATH: process.env.DOCUSIGN_BASE_PATH || '',
+        DOCUSIGN_OAUTH_URL: process.env.DOCUSIGN_OAUTH_URL || '',
         DOCUSIGN_REDIRECT_URI: process.env.DOCUSIGN_REDIRECT_URI || '',
         DOCUSIGN_RSA_KEY_ID: process.env.DOCUSIGN_RSA_KEY_ID || '',
         DOCUSIGN_PUBLIC_KEY: process.env.DOCUSIGN_PUBLIC_KEY || '',
-        DOCUSIGN_PRIVATE_KEY: process.env.DOCUSIGN_PRIVATE_KEY || '',
+        SELF_BASE_URL: process.env.DEV_SELF_BASE_URL,
+        GOOGLE_AUTH_CLIENT_ID: process.env.DEV_GOOGLE_AUTH_CLIENT_ID,
+        GOOGLE_AUTH_CLIENT_SECRET: process.env.DEV_GOOGLE_AUTH_CLIENT_SECRET,
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -118,12 +122,16 @@ export const configs =
           DOCUSIGN_USERNAME: process.env.DOCUSIGN_USERNAME || '',
           DOCUSIGN_PASSWORD: process.env.DOCUSIGN_PASSWORD || '',
           DOCUSIGN_ACCOUNT_ID: process.env.DOCUSIGN_ACCOUNT_ID || '',
+          DOCUSIGN_PRIVATE_KEY: process.env.DOCUSIGN_PRIVATE_KEY || '',
           DOCUSIGN_INTEGRATOR_KEY: process.env.DOCUSIGN_INTEGRATOR_KEY || '',
-          DOCUSIGN_BASE_URL: process.env.DOCUSIGN_BASE_URL || '',
+          DOCUSIGN_BASE_PATH: process.env.DOCUSIGN_BASE_PATH || '',
+          DOCUSIGN_OAUTH_URL: process.env.DOCUSIGN_OAUTH_URL || '',
           DOCUSIGN_REDIRECT_URI: process.env.DOCUSIGN_REDIRECT_URI || '',
           DOCUSIGN_RSA_KEY_ID: process.env.DOCUSIGN_RSA_KEY_ID || '',
           DOCUSIGN_PUBLIC_KEY: process.env.DOCUSIGN_PUBLIC_KEY || '',
-          DOCUSIGN_PRIVATE_KEY: process.env.DOCUSIGN_PRIVATE_KEY || '',
+          SELF_BASE_URL: process.env.PROD_SELF_BASE_URL,
+          GOOGLE_AUTH_CLIENT_ID: process.env.PROD_GOOGLE_AUTH_CLIENT_ID,
+          GOOGLE_AUTH_CLIENT_SECRET: process.env.PROD_GOOGLE_AUTH_CLIENT_SECRET,
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -178,10 +186,14 @@ export const configs =
           DOCUSIGN_USERNAME: process.env.DOCUSIGN_USERNAME || '',
           DOCUSIGN_PASSWORD: process.env.DOCUSIGN_PASSWORD || '',
           DOCUSIGN_ACCOUNT_ID: process.env.DOCUSIGN_ACCOUNT_ID || '',
+          DOCUSIGN_PRIVATE_KEY: process.env.DOCUSIGN_PRIVATE_KEY || '',
           DOCUSIGN_INTEGRATOR_KEY: process.env.DOCUSIGN_INTEGRATOR_KEY || '',
-          DOCUSIGN_BASE_URL: process.env.DOCUSIGN_BASE_URL || '',
+          DOCUSIGN_BASE_PATH: process.env.DOCUSIGN_BASE_PATH || '',
+          DOCUSIGN_OAUTH_URL: process.env.DOCUSIGN_OAUTH_URL || '',
           DOCUSIGN_REDIRECT_URI: process.env.DOCUSIGN_REDIRECT_URI || '',
           DOCUSIGN_RSA_KEY_ID: process.env.DOCUSIGN_RSA_KEY_ID || '',
           DOCUSIGN_PUBLIC_KEY: process.env.DOCUSIGN_PUBLIC_KEY || '',
-          DOCUSIGN_PRIVATE_KEY: process.env.DOCUSIGN_PRIVATE_KEY || '',
+          SELF_BASE_URL: process.env.LOCAL_SELF_BASE_URL,
+          GOOGLE_AUTH_CLIENT_ID: process.env.DEV_GOOGLE_AUTH_CLIENT_ID,
+          GOOGLE_AUTH_CLIENT_SECRET: process.env.DEV_GOOGLE_AUTH_CLIENT_SECRET,
         };

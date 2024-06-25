@@ -2,8 +2,6 @@ import {
   BadRequestException,
   Controller,
   Get,
-  ParseArrayPipe,
-  Query,
   Req,
   Res,
   UseGuards,
@@ -14,7 +12,6 @@ import { S3Service } from './s3.service';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
-import { GetUploadUrlsDto } from './dto/create.file.dto';
 import { Response, Request } from 'express';
 import { configs } from 'src/configs';
 import * as moment from 'moment';

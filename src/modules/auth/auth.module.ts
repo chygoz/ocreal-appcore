@@ -7,6 +7,8 @@ import { AuthController } from './auth.controller';
 import { AgentsModule } from '../agent/agents.module';
 import { UsersModule } from '../users/users.module';
 import { AgentSchema, Agent } from '../agent/schema/agent.schema';
+import { PassportModule } from '@nestjs/passport';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -14,11 +16,12 @@ import { AgentSchema, Agent } from '../agent/schema/agent.schema';
       { name: User.name, schema: UserSchema },
       { name: Agent.name, schema: AgentSchema },
     ]),
+    PassportModule,
     EmailModule,
     AgentsModule,
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, GoogleStrategy],
 })
 export class AuthModule {}

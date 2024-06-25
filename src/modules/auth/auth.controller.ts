@@ -6,6 +6,7 @@ import {
   Put,
   Req,
   UseGuards,
+  Get,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
@@ -18,10 +19,33 @@ import {
 } from './dto/auth.dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    // const googleToken = req.user.accessToken;
+    // const googleRefreshToken = req.user.refreshToken;
+    // res.cookie('access_token', googleToken, { httpOnly: true });
+    // res.cookie('refresh_token', googleRefreshToken, {
+    //   httpOnly: true,
+    // });
+    const data = await this.authService.googleUserLogin(req);
+    return this._sendResponse({
+      res,
+      data,
+      message: 'Code Verified successfully',
+    });
+    // res.redirect('http://localhost:3000/auth/profile');
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {}
 
   @Post('/user/send-verification')
   async sendUserVerificationEmail(
