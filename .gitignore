@@ -4,6 +4,8 @@
 .build
 /.build
 .serverless
+/keys
+/keys/.docusign_private.key
 
 # Logs
 logs
@@ -49,5 +51,3 @@ docker-compose.yaml
 
 keys.sh
 
-/keys
-/keys/.docusign_private.key
