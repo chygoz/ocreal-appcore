@@ -128,17 +128,24 @@ export class PropertyRepoService {
     );
     const privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
     try {
-      const results = await this.apiClient.requestJWTUserToken(
-        configs.DOCUSIGN_INTEGRATOR_KEY,
-        configs.DOCUSIGN_USERNAME,
+      // const results = await this.apiClient.requestJWTUserToken(
+      //   configs.DOCUSIGN_INTEGRATOR_KEY,
+      //   configs.DOCUSIGN_USERNAME,
+      //   null,
+      //   privateKey, //TODO: CONTINUE FROM HERE WITH SETTING UP THE DOCUSIGN KEY, REVIEW GPT CODE ALSO
+      //   3600,
+      // );
+      const SCOPES = ['signature', 'impersonation'];
+      const done = await this.apiClient.requestJWTUserToken(
+        '40a81b2c-a803-48e3-a580-8b8ba57856d3',
+        '5b89f9d7-092a-4480-be08-7d891d461029',
         null,
-        privateKey, //TODO: CONTINUE FROM HERE WITH SETTING UP THE DOCUSIGN KEY, REVIEW GPT CODE ALSO
+        privateKey,
         3600,
       );
-
-      console.log(results);
-      const accessToken = results.body.access_token;
-      return results.body.access_token;
+      console.log(done.body);
+      const accessToken = done.body.access_token;
+      return done.body.access_token;
     } catch (e) {
       console.error('Error getting access token:', e);
     }
