@@ -121,8 +121,8 @@ export class PropertyRepoService {
   //   return access_token;
   // }
 
-  // private async
-  // async function authenticateDocusign(){
+  //   private async
+  // async function authenticate(){
   //   const jwtLifeSec = 10 * 60; // requested lifetime for the JWT is 10 min
   //   const dsApi = new docusign.ApiClient();
   //   dsApi.setOAuthBasePath(jwtConfig.dsOauthServer.replace('https://', '')); // it should be domain only.
@@ -163,7 +163,7 @@ export class PropertyRepoService {
   //   }
   // }
 
-  private async _getAccessToken(): Promise<string> {
+  private async _getAccessToken() {
     this.apiClient.setOAuthBasePath(
       'https://account-d.docusign.com'.replace('https://', ''),
     );
@@ -172,34 +172,43 @@ export class PropertyRepoService {
       '../../../keys/docusign_private.key',
     );
     const privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
-    try {
-      const results = await this.apiClient.requestJWTUserToken(
-        configs.DOCUSIGN_INTEGRATOR_KEY,
-        configs.DOCUSIGN_USERNAME,
-        null,
-        privateKey, //TODO: CONTINUE FROM HERE WITH SETTING UP THE DOCUSIGN KEY, REVIEW GPT CODE ALSO
-        3600,
-      );
-
-      return results.body.access_token;
-    } catch (e) {
-      console.log(e);
-      const body = e.response && e.response.body;
-      // Determine the source of the error
-      if (body) {
-        // The user needs to grant consent
-        // if (body.error && body.error === 'consent_required') {
-        //   if (getConsent()) {
-        //     return authenticate();
-        //   }
-        // } else {
-        //   // Consent has been granted. Show status code for DocuSign API error
-        //   this
-        //     ._debug_log(`\nAPI problem: Status code ${e.response.status}, message body:
-        //   ${JSON.stringify(body, null, 4)}\n\n`);
-        // }
-      }
-    }
+    // try {
+    //   // const results = await this.apiClient.requestJWTUserToken(
+    //   //   configs.DOCUSIGN_INTEGRATOR_KEY,
+    //   //   configs.DOCUSIGN_USERNAME,
+    //   //   null,
+    //   //   privateKey, //TODO: CONTINUE FROM HERE WITH SETTING UP THE DOCUSIGN KEY, REVIEW GPT CODE ALSO
+    //   //   3600,
+    //   // );
+    //   const SCOPES = ['signature', 'impersonation'];
+    //   const done = await this.apiClient.requestJWTUserToken(
+    //     '40a81b2c-a803-48e3-a580-8b8ba57856d3',
+    //     '5b89f9d7-092a-4480-be08-7d891d461029',
+    //     null,
+    //     privateKey,
+    //     3600,
+    //   );
+    //   console.log(done);
+    //   const accessToken = done.body.access_token;
+    //   return done.body.access_token;
+    // } catch (e) {
+    //   console.log(e);
+    //   const body = e.response && e.response.body;
+    //   // Determine the source of the error
+    //   if (body) {
+    //     // The user needs to grant consent
+    //     if (body.error && body.error === 'consent_required') {
+    //       if (getConsent()) {
+    //         return authenticate();
+    //       }
+    //     } else {
+    //       // Consent has been granted. Show status code for DocuSign API error
+    //       this
+    //         ._debug_log(`\nAPI problem: Status code ${e.response.status}, message body:
+    //       ${JSON.stringify(body, null, 4)}\n\n`);
+    //     }
+    //   }
+    // }
   }
 
   public async createEnvelope(
