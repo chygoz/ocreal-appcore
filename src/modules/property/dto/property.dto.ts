@@ -310,21 +310,31 @@ export class AgentCreatePropertyDto {
   propertyType: string;
 }
 
+export class PropertyOwnershipDetailsDto {
+  @IsString() nameOnProperty: string;
+  @IsString() email: string;
+  @Type(() => Date) actionTime: Date;
+}
+
 export class CreatePropertyDto {
   @ValidateNested()
   @Type(() => PropertyAddressDetailsDto)
   propertyAddressDetails: PropertyAddressDetailsDto;
 
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PropertyImageDto)
   images: PropertyImageDto[];
 
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PropertyVideoDto)
   videos: PropertyVideoDto[];
 
   @IsArray()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => PropertyFeaturesDto)
-  features: Array<{ feature: string; icon: string; description: string }>;
+  features: PropertyFeaturesDto[];
 
   @IsString()
   propertyDescription: string;
@@ -343,19 +353,35 @@ export class CreatePropertyDto {
 
   @ValidateNested()
   @Type(() => PriceDto)
-  price: {
-    amount: number;
-    currency: string;
-  };
+  price: PriceDto;
 
-  @ValidateNested()
+  @IsArray()
+  @ValidateNested({ each: true })
   @Type(() => PropertyTaxDto)
-  propertyTaxes: {
-    amount: number;
-    currency: number;
-    dateSeen: Array<Date>;
-  }[];
+  propertyTaxes: PropertyTaxDto[];
 
   @IsString()
   propertyType: string;
+
+  @IsString()
+  latitude: string;
+
+  @IsString()
+  longitude: string;
+
+  @IsString()
+  propertyName: string;
+
+  @ValidateNested()
+  @Type(() => PropertyOwnershipDetailsDto)
+  propertyOwnershipDetails: PropertyOwnershipDetailsDto;
+
+  @IsString() buyer: string;
+  @IsString() seller: string;
+  @IsString() sellerAgent: string;
+  @IsString() buyerAgent: string;
+  @IsString() documentRepo: string;
+
+  @Type(() => Date) createdAt: Date;
+  @Type(() => Date) updatedAt: Date;
 }
