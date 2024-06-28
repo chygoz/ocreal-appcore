@@ -12,6 +12,26 @@ export class User extends Document {
   @Prop({ unique: true, trim: true, required: true, lowercase: true })
   email: string;
 
+  @Prop({
+    type: {
+      propertyType: { type: SchemaTypes.String },
+      onboardingCompleted: { type: SchemaTypes.Boolean, default: false },
+      spendAmount: { type: SchemaTypes.Number },
+      financialProcess: { type: SchemaTypes.String },
+      preApprovalAffiliates: { type: SchemaTypes.Boolean, default: false },
+      workWithLender: { type: SchemaTypes.Boolean, default: false },
+    },
+    _id: false,
+  })
+  propertyPreference: {
+    propertyType: string;
+    onboardingCompleted: boolean;
+    spendAmount: number;
+    financialProcess: string;
+    preApprovalAffiliates: boolean;
+    workWithLender: boolean;
+  };
+
   @Prop({ type: SchemaTypes.ObjectId, ref: UserOfficialDocument.name })
   documents: UserOfficialDocument;
 

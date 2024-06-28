@@ -16,6 +16,7 @@ import { Response, Request } from 'express';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { SaveUserDocumentsDto } from './dto/saveDocuments.dto';
 import { PaginationDto } from 'src/constants/pagination.dto';
+import { PropertyPreferenceDto } from './dto/propertyPreference.dto';
 
 @Controller('user')
 export class UsersController {
@@ -36,6 +37,42 @@ export class UsersController {
       res,
       data,
       message: 'Email sent successfully',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('/save/property-preference')
+  async savedUserPropertyPreference(
+    @Body() dto: PropertyPreferenceDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ): Promise<any> {
+    const data = await this.userService.savedUserPropertyPreference(
+      req.user,
+      dto,
+    );
+    this._sendResponse({
+      res,
+      data,
+      message: 'User property preference updated',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('/complete/property-preference')
+  async completeUserPropertyPreference(
+    @Body() dto: PropertyPreferenceDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ): Promise<any> {
+    const data = await this.userService.completeUserPropertyPreference(
+      req.user,
+      dto,
+    );
+    this._sendResponse({
+      res,
+      data,
+      message: 'User property preference saved',
     });
   }
 
