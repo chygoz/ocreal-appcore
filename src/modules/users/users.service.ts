@@ -13,6 +13,7 @@ import { configs } from 'src/configs';
 import { SaveUserDocumentsDto } from './dto/saveDocuments.dto';
 import { UserDocument } from './schema/user_documents';
 import { PaginationDto } from 'src/constants/pagination.dto';
+import { PropertyPreferenceDto } from './dto/propertyPreference.dto';
 
 @Injectable()
 export class UsersService {
@@ -69,6 +70,30 @@ export class UsersService {
     });
     const documents = await this.userDocumentModel.insertMany(docs);
     return documents;
+  }
+
+  async savedUserPropertyPreference(user: User, dto: PropertyPreferenceDto) {
+    return await this.userModel.findByIdAndUpdate(
+      user.id,
+      {
+        propertyPreference: dto,
+      },
+      {
+        new: true,
+      },
+    );
+  }
+
+  async completeUserPropertyPreference(user: User, dto: PropertyPreferenceDto) {
+    return await this.userModel.findByIdAndUpdate(
+      user.id,
+      {
+        propertyPreference: { ...dto, onboardingCompleted: true },
+      },
+      {
+        new: true,
+      },
+    );
   }
 
   async deleteUserDocuments(user: User, id: string) {
