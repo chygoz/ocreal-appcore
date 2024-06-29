@@ -317,71 +317,87 @@ export class PropertyOwnershipDetailsDto {
 }
 
 export class CreatePropertyDto {
+  @IsOptional()
   @ValidateNested()
   @Type(() => PropertyAddressDetailsDto)
-  propertyAddressDetails: PropertyAddressDetailsDto;
+  propertyAddressDetails?: PropertyAddressDetailsDto;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PropertyImageDto)
-  images: PropertyImageDto[];
+  images?: PropertyImageDto[];
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PropertyVideoDto)
-  videos: PropertyVideoDto[];
+  videos?: PropertyVideoDto[];
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PropertyFeaturesDto)
-  features: PropertyFeaturesDto[];
+  features?: PropertyFeaturesDto[];
 
+  @IsOptional()
   @IsString()
-  propertyDescription: string;
+  propertyDescription?: string;
 
+  @IsOptional()
   @IsString()
-  lotSizeValue: string;
+  lotSizeValue?: string;
 
+  @IsOptional()
   @IsString()
-  lotSizeUnit: string;
+  lotSizeUnit?: string;
 
+  @IsOptional()
   @IsString()
-  numBathroom: string;
+  numBathroom?: string;
 
+  @IsOptional()
   @IsString()
-  numBedroom: string;
+  numBedroom?: string;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => PriceDto)
-  price: PriceDto;
+  price?: PriceDto;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PropertyTaxDto)
-  propertyTaxes: PropertyTaxDto[];
+  propertyTaxes?: PropertyTaxDto[];
 
+  @IsOptional()
   @IsString()
-  propertyType: string;
+  propertyType?: string;
 
+  @IsOptional()
   @IsString()
-  latitude: string;
+  latitude?: string;
 
+  @IsOptional()
   @IsString()
-  longitude: string;
+  longitude?: string;
 
+  @IsOptional()
   @IsString()
-  propertyName: string;
+  propertyName?: string;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => PropertyOwnershipDetailsDto)
-  propertyOwnershipDetails: PropertyOwnershipDetailsDto;
+  propertyOwnershipDetails?: PropertyOwnershipDetailsDto;
 
-  @IsString() buyer: string;
-  @IsString() seller: string;
-  @IsString() sellerAgent: string;
-  @IsString() buyerAgent: string;
-  @IsString() documentRepo: string;
+  @IsOptional() @IsString() buyer?: string;
+  @IsOptional() @IsString() seller?: string;
+  @IsOptional() @IsString() sellerAgent?: string;
+  @IsOptional() @IsString() buyerAgent?: string;
+  @IsOptional() @IsString() documentRepo?: string;
 
-  @Type(() => Date) createdAt: Date;
-  @Type(() => Date) updatedAt: Date;
+  @IsOptional() @Type(() => Date) createdAt?: Date;
+  @IsOptional() @Type(() => Date) updatedAt?: Date;
 }
