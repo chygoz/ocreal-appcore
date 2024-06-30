@@ -184,9 +184,9 @@ export class PropertyService {
 
   async createProperty(data: CreatePropertyDto, user: User): Promise<Property> {
     const newData = {
+      ...data,
       propertyName: data.propertyAddressDetails.formattedAddress,
       seller: user.id,
-      propertyAddressDetails: data.propertyAddressDetails,
     };
     const createdProperty = new this.propertyModel(newData);
     const result = createdProperty.save();
