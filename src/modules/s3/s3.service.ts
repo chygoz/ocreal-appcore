@@ -21,10 +21,10 @@ export class S3Service {
     const credentials = {
       accessKeyId: configs.ACCESS_AWS_KEY,
       secretAccessKey: configs.SECRET_AWS__ACCESS_KEY,
-      region: configs.AWS_REGION,
+      region: 'eu-north-1',
     };
     return new S3Client({
-      region: configs.AWS_REGION,
+      region: 'eu-north-1',
       credentials: credentials,
     });
   }
