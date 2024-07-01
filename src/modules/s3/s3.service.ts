@@ -4,6 +4,7 @@ import {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
+  PutBucketCorsCommand,
 } from '@aws-sdk/client-s3';
 import { configs } from 'src/configs';
 import * as AWS from 'aws-sdk';
@@ -23,10 +24,32 @@ export class S3Service {
       secretAccessKey: configs.SECRET_AWS__ACCESS_KEY,
       region: 'eu-north-1',
     };
+
     return new S3Client({
       region: 'eu-north-1',
       credentials: credentials,
     });
+  }
+
+  private async setCorsConfiguration(bucket: string) {
+    const client = await this._createS3Client();
+    const corsConfiguration = {
+      CORSRules: [
+        {
+          AllowedHeaders: ['*'],
+          AllowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
+          AllowedOrigins: ['*'],
+          ExposeHeaders: [],
+        },
+      ],
+    };
+
+    const command = new PutBucketCorsCommand({
+      Bucket: bucket,
+      CORSConfiguration: corsConfiguration,
+    });
+
+    await client.send(command);
   }
 
   async getPresignedUrlFromS3(object: {
@@ -34,6 +57,8 @@ export class S3Service {
     bucket: string;
     expires: number;
   }) {
+    await this.setCorsConfiguration(object.bucket);
+
     const client = await this._createS3Client();
     const getObjectParams = {
       Bucket: object.bucket,
@@ -51,6 +76,8 @@ export class S3Service {
     bucket: string;
     expires: number;
   }) {
+    await this.setCorsConfiguration(object.bucket);
+
     const client = await this._createS3Client();
     const putObjectParams = {
       Bucket: object.bucket,
