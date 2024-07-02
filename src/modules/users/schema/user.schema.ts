@@ -16,7 +16,7 @@ export class User extends Document {
     type: {
       propertyType: { type: SchemaTypes.String },
       onboardingCompleted: { type: SchemaTypes.Boolean, default: false },
-      spendAmount: { type: SchemaTypes.Number },
+      spendAmount: { type: SchemaTypes.Mixed },
       financialProcess: { type: SchemaTypes.String },
       preApprovalAffiliates: { type: SchemaTypes.Boolean, default: false },
       workWithLender: { type: SchemaTypes.Boolean, default: false },
@@ -26,7 +26,10 @@ export class User extends Document {
   propertyPreference: {
     propertyType: string;
     onboardingCompleted: boolean;
-    spendAmount: number;
+    spendAmount: {
+      min: number;
+      max: number;
+    };
     financialProcess: string;
     preApprovalAffiliates: boolean;
     workWithLender: boolean;
