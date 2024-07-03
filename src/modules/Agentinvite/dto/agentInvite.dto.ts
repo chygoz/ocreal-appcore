@@ -1,10 +1,18 @@
-import { IsNotEmpty, IsEmail } from 'class-validator';
 import { AgentIviteStatus } from '../schema/agentInvite.schema';
+import {
+  IsArray,
+  IsEmail,
+  ArrayNotEmpty,
+  ArrayMinSize,
+  IsNotEmpty,
+} from 'class-validator';
 
 export class InviteAgentDto {
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMinSize(1)
+  @IsEmail({}, { each: true })
+  emails: string[];
 }
 
 export class InviteAgentResponseDto {
