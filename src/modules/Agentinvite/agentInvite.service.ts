@@ -11,7 +11,7 @@ import { User } from '../users/schema/user.schema';
 import { Agent } from '../agent/schema/agent.schema';
 import { configs } from 'src/configs';
 import { PaginationDto } from 'src/constants/pagination.dto';
-import { InviteAgentResponseDto } from './dto/agentInvite.dto';
+import { InviteAgentDto, InviteAgentResponseDto } from './dto/agentInvite.dto';
 
 @Injectable()
 export class InviteService {
@@ -23,40 +23,47 @@ export class InviteService {
     private readonly emailService: EmailService,
   ) {}
 
-  async inviteAnAgent(user: User, { email }: { email: string }) {
-    const alreadyinvited = await this.agentInviteModel.findOne({
-      email,
-      invitedBy: user._id,
-    });
-    if (alreadyinvited) {
+  async inviteAnAgent(user: User, { emails }: InviteAgentDto) {
+    const response = [];
+    for (const email of emails) {
+      const alreadyinvited = await this.agentInviteModel.findOne({
+        email,
+        invitedBy: user._id,
+      });
+      if (alreadyinvited) {
+        await this.emailService.sendEmail({
+          email: email,
+          subject: 'OCreal Agent Invitation',
+          template: 'invite_new_agent',
+          body: {
+            inviterName: user.fullname,
+            lactionUrl: `${configs.BASE_URL}/agent/accept-invite?inviteId=${alreadyinvited._id.toString()}`,
+          },
+        });
+        response.push(alreadyinvited);
+        continue;
+      }
+      const newInvite = await this.agentInviteModel.create({
+        email,
+        invitedBy: user,
+        status: AgentIviteStatus.pending,
+      });
+      const invite = await newInvite.save();
       await this.emailService.sendEmail({
         email: email,
         subject: 'OCreal Agent Invitation',
         template: 'invite_new_agent',
         body: {
           inviterName: user.fullname,
-          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?inviteId=${alreadyinvited._id.toString()}`,
+          lactionUrl: `${configs.BASE_URL}/agent/accept-invite?inviteId=${invite._id.toString()}`,
         },
       });
-      return alreadyinvited;
+      response.push(invite);
+      continue;
     }
-    const newInvite = await this.agentInviteModel.create({
-      email,
-      invitedBy: user,
-      status: AgentIviteStatus.pending,
-    });
-    const invite = await newInvite.save();
-    await this.emailService.sendEmail({
-      email: email,
-      subject: 'OCreal Agent Invitation',
-      template: 'invite_new_agent',
-      body: {
-        inviterName: user.fullname,
-        lactionUrl: `${configs.BASE_URL}/agent/accept-invite?inviteId=${invite._id.toString()}`,
-      },
-    });
-    return invite;
+    return true;
   }
+
   async agentInviteResponse(
     id: string,
     agent: Agent,

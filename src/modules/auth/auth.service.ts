@@ -130,6 +130,7 @@ export class AuthService {
         fullname: user.fullname,
         account_type: user.account_type,
         preApproval: user.preApproval,
+        propertyPreference: user.propertyPreference,
       },
       token,
     };
