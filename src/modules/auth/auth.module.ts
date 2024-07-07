@@ -9,6 +9,7 @@ import { UsersModule } from '../users/users.module';
 import { AgentSchema, Agent } from '../agent/schema/agent.schema';
 import { PassportModule } from '@nestjs/passport';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategies';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import { GoogleStrategy } from './strategies/google.strategy';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy],
+  providers: [AuthService, GoogleStrategy, FacebookStrategy],
 })
 export class AuthModule {}
