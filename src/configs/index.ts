@@ -66,6 +66,8 @@ export const configs =
         SELF_BASE_URL: process.env.DEV_SELF_BASE_URL,
         GOOGLE_AUTH_CLIENT_ID: process.env.DEV_GOOGLE_AUTH_CLIENT_ID,
         GOOGLE_AUTH_CLIENT_SECRET: process.env.DEV_GOOGLE_AUTH_CLIENT_SECRET,
+        FACEBOOK_AUTH_APP_ID: process.env.DEV_FACEBOOK_AUTH_APP_ID,
+        FACEBOOK_AUTH_APP_SECRET: process.env.DEV_FACEBOOK_AUTH_APP_SECRET,
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -132,6 +134,8 @@ export const configs =
           SELF_BASE_URL: process.env.PROD_SELF_BASE_URL,
           GOOGLE_AUTH_CLIENT_ID: process.env.PROD_GOOGLE_AUTH_CLIENT_ID,
           GOOGLE_AUTH_CLIENT_SECRET: process.env.PROD_GOOGLE_AUTH_CLIENT_SECRET,
+          FACEBOOK_AUTH_APP_ID: process.env.PROD_FACEBOOK_AUTH_APP_ID,
+          FACEBOOK_AUTH_APP_SECRET: process.env.PROD_FACEBOOK_AUTH_APP_SECRET,
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -196,4 +200,6 @@ export const configs =
           SELF_BASE_URL: process.env.LOCAL_SELF_BASE_URL,
           GOOGLE_AUTH_CLIENT_ID: process.env.DEV_GOOGLE_AUTH_CLIENT_ID,
           GOOGLE_AUTH_CLIENT_SECRET: process.env.DEV_GOOGLE_AUTH_CLIENT_SECRET,
+          FACEBOOK_AUTH_APP_ID: process.env.DEV_FACEBOOK_AUTH_APP_ID,
+          FACEBOOK_AUTH_APP_SECRET: process.env.DEV_FACEBOOK_AUTH_APP_SECRET,
         };

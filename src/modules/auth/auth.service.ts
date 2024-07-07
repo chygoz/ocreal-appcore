@@ -97,6 +97,81 @@ export class AuthService {
     };
   }
 
+  async facebookUserLogin(facebookUser: any) {
+    if (!facebookUser) {
+      throw new BadRequestException('No user from facebook');
+    }
+    const data = facebookUser.user;
+
+    const user = await this.userModel.findOne({
+      facebookId: data.id,
+    });
+    if (!user) {
+      const newUser = await this.userModel.create({
+        email: data?.email,
+        firstname: data.firstName,
+        lastname: data.lastName,
+        fullname: data.firstName + ' ' + data.lastName,
+        facebookId: data.id,
+      });
+      const savedUser = await newUser.save();
+      const token = this._generateToken(
+        {
+          id: savedUser._id,
+          email: savedUser?.email,
+          firstname: savedUser.firstname,
+          lastname: savedUser.lastname,
+          fullname: savedUser.fullname,
+          account_type: savedUser?.account_type,
+          emailVerified: savedUser.emailVerified,
+          preApproval: savedUser.preApproval,
+        },
+        configs.JWT_SECRET,
+        10 * 24 * 60 * 60,
+      );
+
+      return {
+        user: {
+          id: savedUser._id,
+          email: savedUser.email,
+          firstname: savedUser.firstname,
+          lastname: savedUser.lastname,
+          fullname: savedUser.fullname,
+          account_type: savedUser?.account_type,
+          preApproval: savedUser.preApproval,
+        },
+        token,
+      };
+    }
+    const token = this._generateToken(
+      {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        fullname: user.fullname,
+        account_type: user?.account_type,
+        emailVerified: user?.emailVerified,
+        preApproval: user.preApproval,
+      },
+      configs.JWT_SECRET,
+      10 * 24 * 60 * 60,
+    );
+
+    return {
+      user: {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        fullname: user.fullname,
+        account_type: user?.account_type,
+        preApproval: user?.preApproval,
+      },
+      token,
+    };
+  }
+
   async userLogin(loginDto: LoginUserDto) {
     const user = await this.userModel.findOne({
       email: loginDto.email,

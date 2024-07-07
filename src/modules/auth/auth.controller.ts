@@ -20,6 +20,8 @@ import {
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
 import { AuthGuard } from '@nestjs/passport';
+import axios from 'axios';
+import { configs } from 'src/configs';
 
 @Controller('auth')
 export class AuthController {
@@ -28,19 +30,28 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    // const googleToken = req.user.accessToken;
-    // const googleRefreshToken = req.user.refreshToken;
-    // res.cookie('access_token', googleToken, { httpOnly: true });
-    // res.cookie('refresh_token', googleRefreshToken, {
-    //   httpOnly: true,
-    // });
     const data = await this.authService.googleUserLogin(req);
     return this._sendResponse({
       res,
       data,
-      message: 'Code Verified successfully',
+      message: 'Google login successfull',
     });
     // res.redirect('http://localhost:3000/auth/profile');
+  }
+
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLogin(@Req() req, @Res() res: Response): Promise<any> {}
+
+  @Get('facebook/callback')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLoginCallback(@Req() req, @Res() res: Response): Promise<any> {
+    const data = await this.authService.facebookUserLogin(req.user);
+    return this._sendResponse({
+      res,
+      data,
+      message: 'Facebook login successfull',
+    });
   }
 
   @Get('google')
