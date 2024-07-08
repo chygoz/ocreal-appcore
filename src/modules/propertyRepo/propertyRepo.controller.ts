@@ -61,7 +61,7 @@ export class PropertyRepoController {
   async deletePropertyDocument(@Req() req: Request, @Res() res: Response) {
     await this.propertyRepoService.deletePropertyDocument(
       req.user || req.agent,
-      req.params.propertyId,
+      req.params.id,
     );
     this._sendResponse({
       res,
