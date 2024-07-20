@@ -16,7 +16,7 @@ import axios from 'axios';
 
 @Injectable()
 export class PropertyRepoService {
-  private apiClient: docusign.ApiClient;
+  // private apiClient: docusign.ApiClient;
   constructor(
     @InjectModel(PropertyDocumentRepo.name)
     private propertyDocumentRepo: Model<PropertyDocumentRepo>,
@@ -24,9 +24,18 @@ export class PropertyRepoService {
     private propertyModel: Model<Property>,
     private readonly s3Service: S3Service,
   ) {
-    this.apiClient = new docusign.ApiClient();
-    this.apiClient.setBasePath(configs.DOCUSIGN_BASE_PATH);
-    this.apiClient.addDefaultHeader(
+    // this.apiClient = new docusign.ApiClient();
+    // this.apiClient.setBasePath(configs.DOCUSIGN_BASE_PATH);
+    // this.apiClient.addDefaultHeader(
+    //   'Authorization',
+    //   'Bearer ' + this._getAccessToken(),
+    // );
+  }
+
+  private async _apiClient() {
+    const apiClient = new docusign.ApiClient();
+    apiClient.setBasePath(configs.DOCUSIGN_BASE_PATH);
+    return apiClient.addDefaultHeader(
       'Authorization',
       'Bearer ' + this._getAccessToken(),
     );
@@ -109,7 +118,9 @@ export class PropertyRepoService {
   // }
 
   private async _getAccessToken() {
-    this.apiClient.setOAuthBasePath('account-d.docusign.com');
+    const client = await this._apiClient();
+
+    client.setOAuthBasePath('account-d.docusign.com');
     const privateKeyPath = path.resolve(
       __dirname,
       '../../../keys/docusign_private.key',
@@ -120,7 +131,7 @@ export class PropertyRepoService {
     const SCOPES = ['signature', 'impersonation'];
     console.log(privateKey);
     try {
-      const results = await this.apiClient.requestJWTUserToken(
+      const results = await client.requestJWTUserToken(
         configs.DOCUSIGN_INTEGRATOR_KEY,
         configs.DOCUSIGN_USER_ID,
         null,
@@ -146,8 +157,9 @@ export class PropertyRepoService {
   }
   private async createDocuSignClient() {
     const accessToken = await this._getAccessToken();
-    this.apiClient.addDefaultHeader('Authorization', 'Bearer ' + accessToken);
-    return this.apiClient;
+    const client = await this._apiClient();
+    client.addDefaultHeader('Authorization', 'Bearer ' + accessToken);
+    return client;
   }
 
   // private async getAccessToken(): Promise<string> {
