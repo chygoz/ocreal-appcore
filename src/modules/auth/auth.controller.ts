@@ -20,9 +20,6 @@ import {
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
 import { AuthGuard } from '@nestjs/passport';
-import axios from 'axios';
-import { configs } from 'src/configs';
-
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -41,6 +38,7 @@ export class AuthController {
 
   @Get('facebook')
   @UseGuards(AuthGuard('facebook'))
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async facebookLogin(@Req() req, @Res() res: Response): Promise<any> {}
 
   @Get('facebook/callback')

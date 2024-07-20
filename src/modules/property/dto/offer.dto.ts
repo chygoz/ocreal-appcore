@@ -108,6 +108,16 @@ export class CreateUserOfferDto {
   // @IsString()
   // updatedAt: Date;
 }
+
+export class OfferResponseDto {
+  @IsNotEmpty()
+  @IsBoolean()
+  response: boolean;
+
+  @IsNotEmpty()
+  @IsString()
+  offerId: string;
+}
 export class CreateAgentPropertyOfferDto {
   // @ValidateNested({ each: true })
   // @Type(() => OfferStatus)

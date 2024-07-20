@@ -93,8 +93,8 @@ export class S3Service {
 
   async getDocumentFromS3AndPrepForDocusign(
     key: string,
-    documentName: string,
-    documentId: string,
+    // documentName: string,
+    // documentId: string,
   ): Promise<docusign.Document> {
     try {
       const s3 = new AWS.S3();
@@ -108,9 +108,9 @@ export class S3Service {
 
       const document = new docusign.Document();
       document.documentBase64 = base64Doc;
-      document.name = documentName; // or provide a different name if needed
-      document.fileExtension = key.split('.').pop(); // extract the file extension
-      document.documentId = documentId;
+      // document.name = documentName; // or provide a different name if needed
+      // document.fileExtension = key.split('.').pop(); // extract the file extension
+      // document.documentId = documentId;
 
       return document;
     } catch (error) {

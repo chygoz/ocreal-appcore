@@ -32,6 +32,7 @@ import { CreateTourDto } from './dto/tour.dto';
 import {
   CreateAgentPropertyOfferDto,
   CreateUserOfferDto,
+  OfferResponseDto,
 } from './dto/offer.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 import { AccountTypeEnum } from 'src/constants';
@@ -181,6 +182,61 @@ export class PropertyController {
       data: { result },
       message: 'Offer Created',
       statusCode: 201,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('/buyer/offer/response')
+  async buyerOfferResponse(
+    @Body() dto: OfferResponseDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const result = await this.propertyService.buyerOfferResponse(dto, req.user);
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Offer Created',
+      statusCode: 201,
+    });
+  }
+
+  @UseGuards(SellerAuthGuard)
+  @Post('/seller/create/counter-offer')
+  async sellerCreateOrUpdateCounterOffer(
+    @Body() dto: CreateUserOfferDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const result = await this.propertyService.sellerCreateOrUpdateCounterOffer(
+      dto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Counter Offer Created',
+      statusCode: 200,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Post('/agent/create/counter-offer')
+  async sellerAgentCreateOrUpdateCounterOffer(
+    @Body() dto: CreateUserOfferDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const result =
+      await this.propertyService.sellerAgentCreateOrUpdateCounterOffer(
+        dto,
+        req.agent,
+      );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Counter Offer Created',
+      statusCode: 200,
     });
   }
 
