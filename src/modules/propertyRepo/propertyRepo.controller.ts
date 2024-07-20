@@ -14,6 +14,7 @@ import { PaginationDto } from 'src/constants/pagination.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 import { CreatePropertyDocumentDto } from '../property/dto/AddProperty.dto';
 import { PropertyRepoService } from './propertyRepo.service';
+import { SendDocumentDto } from './dto/docusign.dto';
 
 @UseGuards(AgentOrSellerAuthGuard)
 @Controller('property-repo')
@@ -70,29 +71,26 @@ export class PropertyRepoController {
     });
   }
 
-  // @Get('create-envelope')
-  // async createEnvelope(
-  //   @Query('email') email: string,
-  //   @Query('name') name: string,
-  //   @Res() res: Response,
-  // ) {
-  //   try {
-  //     const documentPath = './path/to/your/document.pdf'; // Adjust this path accordingly
-  //     const envelopeId = await this.propertyRepoService.createEnvelope(
-  //       email,
-  //       name,
-  //       documentPath,
-  //     );
-  //     const signingUrl = await this.propertyRepoService.getEmbeddedSigningUrl(
-  //       envelopeId,
-  //       email,
-  //       name,
-  //     );
-  //     res.redirect(signingUrl);
-  //   } catch (error) {
-  //     res.status(500).send(error.message);
-  //   }
-  // }
+  @Get('request/document-signing')
+  async createEnvelope(
+    @Body() dto: SendDocumentDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const envelopeId = await this.propertyRepoService.createEnvelope(
+        req.user,
+        dto.documentIds,
+      );
+      const signingUrl = await this.propertyRepoService.getEmbeddedSigningUrl(
+        envelopeId,
+        req.user,
+      );
+      res.redirect(signingUrl);
+    } catch (error) {
+      res.status(500).send(error.message);
+    }
+  }
 
   // @Get('callback')
   // callback(@Query('event') event: string, @Res() res: Response) {

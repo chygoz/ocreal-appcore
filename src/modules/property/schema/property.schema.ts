@@ -177,7 +177,7 @@ export class Property extends Document {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   buyer: User;
 
-  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   seller: User;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })

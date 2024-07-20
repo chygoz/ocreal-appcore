@@ -14,6 +14,9 @@ export enum OfferStatusEnum {
   submitted = 'submitted',
   accepted = 'accepted',
   rejected = 'rejected',
+  titleAndEscrow = 'titleAndEscrow',
+  trackingContingency = 'trackingContingency',
+  signAndClose = 'signAndClose',
 }
 
 export enum FinanceTypeEnum {
@@ -27,6 +30,12 @@ export enum FinanceTypeEnum {
 export enum OfferCreatorTypeEnum {
   buyer = 'buyer',
   agent = 'agent',
+  seller = 'seller',
+}
+
+export enum OfferTypeEnum {
+  buyerOffer = 'buyerOffer',
+  counterOffer = 'counterOffer',
 }
 
 export interface IContingency {
@@ -149,6 +158,14 @@ export class Offer extends Document {
     default: false,
   })
   agentApproval: boolean;
+
+  @Prop({
+    type: SchemaTypes.String,
+    enum: Object.values(OfferTypeEnum),
+    default: OfferTypeEnum.buyerOffer,
+  })
+  offerType: OfferTypeEnum;
+
   @Prop({
     type: SchemaTypes.Date,
     default: null,
@@ -160,6 +177,9 @@ export class Offer extends Document {
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   buyer: User;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Offer', unique: true })
+  counterOffer: Offer;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'User', required: true })
   seller: User;
