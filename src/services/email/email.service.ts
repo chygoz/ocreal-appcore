@@ -18,7 +18,11 @@ export class EmailService {
         from: 'contact@ocreal.online',
         subject: data.subject,
         template: this.getTemplatePath(data.template),
-        context: data.body,
+        context: {
+          ...data.body,
+          year: new Date().getFullYear(),
+          companyName: 'Ocreal',
+        },
       });
       return true;
     } catch (error) {

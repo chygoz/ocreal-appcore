@@ -18,6 +18,7 @@ export class User extends Document {
   @Prop({
     type: {
       propertyType: { type: SchemaTypes.String },
+      preferredPropertyAddress: { type: SchemaTypes.String },
       onboardingCompleted: { type: SchemaTypes.Boolean, default: false },
       spendAmount: { type: SchemaTypes.Mixed },
       financialProcess: { type: SchemaTypes.String },
@@ -28,6 +29,7 @@ export class User extends Document {
   })
   propertyPreference: {
     propertyType: string;
+    preferredPropertyAddress: string;
     onboardingCompleted: boolean;
     spendAmount: {
       min: number;

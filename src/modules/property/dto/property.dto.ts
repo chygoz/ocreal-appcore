@@ -10,6 +10,7 @@ import {
   IsEmail,
 } from 'class-validator';
 import { PropertyQuery } from '../schema/propertyQuery.schema';
+import { PropertyStatusEnum } from '../schema/property.schema';
 class PropertyAddressDetailsDto {
   @IsString()
   formattedAddress: string;
@@ -189,6 +190,9 @@ export class UpdatePropertyDto {
 
   @IsString()
   propertyDescription: string;
+
+  @IsString()
+  currentStatus: PropertyStatusEnum;
 
   @IsString()
   lotSizeValue: string;
@@ -397,7 +401,4 @@ export class CreatePropertyDto {
   @IsOptional() @IsString() sellerAgent?: string;
   @IsOptional() @IsString() buyerAgent?: string;
   @IsOptional() @IsString() documentRepo?: string;
-
-  @IsOptional() @Type(() => Date) createdAt?: Date;
-  @IsOptional() @Type(() => Date) updatedAt?: Date;
 }

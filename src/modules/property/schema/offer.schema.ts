@@ -141,7 +141,7 @@ export class Offer extends Document {
     currency: string;
   };
 
-  @Prop([{ name: SchemaTypes.String, url: SchemaTypes.String }])
+  @Prop({ type: SchemaTypes.Mixed })
   documents: Array<{
     name: string;
     url: string;
@@ -178,10 +178,10 @@ export class Offer extends Document {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   buyer: User;
 
-  @Prop({ type: SchemaTypes.ObjectId, ref: 'Offer', unique: true })
-  counterOffer: Offer;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Offer', default: null })
+  counterOffer?: Offer;
 
-  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', required: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   seller: User;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Agent' })
