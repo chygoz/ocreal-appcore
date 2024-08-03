@@ -29,8 +29,10 @@ import { PropertyTour } from './schema/propertyTour.schema';
 import { CreateTourDto } from './dto/tour.dto';
 import {
   CreateAgentPropertyOfferDto,
+  CreateCounterOfferDto,
   CreateUserOfferDto,
   OfferResponseDto,
+  SellerOrSellerAgentAcceptOffer,
 } from './dto/offer.dto';
 import { configs } from 'src/configs';
 import axios, { AxiosInstance } from 'axios';
@@ -100,10 +102,12 @@ export class PropertyService {
         {
           _id: new Types.ObjectId(propertyId),
           seller: new Types.ObjectId(user._id),
+          isDeleted: { $ne: true },
         },
         {
           _id: new Types.ObjectId(propertyId),
           sellerAgent: new Types.ObjectId(user._id),
+          isDeleted: { $ne: true },
         },
       ],
     });
@@ -145,18 +149,22 @@ export class PropertyService {
         {
           _id: new Types.ObjectId(propertyId),
           seller: new Types.ObjectId(userId),
+          isDeleted: { $ne: true },
         },
         {
           _id: new Types.ObjectId(propertyId),
           buyer: new Types.ObjectId(userId),
+          isDeleted: { $ne: true },
         },
         {
           _id: new Types.ObjectId(propertyId),
           sellerAgent: new Types.ObjectId(userId),
+          isDeleted: { $ne: true },
         },
         {
           _id: new Types.ObjectId(propertyId),
           buyerAgent: new Types.ObjectId(userId),
+          isDeleted: { $ne: true },
         },
       ],
     });
@@ -216,6 +224,30 @@ export class PropertyService {
       .populate('offer')
       .exec();
     return comment;
+  }
+
+  async getPropertyAnalytics(propertyId: string) {
+    const property = await this.propertyModel.findOne({
+      _id: new Types.ObjectId(propertyId),
+      isDeleted: { $ne: true },
+    });
+    if (!property) {
+      throw new NotFoundException('Property not found.');
+    }
+    const [totalClients, totalOffers] = await Promise.all([
+      this.agentPropertyInviteModel.countDocuments({
+        property: new Types.ObjectId(propertyId),
+      }),
+      this.offerModel.countDocuments({
+        property: new Types.ObjectId(propertyId),
+      }),
+    ]);
+    return {
+      viewsCount: property?.viewsCounter ?? 0,
+      totalClients,
+      totalOffers,
+      shareCount: property?.shareCounter ?? 0,
+    };
   }
 
   async getOfferComment(
@@ -279,10 +311,10 @@ export class PropertyService {
 
   async buyerOfferResponse(dto: OfferResponseDto, user: User) {
     const accepted = dto.response;
-    const offer = await this.offerModel
+    const counterOffer = await this.offerModel
       .findOneAndUpdate(
         {
-          _id: new Types.ObjectId(dto.offerId),
+          _id: new Types.ObjectId(dto.counterOfferId),
           buyer: user.id,
           offerType: OfferTypeEnum.counterOffer,
         },
@@ -305,92 +337,296 @@ export class PropertyService {
       )
       .populate('seller')
       .populate('sellerAgent')
+      .populate('buyerAgent')
       .populate('property');
-    if (!offer) {
+    if (!counterOffer) {
       throw new NotFoundException('Offer not found');
     }
-    await this.offerModel.findOneAndUpdate(
-      {
-        counterOffer: new Types.ObjectId(offer._id),
-      },
-      {
-        $set: {
-          currentStatus: dto.response
-            ? OfferStatusEnum.accepted
-            : OfferStatusEnum.rejected,
-        },
-        $push: {
-          status: {
-            status: dto.response
-              ? OfferStatusEnum.accepted
-              : OfferStatusEnum.rejected,
-            eventTime: new Date(),
-          },
-        },
-        offerPrice: offer.offerPrice,
-      },
-      { new: true },
-    );
+    const buyerOffer = await this.offerModel.findById(counterOffer._id);
+    if (!buyerOffer) {
+      throw new NotFoundException("Buyer's Offer not found");
+    }
     if (accepted) {
-      await this.propertyModel.findByIdAndUpdate(offer.property, {
-        $set: {
-          currentStatus: PropertyStatusEnum.underContract,
-        },
-        $push: {
-          status: {
-            status: PropertyStatusEnum.underContract,
-            eventTime: new Date(),
+      const update = await this.offerModel.findByIdAndUpdate(
+        buyerOffer._id,
+        {
+          $set: { currentStatus: OfferStatusEnum.titleAndEscrow },
+          $push: {
+            status: {
+              status: OfferStatusEnum.titleAndEscrow,
+              eventTime: new Date(),
+            },
           },
         },
-      });
-      await this.emailService.sendEmail({
-        email: offer.seller.email,
-        subject: `Property Offer  Accepted For ${offer.property.propertyName}`,
-        template: 'offer_accepted',
-        body: {
-          sellerName: offer.seller.lastname,
-          offerPrice: offer.counterOffer.offerPrice.amount,
-          Status: 'Accepted',
+        {
+          new: true,
         },
-      });
-      if (offer?.sellerAgent || offer?.property?.sellerAgent) {
+      );
+      await this.propertyModel.findOneAndUpdate(
+        { _id: counterOffer.property, isDeleted: { $ne: true } },
+        {
+          $set: {
+            currentStatus: PropertyStatusEnum.underContract,
+          },
+          $push: {
+            status: {
+              status: PropertyStatusEnum.underContract,
+              eventTime: new Date(),
+            },
+          },
+        },
+      );
+      if (counterOffer.seller) {
         await this.emailService.sendEmail({
-          email: offer.sellerAgent.email,
-          subject: `Property Offer Accepted For ${offer.property.propertyName}`,
+          email: counterOffer.seller.email,
+          subject: `Property Offer  Accepted For ${counterOffer.property.propertyName}`,
           template: 'offer_accepted',
           body: {
-            name: offer.sellerAgent.lastname,
-            offerPrice: offer.counterOffer.offerPrice.amount,
+            name: counterOffer.seller.lastname,
+            offerPrice: counterOffer.offerPrice.amount,
             Status: 'Accepted',
+            propertyAddress:
+              counterOffer.property?.propertyAddressDetails?.formattedAddress,
           },
         });
       }
-    }
+      if (counterOffer?.sellerAgent) {
+        await this.emailService.sendEmail({
+          email: counterOffer.sellerAgent.email,
+          subject: `Property Offer Accepted For ${counterOffer.property.propertyName}`,
+          template: 'offer_accepted',
+          body: {
+            name: counterOffer.sellerAgent.lastname,
+            offerPrice: counterOffer.offerPrice.amount,
+            Status: 'Accepted',
+            propertyAddress:
+              counterOffer.property?.propertyAddressDetails?.formattedAddress,
+          },
+        });
+      }
 
+      return update;
+    }
+    const update = await this.offerModel.findOneAndUpdate(
+      { _id: buyerOffer._id, isDeleted: { $ne: true } },
+      {
+        $set: { currentStatus: OfferStatusEnum.rejected },
+        $push: {
+          status: {
+            status: OfferStatusEnum.rejected,
+            eventTime: new Date(),
+          },
+        },
+      },
+      {
+        new: true,
+      },
+    );
     await this.emailService.sendEmail({
-      email: offer.seller.email,
-      subject: `Property Offer  Rejected For ${offer.property.propertyName}`,
-      template: 'offer_accepted',
+      email: counterOffer.seller.email,
+      subject: `Property Offer  Rejected For ${counterOffer.property.propertyName}`,
+      template: 'offer_rejected',
       body: {
-        sellerName: offer.seller.lastname,
-        offerPrice: offer.counterOffer.offerPrice.amount,
-        Status: 'Accepted',
+        name: counterOffer.seller.lastname,
+        offerPrice: counterOffer.counterOffer.offerPrice.amount,
+        Status: 'Rejected',
+        propertyAddress:
+          counterOffer.property?.propertyAddressDetails?.formattedAddress,
       },
     });
-    if (offer?.sellerAgent || offer?.property?.sellerAgent) {
+    if (counterOffer?.seller) {
       await this.emailService.sendEmail({
-        email: offer.sellerAgent.email,
-        subject: `Property Offer Rejected For ${offer.property.propertyName}`,
-        template: 'offer_accepted',
+        email: counterOffer.seller.email,
+        subject: `Property Offer Rejected For ${counterOffer.property.propertyName}`,
+        template: 'offer_rejected',
         body: {
-          name: offer.sellerAgent.lastname,
-          offerPrice: offer.counterOffer.offerPrice.amount,
-          Status: 'Accepted',
+          name: counterOffer.seller.lastname,
+          offerPrice: counterOffer.offerPrice.amount,
+          Status: 'Rejected',
+          propertyAddress:
+            counterOffer.property?.propertyAddressDetails?.formattedAddress,
         },
       });
     }
-    return offer;
+    if (counterOffer?.sellerAgent) {
+      await this.emailService.sendEmail({
+        email: counterOffer.sellerAgent.email,
+        subject: `Property Offer Rejected For ${counterOffer.property.propertyName}`,
+        template: 'offer_rejected',
+        body: {
+          name: counterOffer.sellerAgent.lastname,
+          offerPrice: counterOffer.offerPrice.amount,
+          Status: 'Rejected',
+          propertyAddress:
+            counterOffer.property?.propertyAddressDetails?.formattedAddress,
+        },
+      });
+    }
+
+    return update;
   }
+
+  //TODO: Continue from here, you need to create seller and sellet agent offer response APIs, also note the edge cases and things to look out for, reference buyer response logic for help
+  // async sellerOfferResponse(dto: OfferResponseDto, user: User) {
+  //   const accepted = dto.response;
+  //   const offer = await this.offerModel
+  //     .findOne(
+  //       {
+  //         _id: new Types.ObjectId(dto.counterOfferId),
+  //         seller: user.id,
+  //       },
+  //       {
+  //         $set: {
+  //           currentStatus: dto.response
+  //             ? OfferStatusEnum.accepted
+  //             : OfferStatusEnum.rejected,
+  //         },
+  //         $push: {
+  //           status: {
+  //             status: dto.response
+  //               ? OfferStatusEnum.accepted
+  //               : OfferStatusEnum.rejected,
+  //             eventTime: new Date(),
+  //           },
+  //         },
+  //       },
+  //       { new: true },
+  //     )
+  //     .populate('seller')
+  //     .populate('sellerAgent')
+  //     .populate('buyerAgent')
+  //     .populate('property')
+  //     .populate('counterOffer');
+  //   if (!offer) {
+  //     throw new NotFoundException('Offer not found');
+  //   }
+
+  //   if (offer.counterOffer) {
+  //     await this.offerModel.findByIdAndUpdate(offer.counterOffer._id, {
+  //       //TODO: At this point update the sensitive details only
+  //     });
+  //   }
+
+  //   const buyerOffer = await this.offerModel.findById(counterOffer._id);
+  //   if (!buyerOffer) {
+  //     throw new NotFoundException("Buyer's Offer not found");
+  //   }
+  //   if (accepted) {
+  //     const update = await this.offerModel.findByIdAndUpdate(
+  //       buyerOffer._id,
+  //       {
+  //         $set: { currentStatus: OfferStatusEnum.titleAndEscrow },
+  //         $push: {
+  //           status: {
+  //             status: OfferStatusEnum.titleAndEscrow,
+  //             eventTime: new Date(),
+  //           },
+  //         },
+  //       },
+  //       {
+  //         new: true,
+  //       },
+  //     );
+  //     await this.propertyModel.findByIdAndUpdate(counterOffer.property, {
+  //       $set: {
+  //         currentStatus: PropertyStatusEnum.underContract,
+  //       },
+  //       $push: {
+  //         status: {
+  //           status: PropertyStatusEnum.underContract,
+  //           eventTime: new Date(),
+  //         },
+  //       },
+  //     });
+  //     if (counterOffer.seller) {
+  //       await this.emailService.sendEmail({
+  //         email: counterOffer.seller.email,
+  //         subject: `Property Offer  Accepted For ${counterOffer.property.propertyName}`,
+  //         template: 'offer_accepted',
+  //         body: {
+  //           name: counterOffer.seller.lastname,
+  //           offerPrice: counterOffer.offerPrice.amount,
+  //           Status: 'Accepted',
+  //           propertyAddress:
+  //             counterOffer.property?.propertyAddressDetails?.formattedAddress,
+  //         },
+  //       });
+  //     }
+  //     if (counterOffer?.sellerAgent) {
+  //       await this.emailService.sendEmail({
+  //         email: counterOffer.sellerAgent.email,
+  //         subject: `Property Offer Accepted For ${counterOffer.property.propertyName}`,
+  //         template: 'offer_accepted',
+  //         body: {
+  //           name: counterOffer.sellerAgent.lastname,
+  //           offerPrice: counterOffer.offerPrice.amount,
+  //           Status: 'Accepted',
+  //           propertyAddress:
+  //             counterOffer.property?.propertyAddressDetails?.formattedAddress,
+  //         },
+  //       });
+  //     }
+
+  //     return update;
+  //   }
+  //   const update = await this.offerModel.findByIdAndUpdate(
+  //     buyerOffer._id,
+  //     {
+  //       $set: { currentStatus: OfferStatusEnum.rejected },
+  //       $push: {
+  //         status: {
+  //           status: OfferStatusEnum.rejected,
+  //           eventTime: new Date(),
+  //         },
+  //       },
+  //     },
+  //     {
+  //       new: true,
+  //     },
+  //   );
+  //   await this.emailService.sendEmail({
+  //     email: counterOffer.seller.email,
+  //     subject: `Property Offer  Rejected For ${counterOffer.property.propertyName}`,
+  //     template: 'offer_rejected',
+  //     body: {
+  //       name: counterOffer.seller.lastname,
+  //       offerPrice: counterOffer.counterOffer.offerPrice.amount,
+  //       Status: 'Rejected',
+  //       propertyAddress:
+  //         counterOffer.property?.propertyAddressDetails?.formattedAddress,
+  //     },
+  //   });
+  //   if (counterOffer?.seller) {
+  //     await this.emailService.sendEmail({
+  //       email: counterOffer.seller.email,
+  //       subject: `Property Offer Rejected For ${counterOffer.property.propertyName}`,
+  //       template: 'offer_rejected',
+  //       body: {
+  //         name: counterOffer.seller.lastname,
+  //         offerPrice: counterOffer.offerPrice.amount,
+  //         Status: 'Rejected',
+  //         propertyAddress:
+  //           counterOffer.property?.propertyAddressDetails?.formattedAddress,
+  //       },
+  //     });
+  //   }
+  //   if (counterOffer?.sellerAgent) {
+  //     await this.emailService.sendEmail({
+  //       email: counterOffer.sellerAgent.email,
+  //       subject: `Property Offer Rejected For ${counterOffer.property.propertyName}`,
+  //       template: 'offer_rejected',
+  //       body: {
+  //         name: counterOffer.sellerAgent.lastname,
+  //         offerPrice: counterOffer.offerPrice.amount,
+  //         Status: 'Rejected',
+  //         propertyAddress:
+  //           counterOffer.property?.propertyAddressDetails?.formattedAddress,
+  //       },
+  //     });
+  //   }
+
+  //   return update;
+  // }
 
   async createUserPropertyOffer(
     data: CreateUserOfferDto,
@@ -398,21 +634,84 @@ export class PropertyService {
   ): Promise<Offer> {
     const offerCreated = await this.offerModel.find({
       $or: [
-        { property: data.property, buyer: user },
-        { property: data.property, buyerAgent: data?.buyerAgent },
+        { property: new Types.ObjectId(data.property), buyer: user },
+        {
+          property: new Types.ObjectId(data.property),
+          buyerAgent: data?.buyerAgent,
+        },
       ],
     });
-    if (offerCreated.length > 0) {
-      throw new BadRequestException(
-        'An offer has already been created for this property',
-      );
-    }
     const property = await this.propertyModel
       .findById(data.property)
       .populate(['buyer', 'seller', 'sellerAgent'])
       .exec();
     if (!property) {
       throw new NotFoundException('Property not found');
+    }
+    if (offerCreated.length > 0) {
+      const updatedOffer = await this.offerModel.findByIdAndUpdate(
+        offerCreated[0]._id,
+        {
+          ...data,
+        },
+      );
+      if (updatedOffer?.buyerAgent) {
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
+          title: `Property Offer Updated`,
+          user: new Types.ObjectId(data.buyerAgent) as any,
+          userType: NotificationUserType.agent,
+        });
+        await this.emailService.sendEmail({
+          email: property?.buyerAgent.email,
+          subject: `Property Offer Updated`,
+          template: 'offer_updated',
+          body: {
+            name: property?.buyerAgent.fullname,
+            offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+            offerStatus: 'Pending-Acceptance',
+            propertyAddress: property.propertyName,
+          },
+        });
+      }
+      if (property?.seller) {
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
+          title: `Property Offer Updated`,
+          user: new Types.ObjectId(property.seller._id) as any,
+          userType: NotificationUserType.user,
+        });
+        await this.emailService.sendEmail({
+          email: property?.seller.email,
+          subject: `Property Offer Updated`,
+          template: 'offer_updated',
+          body: {
+            name: property?.seller.fullname,
+            offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+            offerStatus: 'Pending-Acceptance',
+            propertyAddress: property.propertyName,
+          },
+        });
+      }
+      if (property?.sellerAgent) {
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
+          title: `Property Offer Updated`,
+          user: new Types.ObjectId(property.sellerAgent._id) as any,
+          userType: NotificationUserType.agent,
+        });
+        await this.emailService.sendEmail({
+          email: property?.sellerAgent.email,
+          subject: `Property Offer Updated`,
+          template: 'offer_updated',
+          body: {
+            name: property?.sellerAgent.fullname,
+            offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+            offerStatus: 'Pending-Acceptance',
+            propertyAddress: property.propertyName,
+          },
+        });
+      }
     }
     const canCreateOffer = [
       PropertyStatusEnum.pendingVerification,
@@ -423,206 +722,262 @@ export class PropertyService {
         'You can not make an offer for this property at this time.',
       );
     }
-    // if (data.submitWithOutAgentApproval && !data.buyerAgent) {
-    //   throw new BadRequestException(
-    //     'Please add a property agent before completing this action',
-    //   );
-    // }
     const newData = {
       ...data,
       buyer: user,
       buyerAgent: data.buyerAgent ? new Types.ObjectId(data.buyerAgent) : null,
       offerCreator: OfferCreatorTypeEnum.buyer,
+      seller: property?.seller,
+      sellerAgent: property?.sellerAgent,
     };
     const createdProperty = new this.offerModel(newData);
     const result = createdProperty.save();
-
     if (data?.buyerAgent) {
       await this.notificationService.createNotification({
-        body: `${user.fullname},  just created a new offer for a ${property.propertyName} property.`,
+        body: `${user.fullname}, just created a new offer for a ${property.propertyName} property.`,
         title: `New property offer from ${user.fullname}`,
         user: new Types.ObjectId(data.buyerAgent) as any,
         userType: NotificationUserType.agent,
+      });
+    }
+    if (data?.buyerAgent) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
+        title: `Property Offer Updated`,
+        user: new Types.ObjectId(data.buyerAgent) as any,
+        userType: NotificationUserType.agent,
+      });
+      await this.emailService.sendEmail({
+        email: property?.buyerAgent.email,
+        subject: `Property Offer Updated`,
+        template: 'offer_updated',
+        body: {
+          name: property?.buyerAgent.fullname,
+          offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+          offerStatus: 'Pending-Acceptance',
+          propertyAddress: property.propertyName,
+        },
+      });
+    }
+    if (property?.seller) {
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: property?.seller.fullname,
+        offerPrice: `${data.offerPrice.currency}${data.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
+        title: `Property Offer Created`,
+        user: new Types.ObjectId(property.seller._id) as any,
+        userType: NotificationUserType.user,
+      });
+      await this.emailService.sendEmail({
+        email: property?.seller.email,
+        subject: `Property Offer Created`,
+        template: 'buyer_create_offer',
+        body: emailBody,
+      });
+    }
+    if (property?.sellerAgent) {
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: property?.sellerAgent.fullname,
+        offerPrice: `${data.offerPrice.currency}${data.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
+        title: `Property Offer Created`,
+        user: property.sellerAgent._id,
+        userType: NotificationUserType.agent,
+      });
+      await this.emailService.sendEmail({
+        email: property?.sellerAgent.email,
+        subject: `Property Offer Created`,
+        template: 'buyer_create_offer',
+        body: emailBody,
+      });
+    }
+    if (property?.buyerAgent) {
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: property?.sellerAgent.fullname,
+        offerPrice: `${data.offerPrice.currency}${data.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
+        title: `Property Offer Created`,
+        user: property?.buyerAgent._id,
+        userType: NotificationUserType.agent,
+      });
+      await this.emailService.sendEmail({
+        email: property?.buyerAgent.email,
+        subject: `Property Offer Created`,
+        template: 'buyer_create_offer',
+        body: emailBody,
       });
     }
     return result;
   }
 
   async sellerCreateOrUpdateCounterOffer(
-    data: CreateUserOfferDto,
+    data: CreateCounterOfferDto,
+    offerId: string,
     user: User,
   ): Promise<Offer> {
-    const property = await this.propertyModel.findById(data.property);
-    if (property.seller !== user._id) {
+    const buyerOffer = await this.offerModel
+      .findById(offerId)
+      .populate(['buyer', 'seller', 'sellerAgent'])
+      .exec();
+    if (buyerOffer?.seller._id.toString() !== user._id.toString()) {
       throw new UnauthorizedException(
-        'You are permitted to perform this action',
+        'You are not permitted to perform this action',
       );
     }
-    if (property.currentStatus !== PropertyStatusEnum.nowShowing) {
+    if (buyerOffer.currentStatus !== OfferStatusEnum.submitted) {
       throw new BadRequestException(
-        'You can not make an offer for this property at this time.',
+        'You can not make a counter offer for this property at this time.',
       );
     }
-    const offerFound = await this.offerModel.findOne({
-      property: new Types.ObjectId(data.property),
+    const property = await this.propertyModel.findOne({
+      _id: buyerOffer.property,
+      isDeleted: { $ne: true },
+    });
+    if (!property) {
+      throw new NotFoundException('Property not found.');
+    }
+    const previousOffer = await this.offerModel.findOne({
+      property: buyerOffer.property,
+      $or: [
+        { buyer: buyerOffer?.buyer },
+        { buyerAgent: buyerOffer?.buyerAgent },
+      ],
+      counterOffer: buyerOffer._id,
       offerType: OfferTypeEnum.counterOffer,
     });
-    if (!offerFound) {
-      const newCounterOffer = await this.offerModel.create({
-        ...data,
-        offerType: OfferTypeEnum.counterOffer,
-        buyer: user,
-        offerCreator: OfferCreatorTypeEnum.seller,
-        property: new Types.ObjectId(data.property),
-      });
-      const createdPropertyOffer = new this.offerModel(newCounterOffer);
-      const result = await createdPropertyOffer.save();
-      await this.offerModel.findByIdAndUpdate(data.property, {
-        counterOffer: result.id,
-      });
-      return result;
-    }
-    const update = await this.offerModel.findByIdAndUpdate(offerFound._id, {
-      ...data,
-      property: new Types.ObjectId(data.property),
-    });
-    return update;
-  }
 
-  async sellerAgentCreateOrUpdateCounterOffer(
-    data: CreateUserOfferDto,
-    user: Agent,
-  ): Promise<Offer> {
-    const property = await this.propertyModel.findById(data.property);
-    if (property.seller !== user._id) {
-      throw new UnauthorizedException(
-        'You are permitted to perform this action',
-      );
-    }
-    if (property.currentStatus !== PropertyStatusEnum.nowShowing) {
-      throw new BadRequestException(
-        'You can not make an offer for this property at this time.',
-      );
-    }
-    const offerFound = await this.offerModel.findOne({
-      property: new Types.ObjectId(data.property),
-      offerType: OfferTypeEnum.counterOffer,
-    });
-    if (!offerFound) {
+    if (!previousOffer) {
       const newCounterOffer = await this.offerModel.create({
         ...data,
+        counterOffer: buyerOffer._id,
         offerType: OfferTypeEnum.counterOffer,
-        buyer: user,
+        buyer: buyerOffer?.buyer,
+        buyerAgent: buyerOffer?.buyerAgent,
         offerCreator: OfferCreatorTypeEnum.seller,
-        property: new Types.ObjectId(data.property),
+        property: buyerOffer.property,
+        seller: property?.seller,
       });
       const createdPropertyOffer = new this.offerModel(newCounterOffer);
       const result = createdPropertyOffer.save();
       return result;
     }
-    const update = await this.offerModel.findByIdAndUpdate(offerFound._id, {
-      ...data,
-      property: new Types.ObjectId(data.property),
-    });
+    const update = await this.offerModel.findByIdAndUpdate(
+      previousOffer._id,
+      data,
+      {
+        new: true,
+      },
+    );
     return update;
   }
 
-  async createAgentPropertyOffer(
-    data: CreateAgentPropertyOfferDto,
-    agent: Agent,
+  async sellerAgentCreateOrUpdateCounterOffer(
+    data: CreateCounterOfferDto,
+    offerId: string,
+    user: Agent,
   ): Promise<Offer> {
-    const offerCreated = await this.offerModel.find({
-      $or: [
-        { property: data.property, buyerAgent: agent },
-        { property: data.property, buy: data.buyer },
-      ],
-    });
-    if (offerCreated.length > 0) {
-      throw new BadRequestException(
-        'An offer has already been created fo rthis property',
-      );
-    }
-    const property = await this.propertyModel
-      .findById(data.property)
+    const buyerOffer = await this.offerModel
+      .findById(offerId)
       .populate(['buyer', 'seller', 'sellerAgent'])
       .exec();
+    if (buyerOffer?.sellerAgent._id.toString() !== user._id.toString()) {
+      throw new UnauthorizedException(
+        'You are not permitted to perform this action',
+      );
+    }
+    if (buyerOffer.currentStatus !== OfferStatusEnum.submitted) {
+      throw new BadRequestException(
+        'You can not make a counter offer for this property at this time.',
+      );
+    }
+    const property = await this.propertyModel.findById({
+      _id: buyerOffer.property,
+      isDeleted: { $ne: true },
+    });
     if (!property) {
-      throw new NotFoundException('Property not found');
+      throw new NotFoundException('Property not found.');
     }
-    if (property.currentStatus !== PropertyStatusEnum.pendingVerification) {
-      throw new BadRequestException(
-        'You can not make an offer for this property at this time.',
-      );
-    }
-    const canCreateOffer =
-      (property.currentStatus as PropertyStatusEnum) ===
-      PropertyStatusEnum.nowShowing;
-    if (!canCreateOffer) {
-      console.log(canCreateOffer, property.currentStatus);
-      throw new BadRequestException(
-        'You can not make an offer for this property at this time.',
-      );
-    }
-
-    const newData = {
-      ...data,
-      // seller: property?.seller,
-      // sellerAgent: property.sellerAgent,
-      buyer: new Types.ObjectId(data.buyer),
-      buyerAgent: agent,
-      offerCreator: OfferCreatorTypeEnum.agent,
-    };
-    const createdProperty = new this.offerModel(newData);
-    const result = await createdProperty.save();
-
-    await this.notificationService.createNotification({
-      body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
-      title: `New submitted offer for ${property.propertyName}`,
-      user: property.sellerAgent as any,
-      userType: NotificationUserType.agent,
+    const previousOffer = await this.offerModel.findOne({
+      property: buyerOffer.property,
+      $or: [
+        { buyer: buyerOffer?.buyer },
+        { buyerAgent: buyerOffer?.buyerAgent },
+      ],
+      counterOffer: buyerOffer._id,
+      offerType: OfferTypeEnum.counterOffer,
     });
 
-    if (property.seller) {
-      await this.notificationService.createNotification({
-        body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
-        title: `New submitted offer for ${property.propertyName}`,
-        user: property.seller as any,
+    if (!previousOffer) {
+      const newCounterOffer = await this.offerModel.create({
+        ...data,
+        counterOffer: buyerOffer._id,
+        offerType: OfferTypeEnum.counterOffer,
+        buyer: buyerOffer?.buyer,
+        buyerAgent: buyerOffer?.buyerAgent,
+        offerCreator: OfferCreatorTypeEnum.agent,
+        property: buyerOffer.property,
+        seller: property?.seller,
       });
+      const createdPropertyOffer = new this.offerModel(newCounterOffer);
+      const result = createdPropertyOffer.save();
+      return result;
     }
-
-    await this.notificationService.createNotification({
-      body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, on your behalf for ${property.propertyName} property.`,
-      title: `New submitted offer for ${property.propertyName}`,
-      user: property.buyer as any,
-    });
-
-    return result;
+    const update = await this.offerModel.findByIdAndUpdate(
+      previousOffer._id,
+      data,
+      {
+        new: true,
+      },
+    );
+    return update;
   }
 
-  async agentSubmitPropertyOffer(agent: Agent, id: string): Promise<Offer> {
-    const offer = await this.offerModel.findOne({
-      _id: new Types.ObjectId(id),
-      buyerAgent: agent,
-      submitWithOutAgentApproval: { $ne: true },
-    });
-    if (!offer) {
+  async buyerSubmitOffer(offerId: string, user: User): Promise<Offer> {
+    const offer = await this.offerModel
+      .findByIdAndUpdate(
+        offerId,
+        {
+          currentStatus: OfferStatusEnum.submitted,
+          $push: {
+            status: {
+              status: OfferStatusEnum.submitted,
+              eventTime: new Date(),
+            },
+          },
+        },
+        {
+          new: true,
+        },
+      )
+      .populate(['buyer', 'seller', 'sellerAgent', 'buyerAgent'])
+      .exec();
+    if (!offer || offer?.buyer !== user._id) {
       throw new NotFoundException('Offer not found');
-    }
-    if (offer.agentApproval) {
-      throw new BadRequestException('Offer already submitted');
-    }
-    if (offer.currentStatus !== OfferStatusEnum.pending) {
-      throw new BadRequestException('You can not subtmit this offer');
     }
     const property = await this.propertyModel
       .findById(offer.property)
-      .populate(['buyer', 'seller', 'sellerAgent'])
+      .populate(['buyer', 'seller', 'sellerAgent', 'buyerAgent'])
       .exec();
     if (!property) {
       throw new NotFoundException('Property not found');
     }
     const canCreateOffer = [
       PropertyStatusEnum.pendingVerification,
+      PropertyStatusEnum.properyOwnershipVerified,
       PropertyStatusEnum.nowShowing,
     ].includes(property.currentStatus as PropertyStatusEnum);
     if (!canCreateOffer) {
@@ -631,14 +986,360 @@ export class PropertyService {
         'You can not make an offer for this property at this time.',
       );
     }
-    const update = await this.offerModel.findByIdAndUpdate(
-      offer.id,
+    if (offer?.buyerAgent && offer.buyerAgent?.email) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
+        title: `Property Offer Submitted`,
+        user: offer?.buyerAgent._id,
+        userType: NotificationUserType.agent,
+      });
+
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: offer?.buyerAgent.fullname,
+        propertyPrice: `${offer.offerPrice.currency}${offer.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+      await this.emailService.sendEmail({
+        email: offer?.buyerAgent.email,
+        subject: `Property Offer Submitted`,
+        template: 'buyer_create_offer',
+        body: emailBody,
+      });
+    }
+    if (offer?.seller && offer.seller?.email) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
+        title: `New Property Offer`,
+        user: offer?.seller._id,
+        userType: NotificationUserType.user,
+      });
+
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: offer?.seller.fullname,
+        propertyPrice: `${offer.offerPrice.currency}${offer.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+      await this.emailService.sendEmail({
+        email: offer?.seller.email,
+        subject: `New Property Offer`,
+        template: 'buyer_create_offer',
+        body: emailBody,
+      });
+    }
+    if (offer?.sellerAgent && offer.sellerAgent?.email) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
+        title: `Property Offer Updated`,
+        user: offer.sellerAgent._id,
+        userType: NotificationUserType.agent,
+      });
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: offer?.seller.fullname,
+        propertyPrice: `${offer.offerPrice.currency}${offer.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+      await this.emailService.sendEmail({
+        email: offer?.sellerAgent.email,
+        subject: `New Property Offer`,
+        template: 'buyer_create_offer',
+        body: emailBody,
+      });
+    }
+    return offer;
+  }
+
+  // async createAgentPropertyOffer(
+  //   data: CreateAgentPropertyOfferDto,
+  //   agent: Agent,
+  // ): Promise<Offer> {
+  //   const offerCreated = await this.offerModel.find({
+  //     $or: [
+  //       { property: data.property, buyerAgent: agent },
+  //       { property: data.property, buy: data.buyer },
+  //     ],
+  //   });
+  //   if (offerCreated.length > 0) {
+  //     throw new BadRequestException(
+  //       'An offer has already been created fo rthis property',
+  //     );
+  //   }
+  //   const property = await this.propertyModel
+  //     .findById(data.property)
+  //     .populate(['buyer', 'seller', 'sellerAgent'])
+  //     .exec();
+  //   if (!property) {
+  //     throw new NotFoundException('Property not found');
+  //   }
+  //   if (property.currentStatus !== PropertyStatusEnum.pendingVerification) {
+  //     throw new BadRequestException(
+  //       'You can not make an offer for this property at this time.',
+  //     );
+  //   }
+  //   const canCreateOffer = [
+  //     PropertyStatusEnum.pendingVerification,
+  //     PropertyStatusEnum.properyOwnershipVerified,
+  //     PropertyStatusEnum.nowShowing,
+  //   ].includes(property.currentStatus as PropertyStatusEnum);
+  //   if (!canCreateOffer) {
+  //     console.log(canCreateOffer, property.currentStatus);
+  //     throw new BadRequestException(
+  //       'You can not make an offer for this property at this time.',
+  //     );
+  //   }
+
+  //   const newData = {
+  //     ...data,
+  //     // seller: property?.seller,
+  //     // sellerAgent: property.sellerAgent,
+  //     buyer: data.buyer ? new Types.ObjectId(data.buyer) : true,
+  //     buyerAgent: agent,
+  //     offerCreator: OfferCreatorTypeEnum.agent,
+  //   };
+  //   const createdProperty = new this.offerModel(newData);
+  //   const result = await createdProperty.save();
+
+  //   if (createdProperty?.buyer) {
+  //     await this.notificationService.createNotification({
+  //       body: `${createdProperty?.buyer.fullname}, just created an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
+  //       title: `New submitted offer for ${property.propertyName}`,
+  //       user: property.sellerAgent as any,
+  //       userType: NotificationUserType.agent,
+  //     });
+  //   }
+
+  //   // if (property.seller) {
+  //   //   await this.notificationService.createNotification({
+  //   //     body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
+  //   //     title: `New submitted offer for ${property.propertyName}`,
+  //   //     user: property.seller as any,
+  //   //   });
+  //   // }
+
+  //   await this.notificationService.createNotification({
+  //     body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, on your behalf for ${property.propertyName} property.`,
+  //     title: `New submitted offer for ${property.propertyName}`,
+  //     user: property.buyer as any,
+  //   });
+
+  //   return result;
+  // }
+
+  async createAgentPropertyOffer(
+    data: CreateAgentPropertyOfferDto,
+    user: Agent,
+  ): Promise<Offer> {
+    const property = await this.propertyModel
+      .findById(data.property)
+      .populate(['buyer', 'seller', 'sellerAgent', 'buyerAgent'])
+      .exec();
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    const offerCreated = await this.offerModel.findOne({
+      property: property._id,
+      buyerAgent: user._id,
+      offerType: OfferTypeEnum.buyerOffer,
+    });
+    const canCreateOffer = [
+      PropertyStatusEnum.pendingVerification,
+      PropertyStatusEnum.properyOwnershipVerified,
+      PropertyStatusEnum.nowShowing,
+    ].includes(property.currentStatus as PropertyStatusEnum);
+    if (!canCreateOffer) {
+      throw new BadRequestException(
+        'You can not make an offer for this property at this time.',
+      );
+    }
+    if (offerCreated) {
+      const updatedOffer = await this.offerModel
+        .findByIdAndUpdate(offerCreated._id, {
+          ...data,
+        })
+        .populate(['buyer', 'seller', 'sellerAgent', 'buyerAgent'])
+        .exec();
+      if (updatedOffer?.buyer) {
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just updated an offer for ${property.propertyName} property.`,
+          title: `Property Offer Updated`,
+          user: updatedOffer?.buyer._id,
+          userType: NotificationUserType.user,
+        });
+        await this.emailService.sendEmail({
+          email: updatedOffer?.buyer.email,
+          subject: `Property Offer Updated`,
+          template: 'offer_updated',
+          body: {
+            name: updatedOffer?.buyer.fullname,
+            offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+            offerStatus: 'Pending-Acceptance',
+            propertyAddress: property.propertyName,
+          },
+        });
+      }
+      // if (updatedOffer?.seller) {
+      //   await this.notificationService.createNotification({
+      //     body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
+      //     title: `Property Offer Updated`,
+      //     user: updatedOffer.seller._id,
+      //     userType: NotificationUserType.user,
+      //   });
+      //   await this.emailService.sendEmail({
+      //     email: updatedOffer?.seller.email,
+      //     subject: `Property Offer Updated`,
+      //     template: 'offer_updated',
+      //     body: {
+      //       name: updatedOffer?.seller.fullname,
+      //       offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+      //       offerStatus: 'Pending-Acceptance',
+      //       propertyAddress: property.propertyName,
+      //     },
+      //   });
+      // }
+      // if (updatedOffer?.sellerAgent) {
+      //   await this.notificationService.createNotification({
+      //     body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
+      //     title: `Property Offer Updated`,
+      //     user: updatedOffer.sellerAgent._id,
+      //     userType: NotificationUserType.agent,
+      //   });
+      //   await this.emailService.sendEmail({
+      //     email: updatedOffer?.sellerAgent.email,
+      //     subject: `Property Offer Updated`,
+      //     template: 'offer_updated',
+      //     body: {
+      //       name: updatedOffer?.sellerAgent.fullname,
+      //       offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+      //       offerStatus: 'Pending-Acceptance',
+      //       propertyAddress: property.propertyName,
+      //     },
+      //   });
+      // }
+    }
+
+    const newData = {
+      ...data,
+      buyer: property?.buyer,
+      buyerAgent: user._id,
+      offerCreator: OfferCreatorTypeEnum.agent,
+      seller: property?.seller,
+      sellerAgent: property?.sellerAgent,
+    };
+    const dataToSave = new this.offerModel(newData);
+    const newOffer = await dataToSave.save();
+    if (newOffer?.buyer) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
+        title: `Property Offer Updated`,
+        user: newOffer?.buyer._id,
+        userType: NotificationUserType.agent,
+      });
+      await this.emailService.sendEmail({
+        email: newOffer.buyer.email,
+        subject: `Property Offer Updated`,
+        template: 'offer_updated',
+        body: {
+          name: newOffer?.buyer.fullname,
+          offerPrice: `${data.offerPrice.currency}data.offerPrice.amount`,
+          offerStatus: 'Pending-Acceptance',
+          propertyAddress: property.propertyName,
+        },
+      });
+    }
+    // if (property?.seller) {
+    //   const emailBody = {
+    //     propertyName: property.propertyName,
+    //     name: property?.seller.fullname,
+    //     offerPrice: `${data.offerPrice.currency}${data.offerPrice.amount}`,
+    //     offerDate: new Date(),
+    //   };
+    //   await this.notificationService.createNotification({
+    //     body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
+    //     title: `Property Offer Created`,
+    //     user: new Types.ObjectId(property.seller._id) as any,
+    //     userType: NotificationUserType.user,
+    //   });
+    //   await this.emailService.sendEmail({
+    //     email: property?.seller.email,
+    //     subject: `Property Offer Created`,
+    //     template: 'buyer_create_offer',
+    //     body: emailBody,
+    //   });
+    // }
+    // if (property?.sellerAgent) {
+    //   const emailBody = {
+    //     propertyName: property.propertyName,
+    //     name: property?.sellerAgent.fullname,
+    //     offerPrice: `${data.offerPrice.currency}${data.offerPrice.amount}`,
+    //     offerDate: new Date(),
+    //   };
+
+    //   await this.notificationService.createNotification({
+    //     body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
+    //     title: `Property Offer Created`,
+    //     user: property.sellerAgent._id,
+    //     userType: NotificationUserType.agent,
+    //   });
+    //   await this.emailService.sendEmail({
+    //     email: property?.sellerAgent.email,
+    //     subject: `Property Offer Created`,
+    //     template: 'buyer_create_offer',
+    //     body: emailBody,
+    //   });
+    // }
+    // if (property?.buyerAgent) {
+    //   const emailBody = {
+    //     propertyName: property.propertyName,
+    //     name: property?.sellerAgent.fullname,
+    //     offerPrice: `${data.offerPrice.currency}${data.offerPrice.amount}`,
+    //     offerDate: new Date(),
+    //   };
+
+    //   await this.notificationService.createNotification({
+    //     body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
+    //     title: `Property Offer Created`,
+    //     user: property?.buyerAgent._id,
+    //     userType: NotificationUserType.agent,
+    //   });
+    //   await this.emailService.sendEmail({
+    //     email: property?.buyerAgent.email,
+    //     subject: `Property Offer Created`,
+    //     template: 'buyer_create_offer',
+    //     body: emailBody,
+    //   });
+    // }
+    return newOffer;
+  }
+
+  async buyerAgentSubmitOffer(user: Agent, offerId: string): Promise<Offer> {
+    const offer = await this.offerModel
+      .findById(offerId)
+      .populate(['buyer', 'seller', 'sellerAgent', 'buyerAgent'])
+      .exec();
+
+    if (!offer || offer?.buyerAgent !== user._id) {
+      throw new NotFoundException('Offer not found');
+    }
+    if (offer.currentStatus !== OfferStatusEnum.pending) {
+      throw new BadRequestException('Offer already submitted');
+    }
+    const property = await this.propertyModel
+      .findById(offer.property)
+      .populate(['buyer', 'seller', 'sellerAgent', 'buyerAgent'])
+      .exec();
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    await this.offerModel.findByIdAndUpdate(
+      offerId,
       {
+        currentStatus: OfferStatusEnum.submitted,
         seller: property?.seller,
-        sellerAgent: property.sellerAgent,
+        sellerAgent: user._id,
         agentApproval: true,
         agentApprovalDate: new Date().toUTCString(),
-        currentStatus: OfferStatusEnum.submitted,
         $push: {
           status: {
             status: OfferStatusEnum.submitted,
@@ -650,27 +1351,78 @@ export class PropertyService {
         new: true,
       },
     );
-    await this.notificationService.createNotification({
-      body: `${agent.fullname}, just submitted an offer of $${offer.offerPrice.amount}, for your ${property.propertyName} property.`,
-      title: `New submitted offer for ${property.propertyName}`,
-      user: property.sellerAgent as any,
-      userType: NotificationUserType.agent,
-    });
-
-    if (property.seller) {
+    const canCreateOffer = [
+      PropertyStatusEnum.pendingVerification,
+      PropertyStatusEnum.properyOwnershipVerified,
+      PropertyStatusEnum.nowShowing,
+    ].includes(property.currentStatus as PropertyStatusEnum);
+    if (!canCreateOffer) {
+      console.log(canCreateOffer, property.currentStatus);
+      throw new BadRequestException(
+        'You can not make an offer for this property at this time.',
+      );
+    }
+    if (offer?.buyer && offer?.buyer?.email) {
       await this.notificationService.createNotification({
-        body: `${agent.fullname}, just submitted an offer of $${offer.offerPrice.amount}, for your ${property.propertyName} property.`,
-        title: `New submitted offer for ${property.propertyName}`,
-        user: property.seller as any,
+        body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
+        title: `Property Offer Submitted`,
+        user: offer.buyer._id,
+        userType: NotificationUserType.agent,
+      });
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: offer?.buyer.fullname,
+        propertyPrice: `${offer.offerPrice.currency}${offer.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+      await this.emailService.sendEmail({
+        email: offer?.buyer.email,
+        subject: `Property Offer Submitted`,
+        template: 'buyer_create_offer',
+        body: emailBody,
       });
     }
-
-    await this.notificationService.createNotification({
-      body: `${agent.fullname}, just approved and submitted your offer of $${offer.offerPrice.amount}, for ${property.propertyName} property.`,
-      title: `New submitted offer for ${property.propertyName}`,
-      user: property.buyer as any,
-    });
-    return update;
+    if (offer?.seller && offer?.seller?.email) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
+        title: `New Property Offer`,
+        user: offer.seller._id,
+        userType: NotificationUserType.user,
+      });
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: offer?.seller.fullname,
+        propertyPrice: `${offer.offerPrice.currency}${offer.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+      await this.emailService.sendEmail({
+        email: offer?.seller.email,
+        subject: `New Property Offer`,
+        template: 'buyer_create_offer',
+        body: emailBody,
+      });
+    }
+    if (offer?.sellerAgent && offer?.sellerAgent?.email) {
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
+        title: `Property Offer Updated`,
+        user: offer.sellerAgent._id,
+        userType: NotificationUserType.agent,
+      });
+      const emailBody = {
+        propertyName: property.propertyName,
+        name: offer?.seller.fullname,
+        propertyPrice: `${offer.offerPrice.currency}${offer.offerPrice.amount}`,
+        offerDate: new Date(),
+      };
+      await this.emailService.sendEmail({
+        email: offer?.sellerAgent.email,
+        subject: `New Property Offer`,
+        template: 'buyer_create_offer',
+        body: emailBody,
+      });
+    }
+    return offer;
   }
 
   async queryPropertiesByAddress(UnparsedAddress: string) {
@@ -727,7 +1479,10 @@ export class PropertyService {
   }
 
   async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
-    const property = await this.propertyModel.findById(data.property);
+    const property = await this.propertyModel.findById({
+      _id: data.property,
+      isDeleted: { $ne: true },
+    });
     if (!property) throw new NotFoundException('Property not found');
     if (property.currentStatus !== PropertyStatusEnum.nowShowing) {
       throw new BadRequestException(
@@ -780,7 +1535,10 @@ export class PropertyService {
   }
 
   async saveUserProperty(propertyId: string, user: User) {
-    const property = await this.propertyModel.findById(propertyId);
+    const property = await this.propertyModel.findById({
+      _id: new Types.ObjectId(propertyId),
+      isDeleted: { $ne: true },
+    });
     if (!property) {
       throw new NotFoundException('Property not found');
     }
@@ -874,6 +1632,7 @@ export class PropertyService {
     const property = await this.propertyModel.findOne({
       _id: new mongoose.Types.ObjectId(id),
       $or: [{ seller: user.id }, { sellerAgent: user.id }],
+      isDeleted: { $ne: true },
     });
     if (!property) {
       throw new NotFoundException('Property not found');
@@ -971,7 +1730,10 @@ export class PropertyService {
         'An invite has already been sent to this agent',
       );
     }
-    const property = await this.propertyModel.findById(data.propertyId);
+    const property = await this.propertyModel.findById({
+      _id: new Types.ObjectId(data.propertyId),
+      isDeleted: { $ne: true },
+    });
     const agentRole =
       user_role == AccountTypeEnum.BUYER ? 'Buying Agent' : 'Selling Agent';
     if (!property) {
@@ -1273,6 +2035,7 @@ export class PropertyService {
     const queryParam: any = {
       seller: user._id,
       ...queryData,
+      isDeleted: { $ne: true },
     };
     if (propertyType) {
       queryParam.propertyType = propertyType;
@@ -1307,6 +2070,309 @@ export class PropertyService {
     ]);
 
     return { result, total, page, limit };
+  }
+
+  async deleteSingleProperty(id: string, user: User | Agent) {
+    const property = await this.propertyModel.findOne({
+      _id: new Types.ObjectId(id),
+      isDeleted: { $ne: true },
+    });
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    if (
+      property.seller._id.toString() !== user._id.toString() &&
+      property.sellerAgent._id.toString() !== user._id.toString()
+    ) {
+      throw new UnauthorizedException(
+        'You are not authorized to delete this property',
+      );
+    }
+
+    await this.propertyModel.findByIdAndUpdate(id, {
+      isDeleted: true,
+    });
+    return true;
+  }
+
+  async sellerOrSellerAgentResponsetoOffer(
+    dto: SellerOrSellerAgentAcceptOffer,
+    user: User | Agent,
+  ) {
+    const offer = await this.offerModel
+      .findById(dto.offerId)
+      .populate('buyer')
+      .populate('seller')
+      .populate('property')
+      .populate('sellerAgent')
+      .populate('buyerAgent')
+      .exec();
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+    if (
+      offer.seller._id.toString() !== user._id.toString() &&
+      offer.sellerAgent._id.toString() !== user._id.toString()
+    ) {
+      throw new UnauthorizedException(
+        'You are not authorized to respond to this offer',
+      );
+    }
+
+    if (offer.currentStatus !== OfferStatusEnum.submitted) {
+      throw new BadRequestException('You can no longer respond to this offer');
+    }
+
+    if (dto.response) {
+      if (offer.seller) {
+        await this.emailService.sendEmail({
+          email: offer.seller.email,
+          subject: 'Offer Accepted',
+          template: 'offer_accepted',
+          body: {
+            name: offer.seller.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just accpted an offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Accepted`,
+          user: user._id,
+          userType: NotificationUserType.user,
+        });
+      }
+
+      if (offer.sellerAgent) {
+        await this.emailService.sendEmail({
+          email: offer.sellerAgent.email,
+          subject: 'Offer Accepted',
+          template: 'offer_accepted',
+          body: {
+            name: offer.sellerAgent.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just accpted an offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Accepted`,
+          user: offer.sellerAgent._id,
+          userType: NotificationUserType.agent,
+        });
+      }
+
+      if (offer.buyer) {
+        await this.emailService.sendEmail({
+          email: offer.buyer.email,
+          subject: dto.header,
+          template: 'buyer_create_offer',
+          body: {
+            name: offer.buyer.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+            message: dto.body,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just accepted your offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Accepted`,
+          user: offer.buyer._id,
+          userType: NotificationUserType.user,
+        });
+      }
+      if (offer.buyerAgent) {
+        await this.emailService.sendEmail({
+          email: offer.buyerAgent.email,
+          subject: dto.header,
+          template: 'buyer_create_offer',
+          body: {
+            name: offer.buyerAgent.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+            message: dto.body,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just just accepted your offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Accepted`,
+          user: offer.buyerAgent._id,
+          userType: NotificationUserType.agent,
+        });
+      }
+      await this.offerModel.updateMany(
+        { property: offer.property._id },
+        {
+          currentStatus: OfferStatusEnum.rejected,
+          $push: {
+            status: {
+              eventTime: new Date(),
+              status: OfferStatusEnum.rejected,
+            },
+          },
+        },
+      );
+      const udpatedOffer = await this.offerModel
+        .findByIdAndUpdate(
+          offer._id,
+          {
+            currentStatus: OfferStatusEnum.accepted,
+            $push: {
+              status: {
+                eventTime: new Date(),
+                status: OfferStatusEnum.rejected,
+              },
+            },
+          },
+          {
+            new: true,
+          },
+        )
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .populate('sellerAgent')
+        .populate('buyerAgent')
+        .exec();
+      const buyers = await this.offerModel.distinct('buyer', {
+        property: offer.property._id,
+      });
+      const buyerAgents = await this.offerModel.distinct('buyerAgent', {
+        property: offer.property._id,
+      });
+      const uniqueBuyers: any = Array.from(new Set(buyers)).filter((id) => id);
+      const uniqueBuyerAgents: any = Array.from(new Set(buyerAgents)).filter(
+        (id) => id,
+      );
+
+      if (uniqueBuyers.length > 0) {
+        await this.notificationService.createMultipleNotifications({
+          body: `${user.fullname}, just just rejected your offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Accepted`,
+          user: uniqueBuyers,
+          userType: NotificationUserType.user,
+        });
+      }
+
+      if (uniqueBuyerAgents.length > 0) {
+        await this.notificationService.createMultipleNotifications({
+          body: `${user.fullname}, just just rejected your offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Accepted`,
+          user: uniqueBuyers,
+          userType: NotificationUserType.agent,
+        });
+      }
+
+      return udpatedOffer;
+    } else {
+      if (offer.seller) {
+        await this.emailService.sendEmail({
+          email: offer.seller.email,
+          subject: 'Offer Rejected',
+          template: 'offer_rejected',
+          body: {
+            name: offer.seller.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just rejected an offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Rejected`,
+          user: user._id,
+          userType: NotificationUserType.user,
+        });
+      }
+
+      if (offer.sellerAgent) {
+        await this.emailService.sendEmail({
+          email: offer.sellerAgent.email,
+          subject: 'Offer Rejected',
+          template: 'offer_rejected',
+          body: {
+            name: offer.sellerAgent.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just rejected an offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Rejected`,
+          user: offer.sellerAgent._id,
+          userType: NotificationUserType.agent,
+        });
+      }
+
+      if (offer.buyer) {
+        await this.emailService.sendEmail({
+          email: offer.buyer.email,
+          subject: dto.header,
+          template: 'offer_rejected',
+          body: {
+            name: offer.buyer.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+            message: dto.body,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just rejected your offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Rejected`,
+          user: offer.buyer._id,
+          userType: NotificationUserType.user,
+        });
+      }
+      if (offer.buyerAgent) {
+        await this.emailService.sendEmail({
+          email: offer.buyerAgent.email,
+          subject: dto.header,
+          template: 'offer_rejected',
+          body: {
+            name: offer.buyerAgent.fullname,
+            propertyAddress: offer.property.propertyName,
+            propertyName: offer.property.propertyName,
+            offerPrice: offer.offerPrice.amount,
+            message: dto.body,
+          },
+        });
+        await this.notificationService.createNotification({
+          body: `${user.fullname}, just rejected your offer for this ${offer.property.propertyName} property.`,
+          title: `Offer Rejected`,
+          user: offer.buyerAgent._id,
+          userType: NotificationUserType.agent,
+        });
+      }
+
+      const udpatedOffer = await this.offerModel
+        .findByIdAndUpdate(
+          offer._id,
+          {
+            currentStatus: OfferStatusEnum.rejected,
+            $push: {
+              status: {
+                eventTime: new Date(),
+                status: OfferStatusEnum.rejected,
+              },
+            },
+          },
+          { new: true },
+        )
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .populate('sellerAgent')
+        .populate('buyerAgent')
+        .exec();
+      return udpatedOffer;
+    }
   }
 
   async getAgentBuyerProperties(paginationDto: PaginationDto, user: Agent) {
@@ -1540,6 +2606,9 @@ export class PropertyService {
         .skip(skip)
         .limit(limit)
         .populate(['sellerAgent', 'buyerAgent', 'buyer', 'seller'])
+        .sort({
+          createdAt: -1,
+        })
         .exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
@@ -1887,8 +2956,8 @@ export class PropertyService {
         update.buyerAgentAcceptance = true;
         user = property.buyer;
       }
-      await this.propertyModel.findByIdAndUpdate(
-        property._id,
+      await this.propertyModel.findOneAndUpdate(
+        { _id: property._id, isDeleted: { $ne: true } },
         { ...update },
         { new: true },
       );
@@ -1986,6 +3055,7 @@ export class PropertyService {
       _id: new Types.ObjectId(id),
       sellerAgent: agent.id,
       currentStatus: PropertyStatusEnum.pendingVerification,
+      isDeleted: { $ne: true },
     });
 
     if (!property) {
@@ -2020,8 +3090,9 @@ export class PropertyService {
   }
 
   async getSingleProperty(id: string): Promise<Property> {
+    console.log(' CALLED');
     const property = await this.propertyModel
-      .findById(id)
+      .findByIdAndUpdate(id, { $inc: { viewsCounter: 1 } }, { new: true })
       .populate('brokers.agent')
       .populate('sellerAgent', 'firstname lastname avatar')
       .populate('buyerAgent', 'firstname lastname avatar')
@@ -2030,7 +3101,6 @@ export class PropertyService {
     if (!property) {
       throw new NotFoundException('Property not found');
     }
-
     return property;
   }
 
@@ -2075,7 +3145,10 @@ export class PropertyService {
     propertyId: string,
     dto: CreatePropertyDocumentDto,
   ) {
-    const property = await this.propertyModel.findById(propertyId);
+    const property = await this.propertyModel.findOne({
+      _id: new Types.ObjectId(propertyId),
+      isDeleted: { $ne: true },
+    });
     if (!property) {
       throw new NotFoundException('Property not found');
     }

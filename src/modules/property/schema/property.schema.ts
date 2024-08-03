@@ -60,6 +60,9 @@ export class Property extends Document {
     country?: string;
   };
 
+  @Prop({ type: SchemaTypes.Boolean, default: false })
+  isDeleted: boolean;
+
   @Prop([{ url: SchemaTypes.String, thumbNail: SchemaTypes.String }])
   images: Array<IPropertyImage>;
 
@@ -194,6 +197,12 @@ export class Property extends Document {
 
   @Prop({ type: SchemaTypes.Boolean, default: false })
   buyerAgentAcceptance: boolean;
+
+  @Prop({ type: SchemaTypes.Number, default: 0 })
+  viewsCounter: number;
+
+  @Prop({ type: SchemaTypes.Number, default: 0 })
+  shareCounter: number;
 
   @Prop({ default: Date.now })
   createdAt: Date;

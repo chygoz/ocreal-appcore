@@ -30,6 +30,10 @@ export class PropertyPreferenceDto {
   financialProcess: string;
 
   @IsOptional()
+  @IsString()
+  preferredPropertyAddress: string;
+
+  @IsOptional()
   @IsBoolean()
   preApprovalAffiliates: boolean;
 

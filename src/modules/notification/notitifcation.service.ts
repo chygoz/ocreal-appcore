@@ -28,6 +28,17 @@ export default class NotificationService {
     return notification;
   }
 
+  async createMultipleNotifications(data: {
+    title: string;
+    body: string;
+    user: string[];
+    userType?: NotificationUserType;
+  }) {
+    await this.notificationModel.insertMany(data);
+    // const notification = await saved.save();
+    // return notification;
+  }
+
   // async sendSms(receiverPhoneNumber: string, message: string) {
   //   const senderPhoneNumber = configs.TWILO_PHONE_NUMBER;
   //   return this.twilioClient.messages.create({

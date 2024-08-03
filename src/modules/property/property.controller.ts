@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -31,8 +32,10 @@ import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 import { CreateTourDto } from './dto/tour.dto';
 import {
   CreateAgentPropertyOfferDto,
+  CreateCounterOfferDto,
   CreateUserOfferDto,
   OfferResponseDto,
+  SellerOrSellerAgentAcceptOffer,
 } from './dto/offer.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 import { AccountTypeEnum } from 'src/constants';
@@ -75,6 +78,38 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('/buyer/submit/offer/:id')
+  async buyerSubmitOffer(@Req() req: Request, @Res() res: Response) {
+    const offerId = req.params.id;
+    const result = await this.propertyService.buyerSubmitOffer(
+      offerId,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Offer Submitted',
+      statusCode: 200,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Post('/agent/submit/offer/:id')
+  async buyerAgentSubmitOffer(@Req() req: Request, @Res() res: Response) {
+    const id = req.params.id;
+    const result = await this.propertyService.buyerAgentSubmitOffer(
+      req.agent,
+      id,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Offer Submitted',
+      statusCode: 200,
+    });
+  }
+
   @UseGuards(AgentOrSellerAuthGuard)
   @Post('offer/comment')
   async addOfferComment(
@@ -109,6 +144,18 @@ export class PropertyController {
     this._sendResponse({
       res,
       message: 'Offer Found',
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Get('/analytics/:id')
+  async getPropertyAnalytics(@Res() res: Response, @Req() req: Request) {
+    const id = req.params.id;
+    const data = await this.propertyService.getPropertyAnalytics(id);
+    this._sendResponse({
+      res,
+      message: 'Property Analytics Done',
       data,
     });
   }
@@ -202,14 +249,16 @@ export class PropertyController {
   }
 
   @UseGuards(SellerAuthGuard)
-  @Post('/seller/create/counter-offer')
+  @Post('/seller/create/counter-offer/:id')
   async sellerCreateOrUpdateCounterOffer(
-    @Body() dto: CreateUserOfferDto,
+    @Body() dto: CreateCounterOfferDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    const propertyId = req.params.id;
     const result = await this.propertyService.sellerCreateOrUpdateCounterOffer(
       dto,
+      propertyId,
       req.user,
     );
     this._sendResponse({
@@ -221,15 +270,17 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAgentAuthGuard)
-  @Post('/agent/create/counter-offer')
+  @Post('/agent/create/counter-offer/:id')
   async sellerAgentCreateOrUpdateCounterOffer(
-    @Body() dto: CreateUserOfferDto,
+    @Body() dto: CreateCounterOfferDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    const propertyId = req.params.id;
     const result =
       await this.propertyService.sellerAgentCreateOrUpdateCounterOffer(
         dto,
+        propertyId,
         req.agent,
       );
     this._sendResponse({
@@ -256,22 +307,6 @@ export class PropertyController {
       data: { result },
       message: 'Offer Created',
       statusCode: 201,
-    });
-  }
-
-  @UseGuards(JwtAgentAuthGuard)
-  @Post('/agent/submit/offer/:id')
-  async agentSubmitPropertyOffer(@Req() req: Request, @Res() res: Response) {
-    const id = req.params.id;
-    const result = await this.propertyService.agentSubmitPropertyOffer(
-      req.agent,
-      id,
-    );
-    this._sendResponse({
-      res,
-      data: { result },
-      message: 'Offer Submitted',
-      statusCode: 200,
     });
   }
 
@@ -412,6 +447,36 @@ export class PropertyController {
     this._sendResponse({
       res,
       message: 'Properties Found',
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('/seller/offer/response')
+  async sellerOrSellerAgentResponsetoOffer(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() dto: SellerOrSellerAgentAcceptOffer,
+  ) {
+    const data = await this.propertyService.sellerOrSellerAgentResponsetoOffer(
+      dto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      message: `Properties Offer ${dto.response ? 'Accepted' : 'Rejected'}.`,
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Delete('/delete/:id')
+  async deleteSingleProperty(@Res() res: Response, @Req() req: Request) {
+    const id = req.params.id;
+    const data = await this.propertyService.deleteSingleProperty(id, req.user);
+    this._sendResponse({
+      res,
+      message: 'Properties deleted successfully',
       data,
     });
   }

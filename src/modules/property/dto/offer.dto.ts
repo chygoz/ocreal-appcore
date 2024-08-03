@@ -36,14 +36,29 @@ export class DocumentDto {
   url: string;
 }
 
+export class SellerOrSellerAgentAcceptOffer {
+  @IsNotEmpty()
+  @IsString()
+  header: string;
+
+  @IsNotEmpty()
+  @IsString()
+  body: string;
+
+  @IsNotEmpty()
+  @IsString()
+  offerId: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  response: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  notifyOtherParties: boolean;
+}
+
 export class CreateUserOfferDto {
-  // @ValidateNested({ each: true })
-  // @Type(() => OfferStatus)
-  // status: OfferStatus[];
-
-  // @IsEnum(OfferStatusEnum)
-  // currentStatus: OfferStatusEnum;
-
   @IsEnum(FinanceTypeEnum)
   financeType: FinanceTypeEnum;
 
@@ -79,34 +94,59 @@ export class CreateUserOfferDto {
   submitWithOutAgentApproval: boolean;
 
   @IsString()
-  property: string;
-
-  @IsString()
   @IsOptional()
   buyerAgent?: string;
 
   @IsString()
   coverLetter: string;
 
-  // @IsString()
-  // buyer: string;
+  @IsString()
+  property: string;
+}
+export class CreateCounterOfferDto {
+  @IsEnum(FinanceTypeEnum)
+  financeType: FinanceTypeEnum;
 
-  // @IsString()
-  // seller: string;
+  @IsOptional()
+  @IsArray()
+  documents?: DocumentDto[];
 
-  // @IsString()
-  // sellerAgent: string;
+  @IsNotEmpty()
+  apprasalContingency: boolean | Contingency;
 
-  // @IsString()
-  // buyerAgent: string;
+  @IsNotEmpty()
+  financeContingency: boolean | Contingency;
 
-  // @Type(() => Date)
-  // @IsString()
-  // createdAt: Date;
+  @IsNotEmpty()
+  inspectionContingency: boolean | Contingency;
 
-  // @Type(() => Date)
-  // @IsString()
-  // updatedAt: Date;
+  @IsNotEmpty()
+  closeEscrow: boolean | Contingency;
+
+  @ValidateNested()
+  @Type(() => Price)
+  offerPrice: Price;
+
+  @ValidateNested()
+  @Type(() => Price)
+  downPayment: Price;
+
+  @ValidateNested()
+  @Type(() => Price)
+  loanAmount: Price;
+
+  @IsNotEmpty()
+  @IsOptional()
+  @IsBoolean()
+  submitWithOutAgentApproval: boolean;
+
+  @IsString()
+  @IsOptional()
+  buyerAgent?: string;
+
+  @IsString()
+  @IsOptional()
+  coverLetter: string;
 }
 
 export class OfferResponseDto {
@@ -116,21 +156,11 @@ export class OfferResponseDto {
 
   @IsNotEmpty()
   @IsString()
-  offerId: string;
+  counterOfferId: string;
 }
 export class CreateAgentPropertyOfferDto {
-  // @ValidateNested({ each: true })
-  // @Type(() => OfferStatus)
-  // status: OfferStatus[];
-
-  // @IsEnum(OfferStatusEnum)
-  // currentStatus: OfferStatusEnum;
-
   @IsEnum(FinanceTypeEnum)
   financeType: FinanceTypeEnum;
-
-  // @IsEnum(OfferCreatorTypeEnum)
-  // offerCreator: OfferCreatorTypeEnum;
 
   @IsNotEmpty()
   apprasalContingency: boolean | Contingency;
@@ -159,10 +189,11 @@ export class CreateAgentPropertyOfferDto {
   @IsString()
   property: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   buyer: string;
 
+  @IsOptional()
   @IsString()
   coverLetter: string;
 }
