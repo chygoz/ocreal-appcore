@@ -6,6 +6,7 @@ import {
   IsString,
   // IsDate,
   ValidateNested,
+  IsOptional,
 } from 'class-validator';
 
 class EventDateDTO {
@@ -37,4 +38,43 @@ export class CreateTourDto {
 export class IsMongoIdDto {
   @IsMongoId()
   id: string;
+}
+
+export class PropertyTourScheduleDto {
+  @IsNotEmpty()
+  @IsString()
+  property: string;
+
+  @IsNotEmpty()
+  @Type(() => Date)
+  eventDate: Date;
+  @IsOptional()
+  @IsString()
+  startTime: string;
+
+  @IsOptional()
+  @IsString()
+  endTime: string;
+
+  @IsNotEmpty()
+  @IsString()
+  timeZone: string;
+}
+
+export class UpdatePropertyTourScheduleDto {
+  @IsOptional()
+  @Type(() => Date)
+  eventDate?: Date;
+
+  @IsOptional()
+  @IsString()
+  startTime?: string;
+
+  @IsOptional()
+  @IsString()
+  endTime?: string;
+
+  @IsOptional()
+  @IsString()
+  timeZone?: string;
 }

@@ -52,6 +52,10 @@ import {
 } from './modules/property/schema/offerComment.schema';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronJobModule } from './cronJob/cronJob.module';
+import {
+  PropertyTourSchedule,
+  PropertyTourScheduleSchema,
+} from './modules/property/schema/proertyTourSchedule.schema';
 
 @Module({
   imports: [
@@ -67,6 +71,7 @@ import { CronJobModule } from './cronJob/cronJob.module';
       { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
       { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
       { name: OfferComment.name, schema: OfferCommentSchema },
+      { name: PropertyTourSchedule.name, schema: PropertyTourScheduleSchema },
     ]),
     ScheduleModule.forRoot(),
     CronJobModule,

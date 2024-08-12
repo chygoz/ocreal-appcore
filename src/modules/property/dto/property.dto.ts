@@ -8,9 +8,9 @@ import {
   ValidateNested,
   IsMongoId,
   IsEmail,
+  IsBoolean,
 } from 'class-validator';
 import { PropertyQuery } from '../schema/propertyQuery.schema';
-import { PropertyStatusEnum } from '../schema/property.schema';
 class PropertyAddressDetailsDto {
   @IsString()
   formattedAddress: string;
@@ -49,6 +49,12 @@ class PropertyAddressDetailsDto {
   @IsString()
   @IsOptional()
   country?: string;
+}
+
+export class SellerOrAgentPublishPropertyDto {
+  @IsNotEmpty()
+  @IsBoolean()
+  publish: boolean;
 }
 
 class BrokerDto {
@@ -190,9 +196,6 @@ export class UpdatePropertyDto {
 
   @IsString()
   propertyDescription: string;
-
-  @IsString()
-  currentStatus: PropertyStatusEnum;
 
   @IsString()
   lotSizeValue: string;

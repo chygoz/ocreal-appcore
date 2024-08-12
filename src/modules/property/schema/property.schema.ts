@@ -21,6 +21,7 @@ export enum PropertyStatusEnum {
   buyerAgentAcceptedInvite = 'Buyer Agent Accepted Invite',
   sellerAgentAcceptedInvite = 'Seller Agent Accepted Invite',
   sellerAgentAdded = 'Seller Agent Added',
+  unpublished = 'Unpublished',
 }
 
 export interface PropertyTax {
