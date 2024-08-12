@@ -26,6 +26,10 @@ import {
   PropertyDocumentRepoSchema,
 } from '../propertyRepo/schema/propertyDocumentRepo.schema';
 import { OfferComment, OfferCommentSchema } from './schema/offerComment.schema';
+import {
+  PropertyTourSchedule,
+  PropertyTourScheduleSchema,
+} from './schema/proertyTourSchedule.schema';
 
 @Module({
   imports: [
@@ -40,6 +44,7 @@ import { OfferComment, OfferCommentSchema } from './schema/offerComment.schema';
       { name: UserSavedProperty.name, schema: UserSavedPropertySchema },
       { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
       { name: OfferComment.name, schema: OfferCommentSchema },
+      { name: PropertyTourSchedule.name, schema: PropertyTourScheduleSchema },
     ]),
     EmailModule,
     NotificationModule,

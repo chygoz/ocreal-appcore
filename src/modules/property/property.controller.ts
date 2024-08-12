@@ -22,6 +22,7 @@ import {
   CreatePropertyDto,
   PropertyOfferComment,
   SavePropertyQueryDTO,
+  SellerOrAgentPublishPropertyDto,
   UpdatePropertyDto,
 } from './dto/property.dto';
 import { PropertyService } from './property.service';
@@ -29,7 +30,11 @@ import { SellerAuthGuard } from 'src/guards/seller.gaurd';
 import { IsPublic } from 'src/guards/isPublic.gaurd';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
-import { CreateTourDto } from './dto/tour.dto';
+import {
+  CreateTourDto,
+  PropertyTourScheduleDto,
+  UpdatePropertyTourScheduleDto,
+} from './dto/tour.dto';
 import {
   CreateAgentPropertyOfferDto,
   CreateCounterOfferDto,
@@ -464,7 +469,101 @@ export class PropertyController {
     );
     this._sendResponse({
       res,
-      message: `Properties Offer ${dto.response ? 'Accepted' : 'Rejected'}.`,
+      message: `Property Offer ${dto.response ? 'Accepted' : 'Rejected'}.`,
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Put('/publish-property/:id')
+  async sellerOrAgentPublishOrUnpublishProperty(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() dto: SellerOrAgentPublishPropertyDto,
+  ) {
+    const id = req.params.id;
+    const data =
+      await this.propertyService.sellerOrAgentPublishOrUnpublishProperty(
+        id,
+        req.user || req.agent,
+        dto,
+      );
+    this._sendResponse({
+      res,
+      message: `Property has been ${dto.publish ? 'Published' : 'Unpublished'}.`,
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('add/tour-schedule')
+  async agentOrSellerAddTourSchedule(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() dto: PropertyTourScheduleDto,
+  ) {
+    const data = await this.propertyService.agentOrSellerAddTourSchedule(
+      req.user || req.agent,
+      dto,
+    );
+    this._sendResponse({
+      res,
+      message: `Property Tour Schedule Added.`,
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Put('update/tour-schedule/:id')
+  async agentOrSellerUpdateTourSchedule(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() dto: UpdatePropertyTourScheduleDto,
+  ) {
+    const id = req.params.id;
+    const data = await this.propertyService.agentOrSellerUpdateTourSchedule(
+      id,
+      req.user || req.agent,
+      dto,
+    );
+    this._sendResponse({
+      res,
+      message: `Property Tour Schedule Updated.`,
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Delete('delete/tour-schedule/:id')
+  async agentOrSellerDeleteTourSchedule(
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const id = req.params.id;
+    await this.propertyService.agentOrSellerDeleteTourSchedule(
+      id,
+      req.user || req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: `Property Tour Schedule Deleted.`,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Get('/get/tour-schedules')
+  async getAgentOrSellerTourSchedules(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentOrSellerTourSchedules(
+      paginationDto,
+      req.user || req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Property Tour Schedules Found.',
       data,
     });
   }
