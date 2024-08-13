@@ -172,7 +172,7 @@ export class AuthService {
     };
   }
 
-  async userLogin(loginDto: LoginUserDto) {
+  async userLogin(loginDto: LoginUserDto) {g
     const user = await this.userModel.findOne({
       email: loginDto.email,
       password: crypto
@@ -264,7 +264,7 @@ export class AuthService {
       template: 'welcome',
       body: {
         verificationCode: token,
-        recipientName: 'User',
+        fullname: 'User',
       },
     });
     return { token };
