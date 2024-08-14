@@ -565,7 +565,7 @@ export class AuthService {
       template: 'welcome',
       body: {
         verificationCode: token,
-        recipientName: 'User',
+        fullname: 'User',
       },
     });
     return { token };
