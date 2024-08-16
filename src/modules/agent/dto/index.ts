@@ -56,6 +56,7 @@ export class OnboardAgentDto {
   @IsNotEmpty()
   region: string;
 
+  @IsOptional()
   @IsString()
   avatar: string;
 

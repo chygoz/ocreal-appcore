@@ -30,6 +30,10 @@ import {
   PropertyTourSchedule,
   PropertyTourScheduleSchema,
 } from './schema/proertyTourSchedule.schema';
+import {
+  SharePropertyDoc,
+  SharePropertyDocSchema,
+} from './schema/shareDocument.schema';
 
 @Module({
   imports: [
@@ -45,6 +49,7 @@ import {
       { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
       { name: OfferComment.name, schema: OfferCommentSchema },
       { name: PropertyTourSchedule.name, schema: PropertyTourScheduleSchema },
+      { name: SharePropertyDoc.name, schema: SharePropertyDocSchema },
     ]),
     EmailModule,
     NotificationModule,
