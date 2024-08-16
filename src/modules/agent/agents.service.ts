@@ -43,10 +43,6 @@ export class AgentsService {
       new: true,
     });
 
-    if (agent.invitedBy) {
-      //TODO: Notify the user that invited this agent that they have been onaboarded
-    }
-
     const token = createAgentJwtToken({
       id: agent._id,
       email: agent.email,
@@ -137,35 +133,41 @@ export class AgentsService {
           'An account with this mobile already exists',
         );
     }
-    //TODO: Perform any notification actions here
 
-    const payload = { ...data };
-    if (data?.firstname && data?.lastname) {
-      payload['fullname'] = `${data.firstname} ${data.lastname}`;
-    }
-    if (data?.firstname && !data?.lastname) {
-      payload['fullname'] = `${data.firstname} ${agent.lastname}`;
-    }
-    if (!data?.firstname && data?.lastname) {
-      payload['fullname'] = `${agent.firstname} ${data.lastname}`;
+    const updateData: Partial<Agent> = { ...data };
+    if (data?.firstname || data?.lastname) {
+      updateData.fullname = `${data.firstname || agent.firstname} ${data.lastname || agent.lastname}`;
     }
 
-    const updatedAgent = await this.agentModel.findByIdAndUpdate(
-      agent._id,
-      payload,
+    const updatedAgent = await this.agentModel.findOneAndUpdate(
+      { _id: agent.id },
+      updateData,
+      { new: true },
     );
 
-    const token = createAgentJwtToken(updatedAgent!);
+    const token = createAgentJwtToken({
+      id: updatedAgent?._id,
+      email: updatedAgent?.email,
+      firstname: updatedAgent?.firstname,
+      lastname: updatedAgent?.lastname,
+      fullname: updatedAgent?.fullname,
+      emailVerified: updatedAgent?.emailVerified,
+      region: updatedAgent?.region,
+      licence_number: updatedAgent?.licence_number,
+      avatar: updatedAgent?.avatar,
+    });
 
     return {
       Agent: {
-        id: updatedAgent!._id,
-        email: updatedAgent!.email,
-        firstname: updatedAgent!.firstname,
-        lastname: updatedAgent!.lastname,
-        fullname: updatedAgent!.fullname,
-        licence_number: updatedAgent!.licence_number,
-        region: updatedAgent!.region,
+        id: updatedAgent?._id,
+        email: updatedAgent?.email,
+        firstname: updatedAgent?.firstname,
+        lastname: updatedAgent?.lastname,
+        fullname: updatedAgent?.fullname,
+        emailVerified: updatedAgent?.emailVerified,
+        region: updatedAgent?.region,
+        licence_number: updatedAgent?.licence_number,
+        avatar: updatedAgent?.avatar,
       },
       token,
     };

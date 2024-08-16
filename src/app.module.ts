@@ -56,6 +56,10 @@ import {
   PropertyTourSchedule,
   PropertyTourScheduleSchema,
 } from './modules/property/schema/proertyTourSchedule.schema';
+import {
+  SharePropertyDoc,
+  SharePropertyDocSchema,
+} from './modules/property/schema/shareDocument.schema';
 
 @Module({
   imports: [
@@ -72,6 +76,7 @@ import {
       { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
       { name: OfferComment.name, schema: OfferCommentSchema },
       { name: PropertyTourSchedule.name, schema: PropertyTourScheduleSchema },
+      { name: SharePropertyDoc.name, schema: SharePropertyDocSchema },
     ]),
     ScheduleModule.forRoot(),
     CronJobModule,

@@ -44,6 +44,7 @@ import {
 } from './dto/offer.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 import { AccountTypeEnum } from 'src/constants';
+import { CreateSharePropertyDocDto } from './dto/shareDocument.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -200,6 +201,56 @@ export class PropertyController {
       data: { property },
       message: 'Property search saved',
       statusCode: 201,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('share/property/document')
+  async sharePropertyDocument(
+    @Body() dto: CreateSharePropertyDocDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const share = await this.propertyService.sharePropertyDocument(
+      req.agent || req.user,
+      dto,
+    );
+    this._sendResponse({
+      res,
+      data: { share },
+      message: 'Property Document Shared',
+      statusCode: 201,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Get('share/property/documents/:id')
+  async getAllSharedDocuments(@Req() req: Request, @Res() res: Response) {
+    const id = req.params.id;
+    const documentsShareList = await this.propertyService.getAllSharedDocuments(
+      req.agent || req.user,
+      id,
+    );
+    this._sendResponse({
+      res,
+      data: { documentsShareList },
+      message: 'Property Documents Found',
+      statusCode: 200,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Delete('remove/property/document/:id')
+  async removeSharedDocumentAccess(@Req() req: Request, @Res() res: Response) {
+    const id = req.params.id;
+    await this.propertyService.removeSharedDocumentAccess(
+      req.agent || req.user,
+      id,
+    );
+    this._sendResponse({
+      res,
+      message: 'Property Document Removed',
+      statusCode: 200,
     });
   }
 

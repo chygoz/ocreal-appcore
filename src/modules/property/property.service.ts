@@ -57,6 +57,9 @@ import { PropertyDocumentRepo } from '../propertyRepo/schema/propertyDocumentRep
 import { CreatePropertyDocumentDto } from './dto/AddProperty.dto';
 import { OfferComment } from './schema/offerComment.schema';
 import { PropertyTourSchedule } from './schema/proertyTourSchedule.schema';
+import { SharePropertyDoc } from './schema/shareDocument.schema';
+import { CreateSharePropertyDocDto } from './dto/shareDocument.dto';
+import { generateReferralCode } from 'src/utils/randome-generators';
 
 @Injectable()
 export class PropertyService {
@@ -80,6 +83,8 @@ export class PropertyService {
     private propertyTourScheduleModel: Model<PropertyTourSchedule>,
     @InjectModel(OfferComment.name)
     private offerCommentModel: Model<OfferComment>,
+    @InjectModel(SharePropertyDoc.name)
+    private sharePropertyDocModel: Model<SharePropertyDoc>,
     private readonly emailService: EmailService,
     private readonly notificationService: NotificationService,
     // private readonly axiosInstance: AxiosInstance,
@@ -95,6 +100,102 @@ export class PropertyService {
       //   'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
       // },
     });
+  }
+
+  async sharePropertyDocument(
+    user: User | Agent,
+    dto: CreateSharePropertyDocDto,
+  ) {
+    const property = await this.propertyModel.findById(dto.property);
+    if (!property) {
+      throw new NotFoundException("This property doesn't exist");
+    }
+    if (
+      property.seller.toString() !== user.id &&
+      property.sellerAgent.toString() !== user.id
+    ) {
+      throw new UnauthorizedException(
+        'You are not permitted to perform this action.',
+      );
+    }
+    let shareToken: null | string = null;
+    while (!shareToken) {
+      shareToken = generateReferralCode(16);
+      const tokenExists = await this.sharePropertyDocModel.findOne({
+        shareToken,
+      });
+      if (tokenExists) shareToken = null;
+    }
+
+    const payload = {
+      ...dto,
+      seller: property?.seller,
+      sellerAgent: property?.sellerAgent,
+      property: property.id,
+      shareToken,
+    };
+
+    const payloadModel = await this.sharePropertyDocModel.create(payload);
+    const sharedDoc = await payloadModel.save();
+    const document = await this.sharePropertyDocModel
+      .findById(sharedDoc._id)
+      .populate('seller')
+      .populate('sellerAgent')
+      .populate('property');
+
+    const emailBody = {
+      recipientName: dto.name,
+      senderName: user?.firstname,
+      documentLink: `${configs.SELF_BASE_URL}/property/property-documents/${sharedDoc._id}`,
+    };
+    await this.emailService.sendEmail({
+      email: dto.email,
+      subject: `Property Document Available`,
+      template: 'property_document',
+      body: emailBody,
+    });
+    return document;
+  }
+
+  async getAllSharedDocuments(user: User | Agent, id: string) {
+    const property = await this.propertyModel.findById(id);
+    if (!property) {
+      throw new NotFoundException("This property doesn't exist");
+    }
+    if (
+      property.seller.toString() !== user.id &&
+      property.sellerAgent.toString() !== user.id
+    ) {
+      throw new UnauthorizedException(
+        'You are not permitted to perform this action.',
+      );
+    }
+    return await this.sharePropertyDocModel
+      .find({
+        property: property.id,
+      })
+      .populate('seller')
+      .populate('sellerAgent')
+      .populate('property')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async removeSharedDocumentAccess(user: User | Agent, id: string) {
+    const document = await this.sharePropertyDocModel.findById(id);
+    if (!document) {
+      throw new NotFoundException("This document doesn't exist");
+    }
+    if (
+      document.seller.toString() !== user.id &&
+      document.sellerAgent.toString() !== user.id
+    ) {
+      throw new UnauthorizedException(
+        'You are not permitted to perform this action.',
+      );
+    }
+    await this.sharePropertyDocModel.findByIdAndDelete(id);
+    return { success: true };
   }
 
   async verifyPropertyOwnerShip(
@@ -135,6 +236,7 @@ export class PropertyService {
       const newDocument = await this.propertyDocumentRepo.create(newDoc);
       await newDocument.save();
     }
+
     return await this.propertyModel.findByIdAndUpdate(
       propertyExists._id,
       {

@@ -92,7 +92,7 @@ export class AgentsController {
 
   @UseGuards(JwtAgentAuthGuard)
   @Put('/profile/update')
-  async updateProfile(
+  async updateAgentProfile(
     @Body() profile: UpdateAgentDto,
     @Res() res: Response,
     @Req() req: Request,
