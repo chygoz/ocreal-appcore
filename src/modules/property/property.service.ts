@@ -198,6 +198,47 @@ export class PropertyService {
     return { success: true };
   }
 
+  private async _getPropertyPercentage(id: string) {
+    let percentageCompleted = 0;
+    const property = await this.propertyModel.findById(id);
+    const offer = await this.offerModel.findOne({
+      property: property.id,
+      currentStatus: {
+        $nin: [
+          OfferStatusEnum.rejected,
+          OfferStatusEnum.submitted,
+          OfferStatusEnum.pending,
+        ],
+      },
+    });
+    if (!offer) {
+      switch (property.currentStatus) {
+        case PropertyStatusEnum.pendingVerification:
+          percentageCompleted = 0;
+        case PropertyStatusEnum.properyOwnershipVerified:
+          percentageCompleted = 25;
+        case PropertyStatusEnum.notVerified:
+          percentageCompleted = 0;
+        case PropertyStatusEnum.sold:
+          percentageCompleted = 100;
+      }
+      return percentageCompleted;
+    } else {
+      switch (offer.currentStatus) {
+        case OfferStatusEnum.accepted:
+          percentageCompleted = 50;
+          break;
+        case OfferStatusEnum.titleAndEscrow:
+          percentageCompleted = 50;
+        case OfferStatusEnum.trackingContingency:
+          percentageCompleted = 75;
+        case OfferStatusEnum.signAndClose:
+          percentageCompleted = 90;
+      }
+      return percentageCompleted;
+    }
+  }
+
   async verifyPropertyOwnerShip(
     user: User | Agent,
     dto: CreatePropertyDTO,
@@ -2224,8 +2265,16 @@ export class PropertyService {
 
     const result = await this.agentPropertyInviteModel.aggregate(facet);
     const { data, total } = result[0];
+    const mappedData = [];
+    for (const r of data.map((x: AgentPropertyInvite) => x.property)) {
+      const percentageCompleted = await this._getPropertyPercentage(r._id);
+      mappedData.push({
+        ...r.toObject(),
+        percentageCompleted,
+      });
+    }
     return {
-      result: data.map((x: AgentPropertyInvite) => x.property),
+      result: mappedData,
       total: total[0]?.total ?? 0,
       page,
       limit,
@@ -2348,8 +2397,15 @@ export class PropertyService {
         .exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
-
-    return { result, total, page, limit };
+    const data = [];
+    for (const r of result) {
+      const percentageCompleted = await this._getPropertyPercentage(r._id);
+      data.push({
+        ...r.toObject(),
+        percentageCompleted,
+      });
+    }
+    return { result: data, total, page, limit };
   }
 
   async deleteSingleProperty(id: string, user: User | Agent) {
@@ -2772,8 +2828,15 @@ export class PropertyService {
         .exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
-
-    return { result, total, page, limit };
+    const mappedData = [];
+    for (const r of result) {
+      const percentageCompleted = await this._getPropertyPercentage(r._id);
+      mappedData.push({
+        ...r.toObject(),
+        percentageCompleted,
+      });
+    }
+    return { result: mappedData, total, page, limit };
   }
 
   async getAgentSellerProperties(paginationDto: PaginationDto, user: Agent) {
@@ -2894,8 +2957,15 @@ export class PropertyService {
         .exec(),
       this.propertyModel.countDocuments(queryParam),
     ]);
-
-    return { result, total, page, limit };
+    const mappedData = [];
+    for (const r of result) {
+      const percentageCompleted = await this._getPropertyPercentage(r._id);
+      mappedData.push({
+        ...r.toObject(),
+        percentageCompleted,
+      });
+    }
+    return { result: mappedData, total, page, limit };
   }
 
   async getAgentIncomingPropertyOffers(
@@ -3371,8 +3441,7 @@ export class PropertyService {
     return update;
   }
 
-  async getSingleProperty(id: string): Promise<Property> {
-    console.log(' CALLED');
+  async getSingleProperty(id: string) {
     const property = await this.propertyModel
       .findByIdAndUpdate(id, { $inc: { viewsCounter: 1 } }, { new: true })
       .populate('brokers.agent')
@@ -3383,7 +3452,8 @@ export class PropertyService {
     if (!property) {
       throw new NotFoundException('Property not found');
     }
-    return property;
+    const percentageCompleted = await this._getPropertyPercentage(property._id);
+    return { percentageCompleted, ...property.toObject() };
   }
 
   async getAllPropertyDocuments(
@@ -3499,7 +3569,15 @@ export class PropertyService {
     // if (result.length === 0) {
     //   throw new BadRequestException('No properties at the moment');
     // }
-    return { result, total, page, limit };
+    const mappedData = [];
+    for (const r of result) {
+      const percentageCompleted = await this._getPropertyPercentage(r._id);
+      mappedData.push({
+        ...r.toObject(),
+        percentageCompleted,
+      });
+    }
+    return { result: mappedData, total, page, limit };
   }
 
   async getAgentMostRecentTour(agent: Agent) {
