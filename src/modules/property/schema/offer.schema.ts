@@ -43,6 +43,13 @@ export interface IContingency {
   unit: string;
 }
 
+export interface IPropertyCoBuyer {
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  mobileNumber: string;
+  email: string;
+}
 @Schema({ timestamps: true, versionKey: false })
 export class Offer extends Document {
   @Prop([
@@ -90,6 +97,20 @@ export class Offer extends Document {
     default: false,
   })
   apprasalContingency: boolean | IContingency;
+
+  @Prop({
+    type: [
+      {
+        firstName: SchemaTypes.String,
+        lastName: SchemaTypes.String,
+        middleName: SchemaTypes.String,
+        mobileNumber: SchemaTypes.String,
+        email: SchemaTypes.String,
+      },
+    ],
+    default: [],
+  })
+  coBuyers: [IPropertyCoBuyer];
 
   @Prop({
     type: SchemaTypes.Mixed,

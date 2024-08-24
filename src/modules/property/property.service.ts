@@ -31,6 +31,7 @@ import {
   UpdatePropertyTourScheduleDto,
 } from './dto/tour.dto';
 import {
+  AddPropertyCoBuyerDto,
   CreateAgentPropertyOfferDto,
   CreateCounterOfferDto,
   CreateUserOfferDto,
@@ -980,7 +981,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
           title: `Property Offer Updated`,
-          user: new Types.ObjectId(property.seller._id) as any,
+          user: new Types.ObjectId(property.seller?.id) as any,
           userType: NotificationUserType.user,
         });
         if (updatedOffer?.seller?.email) {
@@ -1001,7 +1002,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
           title: `Property Offer Updated`,
-          user: new Types.ObjectId(property.sellerAgent._id) as any,
+          user: new Types.ObjectId(property.sellerAgent?.id) as any,
           userType: NotificationUserType.agent,
         });
         if (updatedOffer.sellerAgent.email) {
@@ -1047,7 +1048,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created a new offer for a ${property.propertyName} property.`,
         title: `New property offer from ${user.fullname}`,
-        user: newOffer.buyerAgent._id,
+        user: newOffer.buyerAgent?.id,
         userType: NotificationUserType.agent,
       });
     }
@@ -1055,10 +1056,10 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
         title: `Property Offer Updated`,
-        user: newOffer.buyerAgent._id,
+        user: newOffer.buyerAgent?.id,
         userType: NotificationUserType.agent,
       });
-      if (newOffer?.buyerAgent.email) {
+      if (newOffer?.buyerAgent?.email) {
         await this.emailService.sendEmail({
           email: property?.buyerAgent.email,
           subject: `Property Offer Updated`,
@@ -1082,7 +1083,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
         title: `Property Offer Created`,
-        user: new Types.ObjectId(property.seller._id) as any,
+        user: new Types.ObjectId(property.seller?.id) as any,
         userType: NotificationUserType.user,
       });
       await this.emailService.sendEmail({
@@ -1096,7 +1097,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
         title: `Property Offer Created`,
-        user: property.sellerAgent._id,
+        user: property.sellerAgent?.id,
         userType: NotificationUserType.agent,
       });
       if (property?.sellerAgent.email) {
@@ -1119,7 +1120,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
         title: `Property Offer Created`,
-        user: property?.buyerAgent._id,
+        user: property?.buyerAgent?.id,
         userType: NotificationUserType.agent,
       });
       if (property?.buyerAgent.email) {
@@ -1149,7 +1150,7 @@ export class PropertyService {
       .findById(offerId)
       .populate(['buyer', 'seller', 'sellerAgent'])
       .exec();
-    if (buyerOffer?.seller._id.toString() !== user._id.toString()) {
+    if (buyerOffer?.seller?.id.toString() !== user.id.toString()) {
       throw new UnauthorizedException(
         'You are not permitted to perform this action',
       );
@@ -1210,7 +1211,7 @@ export class PropertyService {
       .findById(offerId)
       .populate(['buyer', 'seller', 'sellerAgent'])
       .exec();
-    if (buyerOffer?.sellerAgent._id.toString() !== user._id.toString()) {
+    if (buyerOffer?.sellerAgent?.id.toString() !== user._id.toString()) {
       throw new UnauthorizedException(
         'You are not permitted to perform this action',
       );
@@ -1264,8 +1265,15 @@ export class PropertyService {
 
   async buyerSubmitOffer(offerId: string, user: User): Promise<Offer> {
     const offer = await this.offerModel
-      .findByIdAndUpdate(
-        offerId,
+      .findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(offerId),
+          buyer: user.id,
+          $or: [
+            { currentStatus: OfferStatusEnum.pending },
+            { currentStatus: OfferStatusEnum.submitted },
+          ],
+        },
         {
           currentStatus: OfferStatusEnum.submitted,
           $push: {
@@ -1281,7 +1289,7 @@ export class PropertyService {
       )
       .populate(['buyer', 'seller', 'sellerAgent', 'buyerAgent'])
       .exec();
-    if (!offer || offer?.buyer !== user._id) {
+    if (!offer || offer?.buyer.id.toString() != user.id.toString()) {
       throw new NotFoundException('Offer not found');
     }
     const property = await this.propertyModel
@@ -1306,7 +1314,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
         title: `Property Offer Submitted`,
-        user: offer?.buyerAgent._id,
+        user: offer?.buyerAgent?.id,
         userType: NotificationUserType.agent,
       });
 
@@ -1327,7 +1335,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
         title: `New Property Offer`,
-        user: offer?.seller._id,
+        user: offer?.seller?.id,
         userType: NotificationUserType.user,
       });
 
@@ -1347,8 +1355,8 @@ export class PropertyService {
     if (offer?.sellerAgent && offer.sellerAgent?.email) {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
-        title: `Property Offer Updated`,
-        user: offer.sellerAgent._id,
+        title: `New Property Offer`,
+        user: offer.sellerAgent?.id,
         userType: NotificationUserType.agent,
       });
       const emailBody = {
@@ -1367,82 +1375,37 @@ export class PropertyService {
     return offer;
   }
 
-  // async createAgentPropertyOffer(
-  //   data: CreateAgentPropertyOfferDto,
-  //   agent: Agent,
-  // ): Promise<Offer> {
-  //   const offerCreated = await this.offerModel.find({
-  //     $or: [
-  //       { property: data.property, buyerAgent: agent },
-  //       { property: data.property, buy: data.buyer },
-  //     ],
-  //   });
-  //   if (offerCreated.length > 0) {
-  //     throw new BadRequestException(
-  //       'An offer has already been created fo rthis property',
-  //     );
-  //   }
-  //   const property = await this.propertyModel
-  //     .findById(data.property)
-  //     .populate(['buyer', 'seller', 'sellerAgent'])
-  //     .exec();
-  //   if (!property) {
-  //     throw new NotFoundException('Property not found');
-  //   }
-  //   if (property.currentStatus !== PropertyStatusEnum.pendingVerification) {
-  //     throw new BadRequestException(
-  //       'You can not make an offer for this property at this time.',
-  //     );
-  //   }
-  //   const canCreateOffer = [
-  //     PropertyStatusEnum.pendingVerification,
-  //     PropertyStatusEnum.properyOwnershipVerified,
-  //     PropertyStatusEnum.nowShowing,
-  //   ].includes(property.currentStatus as PropertyStatusEnum);
-  //   if (!canCreateOffer) {
-  //     console.log(canCreateOffer, property.currentStatus);
-  //     throw new BadRequestException(
-  //       'You can not make an offer for this property at this time.',
-  //     );
-  //   }
-
-  //   const newData = {
-  //     ...data,
-  //     // seller: property?.seller,
-  //     // sellerAgent: property.sellerAgent,
-  //     buyer: data.buyer ? new Types.ObjectId(data.buyer) : true,
-  //     buyerAgent: agent,
-  //     offerCreator: OfferCreatorTypeEnum.agent,
-  //   };
-  //   const createdProperty = new this.offerModel(newData);
-  //   const result = await createdProperty.save();
-
-  //   if (createdProperty?.buyer) {
-  //     await this.notificationService.createNotification({
-  //       body: `${createdProperty?.buyer.fullname}, just created an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
-  //       title: `New submitted offer for ${property.propertyName}`,
-  //       user: property.sellerAgent as any,
-  //       userType: NotificationUserType.agent,
-  //     });
-  //   }
-
-  //   // if (property.seller) {
-  //   //   await this.notificationService.createNotification({
-  //   //     body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, for your ${property.propertyName} property.`,
-  //   //     title: `New submitted offer for ${property.propertyName}`,
-  //   //     user: property.seller as any,
-  //   //   });
-  //   // }
-
-  //   await this.notificationService.createNotification({
-  //     body: `${agent.fullname}, just submitted an offer of $${data.offerPrice.amount}, on your behalf for ${property.propertyName} property.`,
-  //     title: `New submitted offer for ${property.propertyName}`,
-  //     user: property.buyer as any,
-  //   });
-
-  //   return result;
-  // }
-
+  async addOfferCoBuyer(
+    user: User | Agent,
+    offerId: string,
+    dto: AddPropertyCoBuyerDto,
+  ) {
+    const offerExist = await this.offerModel.findOne({
+      _id: new Types.ObjectId(offerId),
+      $or: [
+        {
+          buyer: user.id,
+        },
+        {
+          buyerAgent: user.id,
+        },
+      ],
+    });
+    if (!offerExist) {
+      throw new NotFoundException('offer not found');
+    }
+    return await this.offerModel.findByIdAndUpdate(
+      offerId,
+      {
+        $push: {
+          coBuyers: dto,
+        },
+      },
+      {
+        new: true,
+      },
+    );
+  }
   async createAgentPropertyOffer(
     data: CreateAgentPropertyOfferDto,
     user: Agent,
@@ -1480,7 +1443,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just updated an offer for ${property.propertyName} property.`,
           title: `Property Offer Updated`,
-          user: updatedOffer?.buyer._id,
+          user: updatedOffer?.buyer?.id,
           userType: NotificationUserType.user,
         });
         await this.emailService.sendEmail({
@@ -1549,7 +1512,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just update their offer for ${property.propertyName} property.`,
         title: `Property Offer Updated`,
-        user: newOffer?.buyer._id,
+        user: newOffer?.buyer?.id,
         userType: NotificationUserType.agent,
       });
       await this.emailService.sendEmail({
@@ -1682,7 +1645,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
         title: `Property Offer Submitted`,
-        user: offer.buyer._id,
+        user: offer.buyer?.id,
         userType: NotificationUserType.agent,
       });
       const emailBody = {
@@ -1702,7 +1665,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
         title: `New Property Offer`,
-        user: offer.seller._id,
+        user: offer.seller?.id,
         userType: NotificationUserType.user,
       });
       const emailBody = {
@@ -1722,7 +1685,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just submited a new offer for ${property.propertyName} property.`,
         title: `Property Offer Updated`,
-        user: offer.sellerAgent._id,
+        user: offer.sellerAgent?.id,
         userType: NotificationUserType.agent,
       });
       const emailBody = {
@@ -2417,10 +2380,10 @@ export class PropertyService {
       throw new NotFoundException('Property not found');
     }
     if (
-      property?.seller._id &&
-      property?.seller._id.toString() !== user._id.toString() &&
+      property?.seller?.id &&
+      property?.seller?.id.toString() !== user?.id.toString() &&
       property?.sellerAgent &&
-      property?.sellerAgent._id.toString() !== user._id.toString()
+      property?.sellerAgent?.id.toString() !== user.id.toString()
     ) {
       throw new UnauthorizedException(
         'You are not authorized to delete this property',
@@ -2449,9 +2412,10 @@ export class PropertyService {
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
+    console.log(offer);
     if (
-      offer.seller._id.toString() !== user._id.toString() &&
-      offer.sellerAgent._id.toString() !== user._id.toString()
+      offer.seller?.id.toString() !== user?.id.toString() &&
+      offer.sellerAgent?.id.toString() !== user?.id.toString()
     ) {
       throw new UnauthorizedException(
         'You are not authorized to respond to this offer',
@@ -2459,7 +2423,7 @@ export class PropertyService {
     }
 
     if (offer.currentStatus !== OfferStatusEnum.submitted) {
-      throw new BadRequestException('You can no longer respond to this offer');
+      throw new BadRequestException('You can not respond to this offer');
     }
 
     if (dto.response) {
@@ -2498,7 +2462,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just accpted an offer for this ${offer.property.propertyName} property.`,
           title: `Offer Accepted`,
-          user: offer.sellerAgent._id,
+          user: offer.sellerAgent?.id,
           userType: NotificationUserType.agent,
         });
       }
@@ -2507,7 +2471,7 @@ export class PropertyService {
         await this.emailService.sendEmail({
           email: offer.buyer.email,
           subject: dto.header,
-          template: 'buyer_create_offer',
+          template: `buyer_template_offer_accpted`,
           body: {
             name: offer.buyer.fullname,
             propertyAddress: offer.property.propertyName,
@@ -2519,7 +2483,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just accepted your offer for this ${offer.property.propertyName} property.`,
           title: `Offer Accepted`,
-          user: offer.buyer._id,
+          user: offer.buyer?.id,
           userType: NotificationUserType.user,
         });
       }
@@ -2527,7 +2491,7 @@ export class PropertyService {
         await this.emailService.sendEmail({
           email: offer.buyerAgent.email,
           subject: dto.header,
-          template: 'buyer_create_offer',
+          template: 'buyer_template_offer_accpted',
           body: {
             name: offer.buyerAgent.fullname,
             propertyAddress: offer.property.propertyName,
@@ -2537,9 +2501,9 @@ export class PropertyService {
           },
         });
         await this.notificationService.createNotification({
-          body: `${user.fullname}, just just accepted your offer for this ${offer.property.propertyName} property.`,
+          body: `${user.fullname}, just accepted your offer for this ${offer.property.propertyName} property.`,
           title: `Offer Accepted`,
-          user: offer.buyerAgent._id,
+          user: offer.buyerAgent?.id,
           userType: NotificationUserType.agent,
         });
       }
@@ -2555,7 +2519,7 @@ export class PropertyService {
           },
         },
       );
-      const udpatedOffer = await this.offerModel
+      await this.offerModel
         .findByIdAndUpdate(
           offer._id,
           {
@@ -2563,7 +2527,24 @@ export class PropertyService {
             $push: {
               status: {
                 eventTime: new Date(),
-                status: OfferStatusEnum.rejected,
+                status: OfferStatusEnum.accepted,
+              },
+            },
+          },
+          {
+            new: true,
+          },
+        )
+        .exec();
+      const udpatedOffer = await this.offerModel
+        .findByIdAndUpdate(
+          offer._id,
+          {
+            currentStatus: OfferStatusEnum.titleAndEscrow,
+            $push: {
+              status: {
+                eventTime: new Date(),
+                status: OfferStatusEnum.titleAndEscrow,
               },
             },
           },
@@ -2590,7 +2571,7 @@ export class PropertyService {
 
       if (uniqueBuyers.length > 0) {
         await this.notificationService.createMultipleNotifications({
-          body: `${user.fullname}, just just rejected your offer for this ${offer.property.propertyName} property.`,
+          body: `${user.fullname}, just accepted your offer for this ${offer.property.propertyName} property.`,
           title: `Offer Accepted`,
           user: uniqueBuyers,
           userType: NotificationUserType.user,
@@ -2599,7 +2580,7 @@ export class PropertyService {
 
       if (uniqueBuyerAgents.length > 0) {
         await this.notificationService.createMultipleNotifications({
-          body: `${user.fullname}, just just rejected your offer for this ${offer.property.propertyName} property.`,
+          body: `${user.fullname}, just accepted your offer for this ${offer.property.propertyName} property.`,
           title: `Offer Accepted`,
           user: uniqueBuyers,
           userType: NotificationUserType.agent,
@@ -2623,7 +2604,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just rejected an offer for this ${offer.property.propertyName} property.`,
           title: `Offer Rejected`,
-          user: user._id,
+          user: offer.seller?.id,
           userType: NotificationUserType.user,
         });
       }
@@ -2643,7 +2624,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just rejected an offer for this ${offer.property.propertyName} property.`,
           title: `Offer Rejected`,
-          user: offer.sellerAgent._id,
+          user: offer.sellerAgent?.id,
           userType: NotificationUserType.agent,
         });
       }
@@ -2664,7 +2645,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just rejected your offer for this ${offer.property.propertyName} property.`,
           title: `Offer Rejected`,
-          user: offer.buyer._id,
+          user: offer.buyer?.id,
           userType: NotificationUserType.user,
         });
       }
@@ -2684,7 +2665,7 @@ export class PropertyService {
         await this.notificationService.createNotification({
           body: `${user.fullname}, just rejected your offer for this ${offer.property.propertyName} property.`,
           title: `Offer Rejected`,
-          user: offer.buyerAgent._id,
+          user: offer.buyerAgent?.id,
           userType: NotificationUserType.agent,
         });
       }
@@ -2711,6 +2692,136 @@ export class PropertyService {
         .exec();
       return udpatedOffer;
     }
+  }
+
+  async buyerOrAgentCompleteOfferTitleAndEscrow(
+    user: User | Agent,
+    offerId: string,
+  ) {
+    const offer = await this.offerModel
+      .findById(offerId)
+      .populate('buyer')
+      .populate('seller')
+      .populate('property')
+      .populate('sellerAgent')
+      .populate('buyerAgent')
+      .exec();
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+    if (
+      offer.buyer?._id.toString() !== user?._id.toString() &&
+      offer.buyerAgent?._id.toString() !== user?._id.toString()
+    ) {
+      throw new UnauthorizedException(
+        'You are not authorized to respond to this offer',
+      );
+    }
+
+    if (offer.currentStatus !== OfferStatusEnum.titleAndEscrow) {
+      throw new BadRequestException(
+        'You can not perform this action on this offer at this stage.',
+      );
+    }
+
+    const updatedOffer = await this.offerModel
+      .findByIdAndUpdate(
+        offerId,
+        {
+          currentStatus: OfferStatusEnum.trackingContingency,
+          $push: {
+            status: {
+              eventTime: new Date(),
+              status: OfferStatusEnum.trackingContingency,
+            },
+          },
+        },
+        {
+          new: true,
+        },
+      )
+      .populate('buyer')
+      .populate('seller')
+      .populate('property')
+      .populate('sellerAgent')
+      .populate('buyerAgent');
+    if (updatedOffer.seller) {
+      console.log('seller Sent');
+      await this.emailService.sendEmail({
+        email: updatedOffer.seller.email,
+        subject: 'Title And Escrow Stage Completed',
+        template: 'completed_title&escrow',
+        body: {
+          name: updatedOffer.seller.fullname,
+          propertyAddress: updatedOffer.property.propertyName,
+        },
+      });
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just completed the "Title And Escrow" stae of this ${updatedOffer.property.propertyName} property.`,
+        title: `Offer Rejected`,
+        user: updatedOffer.seller.id,
+        userType: NotificationUserType.user,
+      });
+    }
+
+    if (updatedOffer.sellerAgent) {
+      console.log('seller Agent Sent');
+      await this.emailService.sendEmail({
+        email: updatedOffer.sellerAgent.email,
+        subject: 'Title And Escrow Stage Completed',
+        template: 'completed_title&escrow',
+        body: {
+          name: updatedOffer.sellerAgent.fullname,
+          propertyAddress: updatedOffer.property.propertyName,
+        },
+      });
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just completed the "Title And Escrow" stae of this ${updatedOffer.property.propertyName} property.`,
+        title: `Offer Rejected`,
+        user: updatedOffer.sellerAgent?.id,
+        userType: NotificationUserType.agent,
+      });
+    }
+
+    if (updatedOffer.buyer) {
+      console.log('buyer Sent');
+      await this.emailService.sendEmail({
+        email: updatedOffer.buyer.email,
+        subject: 'Title And Escrow Stage Completed',
+        template: 'completed_title&escrow',
+        body: {
+          name: updatedOffer.buyer.fullname,
+          propertyAddress: updatedOffer.property.propertyName,
+        },
+      });
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just completed the "Title And Escrow" stae of this ${updatedOffer.property.propertyName} property.`,
+        title: `Offer Rejected`,
+        user: updatedOffer.buyer?.id,
+        userType: NotificationUserType.user,
+      });
+    }
+    if (updatedOffer.buyerAgent) {
+      console.log('buyer agent Sent');
+      await this.emailService.sendEmail({
+        email: updatedOffer.buyerAgent.email,
+        subject: 'Title And Escrow Stage Completed',
+        template: 'completed_title&escrow',
+        body: {
+          name: updatedOffer.buyerAgent.fullname,
+          propertyAddress: updatedOffer.property.propertyName,
+          propertyName: updatedOffer.property.propertyName,
+        },
+      });
+      await this.notificationService.createNotification({
+        body: `${user.fullname}, just completed the "Title And Escrow" stae of this ${updatedOffer.property.propertyName} property.`,
+        title: `Offer Rejected`,
+        user: updatedOffer.buyerAgent?.id,
+        userType: NotificationUserType.agent,
+      });
+    }
+    return updatedOffer;
   }
 
   async getAgentBuyerProperties(paginationDto: PaginationDto, user: Agent) {
