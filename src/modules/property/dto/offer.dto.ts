@@ -1,6 +1,7 @@
 import {
   IsArray,
   IsBoolean,
+  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -196,4 +197,24 @@ export class CreateAgentPropertyOfferDto {
   @IsOptional()
   @IsString()
   coverLetter: string;
+}
+
+export class AddPropertyCoBuyerDto {
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @IsString()
+  @IsOptional()
+  middleName?: string;
+
+  @IsString()
+  mobileNumber: string;
+
+  @IsEmail()
+  email: string;
 }

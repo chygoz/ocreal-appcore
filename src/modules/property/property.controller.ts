@@ -36,6 +36,7 @@ import {
   UpdatePropertyTourScheduleDto,
 } from './dto/tour.dto';
 import {
+  AddPropertyCoBuyerDto,
   CreateAgentPropertyOfferDto,
   CreateCounterOfferDto,
   CreateUserOfferDto,
@@ -580,6 +581,45 @@ export class PropertyController {
     this._sendResponse({
       res,
       message: `Property Tour Schedule Updated.`,
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('complete/offer/title&Escrow/:id')
+  async buyerOrAgentCompleteOfferTitleAndEscrow(
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const id = req.params.id;
+    const data =
+      await this.propertyService.buyerOrAgentCompleteOfferTitleAndEscrow(
+        req.user || req.agent,
+        id,
+      );
+    this._sendResponse({
+      res,
+      message: `Offer Title And Escrow Stage Completed.`,
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Post('add/offer/co-buyer/:id')
+  async addOfferCoBuyer(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() dto: AddPropertyCoBuyerDto,
+  ) {
+    const id = req.params.id;
+    const data = await this.propertyService.addOfferCoBuyer(
+      req.user || req.agent,
+      id,
+      dto,
+    );
+    this._sendResponse({
+      res,
+      message: `Offer Co-Buyer Updated.`,
       data,
     });
   }
