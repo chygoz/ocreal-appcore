@@ -2,7 +2,7 @@ name: Dev CI/CD and Notification workflow
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
 
 jobs:
   build:
