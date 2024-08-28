@@ -20,10 +20,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use(helmet());
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.NODE_ENV === 'production'
-  ) {
+  if (process.env.NODE_ENV === 'development') {
     app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH');
@@ -33,25 +30,23 @@ async function bootstrap() {
     });
   }
 
-  // if (process.env.NODE_ENV === 'production') {
-  //   app.use((req, res, next) => {
-  //     res.header('Access-Control-Allow-Origin', '*');
-  //     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH');
-  //     res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
-  //     // res.header('*', '*');
-  //     next();
-  //   });
+  if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH');
+      res.header(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Accept, Authorization',
+      );
+      next();
+    });
 
-  //   app.enableCors({
-  //     allowedHeaders: [
-  //       'wwww.ocreal.online',
-  //       'https://wwww.ocreal.online',
-  //       'https://ocreal.online',
-  //       'wwww.ocreal.online',
-  //     ],
-  //     origin: '*',
-  //   });
-  // }
+    app.enableCors({
+      origin: ['https://ocreal.online', 'https://www.ocreal.online'],
+      methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    });
+  }
   app.useWebSocketAdapter(new IoAdapter(app));
   app.use(sanitizer());
   app.setGlobalPrefix('api/v1');
