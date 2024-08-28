@@ -32,7 +32,11 @@ async function bootstrap() {
 
   if (process.env.NODE_ENV === 'production') {
     app.enableCors({
-      origin: ['https://ocreal.online', 'https://www.ocreal.online'],
+      origin: [
+        'https://ocreal.online',
+        'https://www.ocreal.online',
+        'https://www.ocreal.online/',
+      ],
       methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH'],
       allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
     });
