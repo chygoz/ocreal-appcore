@@ -40,7 +40,12 @@ async function bootstrap() {
     });
 
     app.enableCors({
-      allowedHeaders: 'wwww.ocreal.online',
+      allowedHeaders: [
+        'wwww.ocreal.online',
+        'https://wwww.ocreal.online',
+        'https://ocreal.online',
+        'wwww.ocreal.online',
+      ],
       origin: '*',
     });
   }
