@@ -28,14 +28,15 @@ async function bootstrap() {
     });
   } else {
     app.enableCors({
+      credentials: true,
       origin: [
         'https://www.ocreal.online',
         'https://ocreal.online/',
         /\.ocreal\.online$/,
       ],
-      methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
-      credentials: true,
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
     });
   }
 
