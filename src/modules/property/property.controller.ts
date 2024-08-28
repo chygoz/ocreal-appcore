@@ -881,17 +881,17 @@ export class PropertyController {
     });
   }
 
-  @UseGuards(JwtAgentAuthGuard)
-  @Put('agent/response/:id')
-  async publishProperty(@Req() req: Request, @Res() res: Response) {
-    const id = req.params.id;
-    const result = await this.propertyService.publishProperty(req.agent, id);
-    this._sendResponse({
-      res,
-      data: { result },
-      message: 'Property published.',
-    });
-  }
+  // @UseGuards(JwtAgentAuthGuard)
+  // @Put('agent/response/:id')
+  // async publishProperty(@Req() req: Request, @Res() res: Response) {
+  //   const id = req.params.id;
+  //   const result = await this.propertyService.publishProperty(req.agent, id);
+  //   this._sendResponse({
+  //     res,
+  //     data: { result },
+  //     message: 'Property published.',
+  //   });
+  // }
 
   @UseGuards(IsPublic)
   @Get('single/:id')
