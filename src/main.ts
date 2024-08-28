@@ -28,9 +28,19 @@ async function bootstrap() {
       // res.header('*', '*');
       next();
     });
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+      // res.header('*', '*');
+      next();
+    });
 
     app.enableCors({
-      allowedHeaders: '*',
+      allowedHeaders: 'wwww.ocreal.online',
       origin: '*',
     });
   }
