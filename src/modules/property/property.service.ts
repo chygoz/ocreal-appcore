@@ -1734,6 +1734,8 @@ export class PropertyService {
       const headers = {
         'x-api-key': configs.MLS_API_AUTH_KEY,
         Authorization: 'Bearer ' + access_token,
+        Origin: configs.SELF_BASE_URL,
+        Referer: configs.SELF_BASE_URL + '/',
       };
 
       const propertyResponse = await axios.get(
