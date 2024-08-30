@@ -1731,11 +1731,15 @@ export class PropertyService {
     console.log('🔋 🔋 🔋 🔋', propertResponse.data, '🔋 🔋 🔋 🔋');
     const access_token = propertResponse.data.access_token;
     try {
+      const self_url =
+        configs.ENVIRONMENT == 'production'
+          ? 'https://prod.api.ocreal.online/'
+          : 'https://dev.api.ocreal.online/';
       const headers = {
         'x-api-key': configs.MLS_API_AUTH_KEY,
         Authorization: 'Bearer ' + access_token,
-        Origin: configs.SELF_BASE_URL,
-        Referer: configs.SELF_BASE_URL + '/',
+        Origin: self_url,
+        Referer: self_url + '/',
       };
 
       const propertyResponse = await axios.get(
