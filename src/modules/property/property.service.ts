@@ -1073,7 +1073,7 @@ export class PropertyService {
         });
       }
     }
-    if (property?.seller) {
+    if (property?.seller?.email) {
       const emailBody = {
         propertyName: property.propertyName,
         name: property?.seller.fullname,
@@ -1093,7 +1093,7 @@ export class PropertyService {
         body: emailBody,
       });
     }
-    if (property?.sellerAgent) {
+    if (property?.sellerAgent?.email) {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
         title: `Property Offer Created`,
@@ -1116,14 +1116,14 @@ export class PropertyService {
         });
       }
     }
-    if (property?.buyerAgent) {
+    if (property?.buyerAgent?.email) {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
         title: `Property Offer Created`,
         user: property?.buyerAgent?.id,
         userType: NotificationUserType.agent,
       });
-      if (property?.buyerAgent.email) {
+      if (property?.buyerAgent?.email) {
         const emailBody = {
           propertyName: property.propertyName,
           name: property?.sellerAgent.fullname,
@@ -1705,12 +1705,12 @@ export class PropertyService {
   }
 
   async queryPropertiesByAddress(UnparsedAddress: string) {
-    const savedQueries = await this.propertyQueryModel.find({
-      UnparsedAddress: new RegExp(new RegExp(UnparsedAddress, 'i'), 'i'),
-    });
-    if (savedQueries.length > 0) {
-      return savedQueries.map((x) => this.mapPropertyQueryToProperty(x));
-    }
+    // const savedQueries = await this.propertyQueryModel.find({
+    //   UnparsedAddress: new RegExp(new RegExp(UnparsedAddress, 'i'), 'i'),
+    // });
+    // if (savedQueries.length > 0) {
+    //   return savedQueries.map((x) => this.mapPropertyQueryToProperty(x));
+    // }
     const encodedParams = new URLSearchParams();
     encodedParams.set('grant_type', 'client_credentials');
     encodedParams.set('client_id', configs.MLS_CLIENT_ID);
@@ -1728,7 +1728,6 @@ export class PropertyService {
       encodedParams,
       config,
     );
-    console.log('🔋 🔋 🔋 🔋', propertResponse.data, '🔋 🔋 🔋 🔋');
     const access_token = propertResponse.data.access_token;
     try {
       const self_url =
@@ -1743,12 +1742,13 @@ export class PropertyService {
       };
 
       const propertyResponse = await axios.get(
-        `https://api.realtyfeed.com/reso/odata/Property?UnparsedAddress eq '${UnparsedAddress}'&top=10`,
+        `https://api.realtyfeed.com/reso/odata/Property?$filter=UnparsedAddress eq '${UnparsedAddress}'&top=10`,
         {
           headers,
         },
       );
       const properties = propertyResponse.data.value;
+      console.log(propertyResponse.data, '  <<< THE MLS RESPONSE DATA PAYLOAD');
       // if (properties.length > 0) {
       //   await this.propertyQueryModel.insertMany(properties);
       // }
