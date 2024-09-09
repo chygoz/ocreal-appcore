@@ -1073,7 +1073,7 @@ export class PropertyService {
         });
       }
     }
-    if (property?.seller) {
+    if (property?.seller?.email) {
       const emailBody = {
         propertyName: property.propertyName,
         name: property?.seller.fullname,
@@ -1093,7 +1093,7 @@ export class PropertyService {
         body: emailBody,
       });
     }
-    if (property?.sellerAgent) {
+    if (property?.sellerAgent?.email) {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
         title: `Property Offer Created`,
@@ -1116,14 +1116,14 @@ export class PropertyService {
         });
       }
     }
-    if (property?.buyerAgent) {
+    if (property?.buyerAgent?.email) {
       await this.notificationService.createNotification({
         body: `${user.fullname}, just created an offer for ${property.propertyName} property.`,
         title: `Property Offer Created`,
         user: property?.buyerAgent?.id,
         userType: NotificationUserType.agent,
       });
-      if (property?.buyerAgent.email) {
+      if (property?.buyerAgent?.email) {
         const emailBody = {
           propertyName: property.propertyName,
           name: property?.sellerAgent.fullname,
@@ -1728,7 +1728,6 @@ export class PropertyService {
       encodedParams,
       config,
     );
-    console.log('🔋 🔋 🔋 🔋', propertResponse.data, '🔋 🔋 🔋 🔋');
     const access_token = propertResponse.data.access_token;
     try {
       const self_url =
@@ -1743,7 +1742,8 @@ export class PropertyService {
       };
 
       const propertyResponse = await axios.get(
-        `https://api.realtyfeed.com/reso/odata/Property?UnparsedAddress eq '${UnparsedAddress}'&top=10`,
+        `https://api.realtyfeed.com/reso/odata/Property?$filter=contains(UnparsedAddress, '${UnparsedAddress})'&top=10`,
+        // https://api.realtyfeed.com/reso/odata/Property?$select=ALL&$filter=contains(UnparsedAddress, '1714 Mccadden Place Unit 3421, Los Angeles, California 90028')
         {
           headers,
         },
@@ -1949,7 +1949,10 @@ export class PropertyService {
     const { page = 1, limit = 10, financeType, min, max } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const query: any = { property: new Types.ObjectId(id) };
+    const query: any = {
+      property: new Types.ObjectId(id),
+      currentStatus: OfferStatusEnum.submitted,
+    };
 
     if (min && max) {
       query['offerPrice.amount'] = {
@@ -1979,11 +1982,24 @@ export class PropertyService {
         .populate('buyerAgent')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       this.offerModel.countDocuments(query),
     ]);
+    const payload = [];
+    for (const offer of result) {
+      const offerCommentCount = await this.offerCommentModel
+        .countDocuments({
+          offer: offer.id,
+        })
+        .lean();
+      payload.push({
+        ...offer,
+        offerCommentCount,
+      });
+    }
 
-    return { result, total, page, limit };
+    return { result: payload, total, page, limit };
   }
 
   async addAgentToProperty(
@@ -3833,6 +3849,15 @@ export class PropertyService {
       propertyType: query.PropertyType,
       yearBuild: query.YearBuilt,
       propertyDescription: query.PublicRemarks,
+      closeSchoolDetails: {
+        distanceToSchoolBusNumeric: query.DistanceToSchoolBusNumeric,
+        elementarySchoolDistrict: query.ElementarySchoolDistrict,
+        middleOrJuniorSchoolDistrict: query.MiddleOrJuniorSchoolDistrict,
+        highSchool: query.HighSchool,
+        elementarySchool: query.ElementarySchool,
+        highSchoolDistrict: query.HighSchoolDistrict,
+        middleOrJuniorSchool: query.MiddleOrJuniorSchool,
+      },
     };
 
     return property;
