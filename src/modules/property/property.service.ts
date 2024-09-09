@@ -1705,12 +1705,12 @@ export class PropertyService {
   }
 
   async queryPropertiesByAddress(UnparsedAddress: string) {
-    // const savedQueries = await this.propertyQueryModel.find({
-    //   UnparsedAddress: new RegExp(new RegExp(UnparsedAddress, 'i'), 'i'),
-    // });
-    // if (savedQueries.length > 0) {
-    //   return savedQueries.map((x) => this.mapPropertyQueryToProperty(x));
-    // }
+    const savedQueries = await this.propertyQueryModel.find({
+      UnparsedAddress: new RegExp(new RegExp(UnparsedAddress, 'i'), 'i'),
+    });
+    if (savedQueries.length > 0) {
+      return savedQueries.map((x) => this.mapPropertyQueryToProperty(x));
+    }
     const encodedParams = new URLSearchParams();
     encodedParams.set('grant_type', 'client_credentials');
     encodedParams.set('client_id', configs.MLS_CLIENT_ID);
@@ -1742,13 +1742,13 @@ export class PropertyService {
       };
 
       const propertyResponse = await axios.get(
-        `https://api.realtyfeed.com/reso/odata/Property?$filter=UnparsedAddress eq '${UnparsedAddress}'&top=10`,
+        `https://api.realtyfeed.com/reso/odata/Property?$filter=contains(UnparsedAddress, '${UnparsedAddress})'&top=10`,
+        // https://api.realtyfeed.com/reso/odata/Property?$select=ALL&$filter=contains(UnparsedAddress, '1714 Mccadden Place Unit 3421, Los Angeles, California 90028')
         {
           headers,
         },
       );
       const properties = propertyResponse.data.value;
-      console.log(propertyResponse.data, '  <<< THE MLS RESPONSE DATA PAYLOAD');
       // if (properties.length > 0) {
       //   await this.propertyQueryModel.insertMany(properties);
       // }
@@ -1949,7 +1949,10 @@ export class PropertyService {
     const { page = 1, limit = 10, financeType, min, max } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const query: any = { property: new Types.ObjectId(id) };
+    const query: any = {
+      property: new Types.ObjectId(id),
+      currentStatus: OfferStatusEnum.submitted,
+    };
 
     if (min && max) {
       query['offerPrice.amount'] = {
@@ -1979,11 +1982,24 @@ export class PropertyService {
         .populate('buyerAgent')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       this.offerModel.countDocuments(query),
     ]);
+    const payload = [];
+    for (const offer of result) {
+      const offerCommentCount = await this.offerCommentModel
+        .countDocuments({
+          offer: offer.id,
+        })
+        .lean();
+      payload.push({
+        ...offer,
+        offerCommentCount,
+      });
+    }
 
-    return { result, total, page, limit };
+    return { result: payload, total, page, limit };
   }
 
   async addAgentToProperty(
@@ -3833,6 +3849,15 @@ export class PropertyService {
       propertyType: query.PropertyType,
       yearBuild: query.YearBuilt,
       propertyDescription: query.PublicRemarks,
+      closeSchoolDetails: {
+        distanceToSchoolBusNumeric: query.DistanceToSchoolBusNumeric,
+        elementarySchoolDistrict: query.ElementarySchoolDistrict,
+        middleOrJuniorSchoolDistrict: query.MiddleOrJuniorSchoolDistrict,
+        highSchool: query.HighSchool,
+        elementarySchool: query.ElementarySchool,
+        highSchoolDistrict: query.HighSchoolDistrict,
+        middleOrJuniorSchool: query.MiddleOrJuniorSchool,
+      },
     };
 
     return property;
