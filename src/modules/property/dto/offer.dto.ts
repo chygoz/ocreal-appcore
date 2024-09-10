@@ -102,6 +102,9 @@ export class CreateUserOfferDto {
   coverLetter: string;
 
   @IsString()
+  specialTerms: string;
+
+  @IsString()
   property: string;
 }
 export class CreateCounterOfferDto {
@@ -140,6 +143,10 @@ export class CreateCounterOfferDto {
   @IsOptional()
   @IsBoolean()
   submitWithOutAgentApproval: boolean;
+
+  @IsString()
+  @IsOptional()
+  specialTerms?: string;
 
   @IsString()
   @IsOptional()
@@ -186,6 +193,9 @@ export class CreateAgentPropertyOfferDto {
   @ValidateNested()
   @Type(() => Price)
   loanAmount: Price;
+
+  @IsString()
+  specialTerms: string;
 
   @IsString()
   property: string;

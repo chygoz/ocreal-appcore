@@ -81,6 +81,11 @@ export class Offer extends Document {
 
   @Prop({
     type: SchemaTypes.String,
+  })
+  specialTerms: string;
+
+  @Prop({
+    type: SchemaTypes.String,
     enum: Object.values(FinanceTypeEnum),
   })
   financeType: FinanceTypeEnum;
@@ -162,10 +167,19 @@ export class Offer extends Document {
     currency: string;
   };
 
-  @Prop({ type: SchemaTypes.Mixed })
+  @Prop({
+    type: [
+      {
+        name: String,
+        url: String,
+        dateAdded: { type: Date, default: new Date() },
+      },
+    ],
+  })
   documents: Array<{
     name: string;
     url: string;
+    dateAdded: Date;
   }>;
 
   @Prop({
