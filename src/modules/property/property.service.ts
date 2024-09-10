@@ -1730,19 +1730,19 @@ export class PropertyService {
     );
     const access_token = propertResponse.data.access_token;
     try {
-      const self_url =
-        configs.ENVIRONMENT == 'production'
-          ? 'https://prod.api.ocreal.online/'
-          : 'https://dev.api.ocreal.online/';
+      // const self_url =
+      //   configs.ENVIRONMENT == 'production'
+      //     ? 'https://prod.api.ocreal.online/'
+      //     : 'https://dev.api.ocreal.online/';
       const headers = {
         'x-api-key': configs.MLS_API_AUTH_KEY,
         Authorization: 'Bearer ' + access_token,
-        Origin: self_url,
-        Referer: self_url + '/',
+        Origin: 'https://prod.api.ocreal.online/',
+        Referer: 'https://dev.api.ocreal.online/',
       };
 
       const propertyResponse = await axios.get(
-        `https://api.realtyfeed.com/reso/odata/Property?$filter=contains(UnparsedAddress, '${UnparsedAddress})'&top=10`,
+        `https://api.realtyfeed.com/reso/odata/Property?$filter=contains(UnparsedAddress, '${UnparsedAddress}')&top=10`,
         // https://api.realtyfeed.com/reso/odata/Property?$select=ALL&$filter=contains(UnparsedAddress, '1714 Mccadden Place Unit 3421, Los Angeles, California 90028')
         {
           headers,
@@ -3823,7 +3823,6 @@ export class PropertyService {
         }
       }
     }
-
     const property = {
       propertyAddressDetails: {
         formattedAddress: query.UnparsedAddress,
