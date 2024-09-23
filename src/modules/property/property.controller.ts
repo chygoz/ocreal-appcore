@@ -46,6 +46,7 @@ import {
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 import { AccountTypeEnum } from 'src/constants';
 import { CreateSharePropertyDocDto } from './dto/shareDocument.dto';
+import { AcceptTermsDto } from './dto/buyerPropertyAgreement.dto';
 
 @Controller('property')
 export class PropertyController {
@@ -382,6 +383,30 @@ export class PropertyController {
       res,
       data: { tour },
       message: 'Tour Scheduled',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('buyer/terms-and-agreement')
+  async buyerTermsAgreement(
+    @Body() dto: AcceptTermsDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    if (req.active_user_role !== AccountTypeEnum.BUYER) {
+      throw new BadRequestException('Only Buyers can perform this action');
+    }
+    const ipAddress = req.ip;
+
+    const termsAndAgreement = await this.propertyService.buyerTermsAgreement(
+      req.user,
+      dto,
+      ipAddress,
+    );
+    this._sendResponse({
+      res,
+      data: { termsAndAgreement },
+      message: `Terms And Agreement ${dto.accepted ? 'Accepted' : 'Declined'}`,
     });
   }
 

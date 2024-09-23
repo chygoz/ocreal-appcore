@@ -10,7 +10,7 @@ import { Plan } from '../subscription/schema/plan.schema';
 import {
   Payment,
   PaymentTypeEnum,
-} from 'src/services/payments/schema/payment.shcema';
+} from 'src/modules/payments/schema/payment.schema';
 import { generateReferralCode } from 'src/utils/randome-generators';
 
 @Injectable()

@@ -8,6 +8,7 @@ import { UserSchema, User } from '../users/schema/user.schema';
 import { AgentSchema, Agent } from '../agent/schema/agent.schema';
 import { SocketModule } from '../socket/socket.module';
 import { MessageGateway } from '../socket/message.gateway';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MessageGateway } from '../socket/message.gateway';
       { name: Agent.name, schema: AgentSchema },
     ]),
     SocketModule,
+    NotificationModule,
   ],
   exports: [MessageService],
   providers: [MessageService, MessageGateway],

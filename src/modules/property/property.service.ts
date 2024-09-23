@@ -61,6 +61,9 @@ import { PropertyTourSchedule } from './schema/proertyTourSchedule.schema';
 import { SharePropertyDoc } from './schema/shareDocument.schema';
 import { CreateSharePropertyDocDto } from './dto/shareDocument.dto';
 import { generateReferralCode } from 'src/utils/randome-generators';
+import { AgentContract } from './schema/agentContract.schema';
+import { BuyerProperyTermsAndAgreement } from './schema/buyerPropertyTermsAndAgreement.schema';
+import { AcceptTermsDto } from './dto/buyerPropertyAgreement.dto';
 
 @Injectable()
 export class PropertyService {
@@ -68,24 +71,30 @@ export class PropertyService {
   constructor(
     @InjectModel(Property.name) private propertyModel: Model<Property>,
     @InjectModel(PropertyDocumentRepo.name)
-    private propertyDocumentRepo: Model<PropertyDocumentRepo>,
-    @InjectModel(Agent.name) private agentModel: Model<Agent>,
+    private readonly propertyDocumentRepo: Model<PropertyDocumentRepo>,
+    @InjectModel(Agent.name) private readonly agentModel: Model<Agent>,
     @InjectModel(PropertyTour.name)
-    private propertyTourModel: Model<PropertyTour>,
+    private readonly propertyTourModel: Model<PropertyTour>,
     @InjectModel(AgentPropertyInvite.name)
-    private agentPropertyInviteModel: Model<AgentPropertyInvite>,
+    private readonly agentPropertyInviteModel: Model<AgentPropertyInvite>,
     @InjectModel(Offer.name)
-    private offerModel: Model<Offer>,
+    private readonly offerModel: Model<Offer>,
     @InjectModel(PropertyQuery.name)
-    private propertyQueryModel: Model<PropertyQuery>,
+    private readonly propertyQueryModel: Model<PropertyQuery>,
     @InjectModel(UserSavedProperty.name)
-    private userSavedPropertyModel: Model<UserSavedProperty>,
+    private readonly userSavedPropertyModel: Model<UserSavedProperty>,
     @InjectModel(PropertyTourSchedule.name)
-    private propertyTourScheduleModel: Model<PropertyTourSchedule>,
+    private readonly propertyTourScheduleModel: Model<PropertyTourSchedule>,
     @InjectModel(OfferComment.name)
-    private offerCommentModel: Model<OfferComment>,
+    private readonly offerCommentModel: Model<OfferComment>,
     @InjectModel(SharePropertyDoc.name)
-    private sharePropertyDocModel: Model<SharePropertyDoc>,
+    private readonly sharePropertyDocModel: Model<SharePropertyDoc>,
+    @InjectModel(AgentContract.name)
+    private readonly agentContractModel: Model<AgentContract>,
+    @InjectModel(BuyerProperyTermsAndAgreement.name)
+    private readonly buyerProperyTermsAndAgreementModel: Model<BuyerProperyTermsAndAgreement>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
     private readonly emailService: EmailService,
     private readonly notificationService: NotificationService,
     // private readonly axiosInstance: AxiosInstance,
@@ -101,6 +110,37 @@ export class PropertyService {
       //   'X-RapidAPI-Host': 'mls-router1.p.rapidapi.com',
       // },
     });
+  }
+
+  async buyerTermsAgreement(
+    user: User,
+    dto: AcceptTermsDto,
+    ipAddress: string,
+  ) {
+    if (dto.propertyPreference) {
+      await this.userModel.findByIdAndUpdate(user.id, {
+        propertyPreference: dto.propertyPreference,
+      });
+    }
+    const property = await this.propertyModel.findById(dto.property);
+    if (!property) {
+      throw new NotFoundException("This property doesn't exist");
+    }
+    const alreadyActedOn =
+      await this.buyerProperyTermsAndAgreementModel.findOne({
+        user: user.id,
+        property: dto.property,
+      });
+    if (alreadyActedOn) {
+      throw new BadRequestException('You have already acted on this');
+    }
+    const termsAndAgreement =
+      await this.buyerProperyTermsAndAgreementModel.create({
+        ...dto,
+        user: new mongoose.Types.ObjectId(user.id),
+        ipAddress,
+      });
+    return termsAndAgreement;
   }
 
   async sharePropertyDocument(

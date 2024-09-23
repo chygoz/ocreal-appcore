@@ -15,8 +15,20 @@ export class AgentContract extends Document {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Property', required: true })
   property: Property;
 
-  @Prop({ type: SchemaTypes.String, required: true })
-  document_url: string;
+  @Prop({
+    type: [
+      {
+        name: String,
+        url: String,
+        dateAdded: { type: Date, default: new Date() },
+      },
+    ],
+  })
+  documents: Array<{
+    name: string;
+    url: string;
+    dateAdded: Date;
+  }>;
 
   @Prop({ default: Date.now })
   createdAt: Date;

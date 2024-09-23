@@ -68,6 +68,8 @@ export const configs =
         GOOGLE_AUTH_CLIENT_SECRET: process.env.DEV_GOOGLE_AUTH_CLIENT_SECRET,
         FACEBOOK_AUTH_APP_ID: process.env.DEV_FACEBOOK_AUTH_APP_ID,
         FACEBOOK_AUTH_APP_SECRET: process.env.DEV_FACEBOOK_AUTH_APP_SECRET,
+        oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
+        oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -136,6 +138,8 @@ export const configs =
           GOOGLE_AUTH_CLIENT_SECRET: process.env.PROD_GOOGLE_AUTH_CLIENT_SECRET,
           FACEBOOK_AUTH_APP_ID: process.env.PROD_FACEBOOK_AUTH_APP_ID,
           FACEBOOK_AUTH_APP_SECRET: process.env.PROD_FACEBOOK_AUTH_APP_SECRET,
+          oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
+          oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -202,4 +206,6 @@ export const configs =
           GOOGLE_AUTH_CLIENT_SECRET: process.env.DEV_GOOGLE_AUTH_CLIENT_SECRET,
           FACEBOOK_AUTH_APP_ID: process.env.DEV_FACEBOOK_AUTH_APP_ID,
           FACEBOOK_AUTH_APP_SECRET: process.env.DEV_FACEBOOK_AUTH_APP_SECRET,
+          oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
+          oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
         };

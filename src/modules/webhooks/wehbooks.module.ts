@@ -10,7 +10,7 @@ import { Plan, PlanSchema } from '../subscription/schema/plan.schema';
 import {
   Payment,
   PaymentSchema,
-} from 'src/services/payments/schema/payment.shcema';
+} from 'src/modules/payments/schema/payment.schema';
 
 @Module({
   imports: [
