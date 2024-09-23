@@ -124,16 +124,16 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Chat } from './schema/chat.schema';
-import { Message } from './schema/message.schema';
+import { Message, MessageTypeEnum } from './schema/message.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
-import { MessageGateway } from '../socket/message.gateway';
+import NotificationService from '../notification/notitifcation.service';
 
 @Injectable()
 export class MessageService {
   constructor(
     @InjectModel(Message.name) private readonly messageRepo: Model<Message>,
     @InjectModel(Chat.name) private readonly chatRepo: Model<Chat>,
-    private readonly messageGateway: MessageGateway,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createMessage(message: Partial<Message>): Promise<Message> {
@@ -155,9 +155,7 @@ export class MessageService {
       .populate(['chats', 'chats.sender'])
       .populate('user')
       .populate('agent');
-    this.messageGateway.server
-      .to(message.property.toString())
-      .emit('message', result);
+
     return result;
   }
 
@@ -186,10 +184,25 @@ export class MessageService {
         'user',
         'agent',
       ]);
-
-    this.messageGateway.server
-      .to(message.property.toString())
-      .emit('chat', newChat);
+    if (message.messageType == MessageTypeEnum.agentToAgent) {
+      await this.notificationService.sendPushNotification(
+        'You have a new chat message',
+        [
+          chat.sender != message.buyerAgent
+            ? (message.buyerAgent as any)
+            : (message.sellerAgent as any),
+        ],
+      );
+    } else {
+      await this.notificationService.sendPushNotification(
+        'You have a new chat message',
+        [
+          chat.sender != message.buyerAgent
+            ? (message.buyerAgent as any)
+            : (message.sellerAgent as any),
+        ],
+      );
+    }
     return updatedMessage;
   }
 

@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Put,
   Query,
   Req,
@@ -11,6 +12,7 @@ import { Response, Request } from 'express';
 import NotificationService from './notitifcation.service';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
+import { OneSignalPlayerDto } from './dto/oneSignal.dto';
 
 @UseGuards(AgentOrSellerAuthGuard)
 @Controller('Notifications')
@@ -18,7 +20,7 @@ export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @Get()
-  async getUserNotifications(
+  async setOneSignalPlayerId(
     @Req() req: Request,
     @Res() res: Response,
     @Query() paginationDto: PaginationDto,
@@ -31,6 +33,23 @@ export class NotificationController {
       res,
       data: { result },
       message: 'Notifications result.',
+    });
+  }
+
+  @Post('set-player')
+  async setOneSignalPlayer(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query() dto: OneSignalPlayerDto,
+  ) {
+    const result = await this.notificationService.setOneSignalExternalUserId(
+      dto.player_id,
+      req.user.id || req.agent.id,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Push notifications subscription completed.',
     });
   }
 

@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { EmailService } from 'src/services/email/email.service';
+import axios from 'axios';
+import { configs } from 'src/configs';
+
 import {
   Notification,
   NotificationUserType,
@@ -16,6 +19,61 @@ export default class NotificationService {
     private readonly notificationModel: Model<Notification>,
   ) {}
 
+  private readonly oneSignalApiKey = configs.oneSignal_api_key;
+  private readonly oneSignalAppId = configs.oneSignal_app_id;
+
+  async setOneSignalExternalUserId(playerId: string, mongoUserId: string) {
+    const payload = {
+      app_id: this.oneSignalAppId,
+      external_user_id: mongoUserId, // Link the Mongoose ObjectId here
+    };
+
+    try {
+      const response = await axios.put(
+        `https://onesignal.com/api/v1/players/${playerId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Basic ${this.oneSignalApiKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      console.log('External User ID set successfully:', response.data);
+    } catch (error) {
+      console.error('Error setting External User ID:', error.response.data);
+      throw new Error('Failed to set External User ID');
+    }
+  }
+
+  async sendPushNotification(
+    message: string,
+    targetUserIds: string[],
+  ): Promise<void> {
+    const notificationPayload = {
+      app_id: this.oneSignalAppId,
+      include_external_user_ids: targetUserIds,
+      contents: { en: message },
+    };
+
+    try {
+      const response = await axios.post(
+        'https://onesignal.com/api/v1/notifications',
+        notificationPayload,
+        {
+          headers: {
+            Authorization: `Basic ${this.oneSignalApiKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      console.log('Notification sent:', response.data);
+    } catch (error) {
+      console.error('Error sending notification:', error.response.data);
+      // throw new Error('Failed to send notification');
+    }
+  }
+
   async createNotification(data: {
     title: string;
     body: string;
@@ -24,7 +82,7 @@ export default class NotificationService {
   }): Promise<Notification> {
     const saved = await this.notificationModel.create(data);
     const notification = await saved.save();
-    //TODO: Send push notifications here
+    await this.sendPushNotification(data.body, [notification.user._id]);
     return notification;
   }
 

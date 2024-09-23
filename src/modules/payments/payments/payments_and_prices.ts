@@ -1,0 +1,46 @@
+const actionsAndPrices = {
+  buyer: {
+    sendOffer: { price: 250, per: 'property' },
+    closingServices: { price: 2500, per: 'transaction' },
+    aiAssistedDisclosureSummary: { price: 150, per: 'property' },
+    agentAssistedShowings: { price: 0, disabled: true },
+    reviewCMAAndDisclosures: { price: 0, disabled: true },
+    reviewDetailedAnalyticsAndCMA: { price: 0, disabled: true },
+  },
+  seller: {
+    aiAssistedDisclosureSummary: { price: 150, per: 'property' },
+    calendarServicesApproval: { price: 15, per: 'property' },
+    sendCounterOffer: { price: 250, per: 'property' },
+    closingServices: { price: 2500, per: 'transaction' },
+    generateCMA: { price: 15, per: 'property' },
+    reviewDetailedAnalyticsAndCMA: { price: 0, disabled: true },
+    reviewCMAAndDisclosures: { price: 0, disabled: true },
+    agentAssistedShowings: { price: 0, disabled: true },
+  },
+  agent: {
+    yearlySubscription: { price: 200, per: 'yearly' },
+    monthlySubscription: { price: 100, per: 'monthly' },
+    sendOffer: { price: 0, unlocked: true },
+    closingServices: { price: 2500, per: 'transaction' },
+    aiAssistedDisclosureSummary: { price: 0, unlocked: true },
+    sendCounterOffer: { price: 0, unlocked: true },
+    calendarServicesApproval: { price: 0, unlocked: true },
+    agentAssistedShowings: { price: 0, disabled: true },
+    reviewCMAAndDisclosures: { price: 0, disabled: true },
+    reviewDetailedAnalyticsAndCMA: { price: 0, disabled: true },
+  },
+};
+enum ActionsEnum {
+  SEND_OFFER = 'sendOffer',
+  CLOSING_SERVICES = 'closingServices',
+  AI_ASSISTED_DISCLOSURE_SUMMARY = 'aiAssistedDisclosureSummary',
+  AGENT_ASSISTED_SHOWINGS = 'agentAssistedShowings',
+  REVIEW_CMA_DISCLOSURES = 'reviewCMAAndDisclosures',
+  REVIEW_DETAILED_ANALYTICS_CMA = 'reviewDetailedAnalyticsAndCMA',
+  CALENDAR_SERVICES_APPROVAL = 'calendarServicesApproval',
+  SEND_COUNTER_OFFER = 'sendCounterOffer',
+  GENERATE_CMA = 'generateCMA',
+  YEARLYSUBSCRIPTION = 'yearlySubscription',
+  MONTHLYSUBSCRIPTION = 'monthlySubscription',
+}
+export { actionsAndPrices, ActionsEnum };

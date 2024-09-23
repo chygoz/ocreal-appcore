@@ -41,3 +41,10 @@ export class PropertyPreferenceDto {
   @IsBoolean()
   workWithLender: boolean;
 }
+
+export class PropertyPreferenceDetailsDto {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PropertyPreferenceDto)
+  propertyPreference: PropertyPreferenceDto;
+}

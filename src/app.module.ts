@@ -10,7 +10,7 @@ import { AgentsModule } from './modules/agent/agents.module';
 import { Agent, AgentSchema } from './modules/agent/schema/agent.schema';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { WebhooksModule } from './modules/webhooks/wehbooks.module';
-import { PaymentModule } from './services/payments/payments.module';
+import { PaymentModule } from './modules/payments/payments.module';
 import { StripeModule } from './services/stripe/stripe.module';
 import { PropertyModule } from './modules/property/property.module';
 import { MessageModule } from './modules/message/message.module';
@@ -60,6 +60,14 @@ import {
   SharePropertyDoc,
   SharePropertyDocSchema,
 } from './modules/property/schema/shareDocument.schema';
+import {
+  AgentContract,
+  AgentContractSchema,
+} from './modules/property/schema/agentContract.schema';
+import {
+  BuyerProperyTermsAndAgreement,
+  BuyerProperyTermsAndAgreementSchema,
+} from './modules/property/schema/buyerPropertyTermsAndAgreement.schema';
 
 @Module({
   imports: [
@@ -77,6 +85,11 @@ import {
       { name: OfferComment.name, schema: OfferCommentSchema },
       { name: PropertyTourSchedule.name, schema: PropertyTourScheduleSchema },
       { name: SharePropertyDoc.name, schema: SharePropertyDocSchema },
+      { name: AgentContract.name, schema: AgentContractSchema },
+      {
+        name: BuyerProperyTermsAndAgreement.name,
+        schema: BuyerProperyTermsAndAgreementSchema,
+      },
     ]),
     ScheduleModule.forRoot(),
     CronJobModule,

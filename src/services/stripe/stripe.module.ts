@@ -4,7 +4,10 @@ import Stripe from 'stripe';
 import { configs } from 'src/configs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/modules/users/schema/user.schema';
-import { Payment, PaymentSchema } from '../payments/schema/payment.shcema';
+import {
+  Payment,
+  PaymentSchema,
+} from '../../modules/payments/schema/payment.schema';
 // import { ConfigurableModuleClass } from './instance.stripe';
 
 // @Module({

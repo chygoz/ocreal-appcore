@@ -34,6 +34,14 @@ import {
   SharePropertyDoc,
   SharePropertyDocSchema,
 } from './schema/shareDocument.schema';
+import {
+  AgentContract,
+  AgentContractSchema,
+} from './schema/agentContract.schema';
+import {
+  BuyerProperyTermsAndAgreement,
+  BuyerProperyTermsAndAgreementSchema,
+} from './schema/buyerPropertyTermsAndAgreement.schema';
 
 @Module({
   imports: [
@@ -50,6 +58,11 @@ import {
       { name: OfferComment.name, schema: OfferCommentSchema },
       { name: PropertyTourSchedule.name, schema: PropertyTourScheduleSchema },
       { name: SharePropertyDoc.name, schema: SharePropertyDocSchema },
+      { name: AgentContract.name, schema: AgentContractSchema },
+      {
+        name: BuyerProperyTermsAndAgreement.name,
+        schema: BuyerProperyTermsAndAgreementSchema,
+      },
     ]),
     EmailModule,
     NotificationModule,
