@@ -6,6 +6,7 @@ import { Plan, PlanSchema } from './schema/plan.schema';
 import { User, UserSchema } from '../users/schema/user.schema';
 import { SubscriptionSchema, Subscription } from './schema/subscription.schema';
 import { StripeModule } from 'src/services/stripe/stripe.module';
+import { AgentSchema, Agent } from '../agent/schema/agent.schema';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { StripeModule } from 'src/services/stripe/stripe.module';
       { name: Plan.name, schema: PlanSchema },
       { name: User.name, schema: UserSchema },
       { name: Subscription.name, schema: SubscriptionSchema },
+      { name: Agent.name, schema: AgentSchema },
     ]),
     StripeModule,
   ],

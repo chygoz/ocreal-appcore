@@ -12,16 +12,20 @@ import {
   PaymentTypeEnum,
 } from 'src/modules/payments/schema/payment.schema';
 import { generateReferralCode } from 'src/utils/randome-generators';
+import { PaymentService } from '../payments/payment.service';
+import { Agent } from '../agent/schema/agent.schema';
 
 @Injectable()
 export class WebhooksService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(Agent.name) private readonly asgentModel: Model<Agent>,
     @InjectModel(Plan.name) private readonly planModel: Model<Plan>,
     @InjectModel(Payment.name) private readonly paymentModel: Model<Payment>,
     private readonly emailService: EmailService,
     private readonly stripeService: StripeService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly paymentService: PaymentService,
   ) {}
 
   async handleStripeEvent(sig: string, eventId: string) {
@@ -62,65 +66,116 @@ export class WebhooksService {
     const invoiceObject = await this.stripeService.getInvoiceObject(
       subscriptionScheduleCreated.latest_invoice as string,
     );
-
     const stripe_customer_id = invoiceObject.customer as string;
     const amountInCents = invoiceObject.amount_paid;
     const amount = amountInCents / 100;
-    const user = await this.userModel.findOne({
-      stripe_customer_id,
-    });
     const invoiceUrl = invoiceObject.hosted_invoice_url!;
     const stripeSubItem = subscriptionScheduleCreated.items.data.pop();
     const plan = await this.planModel.findOne({
       stripePriceId: stripeSubItem!.price.id,
     });
-
-    switch (invoiceObject.billing_reason) {
-      case 'subscription_update':
-        console.log('::: SUBSCRIPTION UPDATE EVENT CALLED :::');
-        if (invoiceObject.paid) {
-          await this.subscriptionService.handleSubscriptionUpdates(
-            subscriptionScheduleCreated,
-            user,
-            plan,
+    const user = await this.userModel.findOne({
+      stripe_customer_id,
+    });
+    if (user) {
+      switch (invoiceObject.billing_reason) {
+        case 'subscription_update':
+          console.log('::: SUBSCRIPTION UPDATE EVENT CALLED :::');
+          if (invoiceObject.paid) {
+            await this.subscriptionService.handleSubscriptionUpdates(
+              subscriptionScheduleCreated,
+              user,
+              plan,
+            );
+          }
+          break;
+        case 'subscription_create':
+          console.log('::: CRREATING A BRAND NEW SUBSCRIPTION :::');
+          const { customer } = subscriptionScheduleCreated;
+          await this.stripeService.cancelOldStripeSubs(
+            customer as string,
+            subscriptionScheduleCreated.id,
           );
-        }
-        break;
-      case 'subscription_create':
-        console.log('::: CRREATING A BRAND NEW SUBSCRIPTION :::');
-        const { customer } = subscriptionScheduleCreated;
-        await this.stripeService.cancelOldStripeSubs(
-          customer as string,
-          subscriptionScheduleCreated.id,
-        );
-        await this.subscriptionService.createNewSubscription(
-          plan.id,
-          customer as string,
-          subscriptionScheduleCreated.id,
-        );
-        break;
-      case 'subscription_cycle':
-        console.log('::: SUBSCRIPTION RENEWAL EVENT CALLED :::');
-        if (invoiceObject.paid) {
-          await this.subscriptionService.handleSubscriptionUpdates(
-            subscriptionScheduleCreated,
-            user,
-            plan,
+          await this.subscriptionService.createNewSubscription(
+            plan.id,
+            customer as string,
+            subscriptionScheduleCreated.id,
           );
-        }
-        break;
+          break;
+        case 'subscription_cycle':
+          console.log('::: SUBSCRIPTION RENEWAL EVENT CALLED :::');
+          if (invoiceObject.paid) {
+            await this.subscriptionService.handleSubscriptionUpdates(
+              subscriptionScheduleCreated,
+              user,
+              plan,
+            );
+          }
+          break;
+      }
+      const paymentUpdateData = {
+        paymentType: PaymentTypeEnum.subscription,
+        amount: {
+          amount: amount,
+          currency: invoiceObject.currency.toUpperCase(),
+        },
+        user: user?._id,
+        reference: `REF-${generateReferralCode(6)}`,
+        receiptUrl: invoiceUrl,
+        stripeInvoiceId: invoiceObject.id,
+      };
+      await this.paymentModel.create(paymentUpdateData);
+    } else {
+      const agent = await this.asgentModel.findOne({
+        stripe_customer_id,
+      });
+      switch (invoiceObject.billing_reason) {
+        case 'subscription_update':
+          console.log('::: SUBSCRIPTION UPDATE EVENT CALLED :::');
+          if (invoiceObject.paid) {
+            await this.subscriptionService.handleAgentSubscriptionUpdates(
+              subscriptionScheduleCreated,
+              agent,
+              plan,
+            );
+          }
+          break;
+        case 'subscription_create':
+          console.log('::: CRREATING A BRAND NEW SUBSCRIPTION :::');
+          const { customer } = subscriptionScheduleCreated;
+          await this.stripeService.cancelOldStripeSubs(
+            customer as string,
+            subscriptionScheduleCreated.id,
+          );
+          await this.subscriptionService.createAgentNewSubscription(
+            plan.id,
+            customer as string,
+            subscriptionScheduleCreated.id,
+          );
+          break;
+        case 'subscription_cycle':
+          console.log('::: SUBSCRIPTION RENEWAL EVENT CALLED :::');
+          if (invoiceObject.paid) {
+            await this.subscriptionService.handleAgentSubscriptionUpdates(
+              subscriptionScheduleCreated,
+              agent,
+              plan,
+            );
+          }
+          break;
+      }
+      const paymentUpdateData = {
+        paymentType: PaymentTypeEnum.subscription,
+        amount: {
+          amount: amount,
+          currency: invoiceObject.currency.toUpperCase(),
+        },
+        agent: agent?._id,
+        reference: `REF-${generateReferralCode(6)}`,
+        receiptUrl: invoiceUrl,
+        stripeInvoiceId: invoiceObject.id,
+      };
+      await this.paymentModel.create(paymentUpdateData);
     }
-    const paymentUpdateData = {
-      paymentType: PaymentTypeEnum.subscription,
-      amount: {
-        amount: amount,
-        currency: invoiceObject.currency.toUpperCase(),
-      },
-      user: user?._id,
-      reference: `REF-${generateReferralCode(6)}`,
-      receiptUrl: invoiceUrl,
-      stripeInvoiceId: invoiceObject.id,
-    };
-    await this.paymentModel.create(paymentUpdateData);
   }
 }

@@ -6,13 +6,18 @@ import { Document } from 'mongoose';
 export type PlanDocument = Document & Plan;
 
 export enum PlanTypeEnum {
-  freemium = 'freemium',
-  premium = 'premium',
+  monthly = 'monthly',
+  yearly = 'yearly',
+}
+
+export enum PlanIntervalEnum {
+  month = 'month',
+  year = 'year',
 }
 
 @Schema({ timestamps: true })
 export class Plan {
-  @Prop({ type: String, enum: PlanTypeEnum, default: PlanTypeEnum.freemium })
+  @Prop({ type: String, enum: PlanTypeEnum, default: PlanTypeEnum.monthly })
   subscriptionType: PlanTypeEnum;
 
   @Prop()
@@ -23,7 +28,11 @@ export class Plan {
   })
   price: { amount: number; currency: string };
 
-  @Prop({ type: String, default: 'month' })
+  @Prop({
+    type: String,
+    enum: PlanIntervalEnum,
+    default: PlanIntervalEnum.month,
+  })
   interval: string;
 
   @Prop({ type: Number, default: 1 })

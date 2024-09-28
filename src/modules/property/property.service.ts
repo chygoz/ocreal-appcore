@@ -2042,6 +2042,118 @@ export class PropertyService {
     return { result: payload, total, page, limit };
   }
 
+  async getSellerAgentSentOffer(paginationDto: PaginationDto, agent: Agent) {
+    const { page = 1, limit = 10, financeType, min, max } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const query: any = {
+      sellerAgent: agent._id,
+    };
+
+    if (min && max) {
+      query['offerPrice.amount'] = {
+        $gte: +min,
+        $lte: +max,
+      };
+    } else if (max && !min) {
+      query['offerPrice.amount'] = {
+        $lte: +max,
+      };
+    } else if (min && !max) {
+      query['offerPrice.amount'] = {
+        $gte: +min,
+      };
+    }
+
+    if (financeType) {
+      query.financeType = financeType;
+    }
+    const [result, total] = await Promise.all([
+      this.offerModel
+        .find(query)
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .populate('sellerAgent')
+        .populate('buyerAgent')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.offerModel.countDocuments(query),
+    ]);
+    const payload = [];
+    for (const offer of result) {
+      const offerCommentCount = await this.offerCommentModel
+        .countDocuments({
+          offer: offer.id,
+        })
+        .lean();
+      payload.push({
+        ...offer,
+        offerCommentCount,
+      });
+    }
+
+    return { result: payload, total, page, limit };
+  }
+
+  async getBuyerAgentSentOffer(paginationDto: PaginationDto, agent: Agent) {
+    const { page = 1, limit = 10, financeType, min, max } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const query: any = {
+      buyerAgent: agent._id,
+    };
+
+    if (min && max) {
+      query['offerPrice.amount'] = {
+        $gte: +min,
+        $lte: +max,
+      };
+    } else if (max && !min) {
+      query['offerPrice.amount'] = {
+        $lte: +max,
+      };
+    } else if (min && !max) {
+      query['offerPrice.amount'] = {
+        $gte: +min,
+      };
+    }
+
+    if (financeType) {
+      query.financeType = financeType;
+    }
+    const [result, total] = await Promise.all([
+      this.offerModel
+        .find(query)
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .populate('sellerAgent')
+        .populate('buyerAgent')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.offerModel.countDocuments(query),
+    ]);
+    const payload = [];
+    for (const offer of result) {
+      const offerCommentCount = await this.offerCommentModel
+        .countDocuments({
+          offer: offer.id,
+        })
+        .lean();
+      payload.push({
+        ...offer,
+        offerCommentCount,
+      });
+    }
+
+    return { result: payload, total, page, limit };
+  }
+
   async addAgentToProperty(
     user: User,
     user_role: AccountTypeEnum,

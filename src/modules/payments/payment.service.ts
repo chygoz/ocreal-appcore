@@ -9,6 +9,8 @@ import { Invoice } from './schema/invoice.schema';
 import Stripe from 'stripe';
 import { configs } from 'src/configs';
 import { actionsAndPrices, ActionsEnum } from './payments/payments_and_prices';
+import { PaginationDto } from 'src/constants/pagination.dto';
+import { Agent } from '../agent/schema/agent.schema';
 
 const stripe = new Stripe(configs.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
@@ -30,7 +32,35 @@ export class PaymentService {
     // private readonly emailService: EmailService,
   ) {}
 
-  async createStripeCheckOut(paymentDate: {
+  async getAllUserPayments(user: User, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+
+    const skip = (page - 1) * limit;
+    const query = {
+      user: user._id,
+    };
+    const [result, total] = await Promise.all([
+      this.PaymentModel.find({ query }).skip(skip).limit(limit).exec(),
+      this.PaymentModel.countDocuments({ query }),
+    ]);
+    return { result, total, page, limit };
+  }
+
+  async getAllAgentPayments(agent: Agent, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10 } = paginationDto;
+
+    const skip = (page - 1) * limit;
+    const query = {
+      agent: agent._id,
+    };
+    const [result, total] = await Promise.all([
+      this.PaymentModel.find({ query }).skip(skip).limit(limit).exec(),
+      this.PaymentModel.countDocuments({ query }),
+    ]);
+    return { result, total, page, limit };
+  }
+
+  async _createStripeCheckOut(paymentDate: {
     actionEnum: ActionsEnum;
     metadata: any;
     userType: PaymentUserTypeEnum;
