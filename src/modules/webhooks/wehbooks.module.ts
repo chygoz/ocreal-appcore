@@ -11,6 +11,8 @@ import {
   Payment,
   PaymentSchema,
 } from 'src/modules/payments/schema/payment.schema';
+import { AgentSchema, Agent } from '../agent/schema/agent.schema';
+import { PaymentModule } from '../payments/payments.module';
 
 @Module({
   imports: [
@@ -18,10 +20,12 @@ import {
       { name: User.name, schema: UserSchema },
       { name: Plan.name, schema: PlanSchema },
       { name: Payment.name, schema: PaymentSchema },
+      { name: Agent.name, schema: AgentSchema },
     ]),
     EmailModule,
     StripeModule,
     SubscriptionModule,
+    PaymentModule,
   ],
   controllers: [WebhooksController],
   providers: [WebhooksService],

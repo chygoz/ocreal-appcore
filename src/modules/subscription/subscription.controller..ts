@@ -13,6 +13,7 @@ import { CreatePlanDto } from './dto';
 import { Response, Request } from 'express';
 import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
 import { AdminGuard } from 'src/guards/admin.gaurd';
+import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 
 @Controller('subcription')
 export class SubscriptionController {
@@ -25,6 +26,20 @@ export class SubscriptionController {
     @Res() res: Response,
   ): Promise<any> {
     const data = await this.subscriptionService.getUserSubscription(req.user);
+    this._sendResponse({
+      res,
+      data,
+      message: 'Subscription Found',
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/subcription')
+  async getAgentSubscription(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<any> {
+    const data = await this.subscriptionService.getAgentSubscription(req.agent);
     this._sendResponse({
       res,
       data,
@@ -47,12 +62,12 @@ export class SubscriptionController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('/session/:id')
-  async getSubscriotionSettion(
+  @Get('/user/subscription/session/:id')
+  async getSubscriptionSession(
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<any> {
-    const data = await this.subscriptionService.getSubscrioptionSession(
+    const data = await this.subscriptionService.getSubscriptionSession(
       req.user,
       req.params.id,
     );
@@ -63,13 +78,43 @@ export class SubscriptionController {
     });
   }
 
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('agent/subscription/session/:id')
+  async getAgentSubscriptionSession(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<any> {
+    const data = await this.subscriptionService.getAgentSubscriptionSession(
+      req.agent,
+      req.params.id,
+    );
+    this._sendResponse({
+      res,
+      data,
+      message: 'Session Created',
+    });
+  }
+
   @UseGuards(JwtAuthGuard)
-  @Put('/cancel/')
+  @Put('/user/cancel/subcription')
   async cancelSubscription(
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<any> {
     await this.subscriptionService.cancelSubscription(req.user);
+    this._sendResponse({
+      res,
+      message: 'Subscription Canceled',
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Put('/agent/cancel/subcription')
+  async cancelAgentSubscription(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<any> {
+    await this.subscriptionService.cancelAgentSubscription(req.agent);
     this._sendResponse({
       res,
       message: 'Subscription Canceled',

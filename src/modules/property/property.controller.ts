@@ -476,6 +476,42 @@ export class PropertyController {
   }
 
   @UseGuards(AgentOrSellerAuthGuard)
+  @Get('/all/seller-agent/incoming/property-offers')
+  async getSellerAgentSentOffer(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getSellerAgentSentOffer(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offers Found',
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
+  @Get('/all/buyer-agent/sent/property-offers')
+  async getBuyerAgentSentOffer(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getBuyerAgentSentOffer(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offers Found',
+      data,
+    });
+  }
+
+  @UseGuards(AgentOrSellerAuthGuard)
   @Post('/verify/property/ownership/:id')
   async verifyPropertyOwnerShip(
     @Res() res: Response,

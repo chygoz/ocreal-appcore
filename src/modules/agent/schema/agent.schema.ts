@@ -44,6 +44,9 @@ export class Agent extends Document {
   licence_number: string;
 
   @Prop()
+  stripe_customer_id: string;
+
+  @Prop()
   region: string;
 
   @Prop()

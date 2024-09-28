@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Stripe from 'stripe';
 import { configs } from 'src/configs';
+import { PlanTypeEnum } from 'src/modules/subscription/schema/plan.schema';
 // import { Payment } from '../payments/schema/payment.shcema';
 // import { InjectModel } from '@nestjs/mongoose';
 // import { Model } from 'mongoose';
@@ -32,7 +33,7 @@ export class StripeService {
     );
   }
 
-  async createStripePlan(subscriptionType: string) {
+  async createStripePlan(subscriptionType: PlanTypeEnum) {
     const product = await this.stripe.products.create({
       name: subscriptionType,
     });
