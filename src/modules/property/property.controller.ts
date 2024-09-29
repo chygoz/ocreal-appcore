@@ -905,7 +905,7 @@ export class PropertyController {
     });
   }
 
-  @UseGuards(SellerAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('add/agent')
   async addAgentToProperty(
     @Body() data: AddAgentToPropertyDto,

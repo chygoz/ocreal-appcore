@@ -2196,11 +2196,12 @@ export class PropertyService {
       throw new BadRequestException(
         'An agent has already been added to this property',
       );
-    } else if (property.buyerAgent && user_role == AccountTypeEnum.BUYER) {
-      throw new BadRequestException(
-        'An agent has already been added to this property',
-      );
     }
+    // else if (property.buyerAgent && user_role == AccountTypeEnum.BUYER) {
+    //   throw new BadRequestException(
+    //     'An agent has already been added to this property',
+    //   );
+    // }
 
     const newPropertyInvite = {
       inviteAccountType: user_role,
@@ -2221,7 +2222,6 @@ export class PropertyService {
         lactionUrl: `${configs.BASE_URL}/agent/accept-invite?propertyInviteId=${propertyAgentinvite._id.toString()}`,
       },
     });
-    //TODO: send notifications at this point
 
     if (agent) {
       await this.notificationService.createNotification({
