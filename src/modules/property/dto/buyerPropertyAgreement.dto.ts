@@ -13,6 +13,10 @@ export class AcceptTermsDto {
   @IsNotEmpty()
   property: string;
 
+  @IsString()
+  @IsNotEmpty()
+  listingId: string;
+
   @IsBoolean()
   @IsNotEmpty()
   accepted: boolean;

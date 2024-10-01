@@ -440,6 +440,160 @@ export class PropertyService {
     };
   }
 
+  async getSellerAnalytics(seller: User) {
+    const totalCount = await this.propertyModel.countDocuments({
+      seller: new Types.ObjectId(seller._id),
+      $or: [
+        { currentStatus: { $ne: PropertyStatusEnum.sold } },
+        {
+          currentStatus: {
+            $in: [
+              PropertyStatusEnum.nowShowing,
+              PropertyStatusEnum.underContract,
+              PropertyStatusEnum.unpublished,
+            ],
+          },
+        },
+      ],
+    });
+    const pipeline = [
+      {
+        $match: {
+          seller: new Types.ObjectId(seller._id),
+          $or: [
+            { currentStatus: { $ne: PropertyStatusEnum.sold } },
+            {
+              currentStatus: {
+                $in: [
+                  PropertyStatusEnum.nowShowing,
+                  PropertyStatusEnum.underContract,
+                  PropertyStatusEnum.unpublished,
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalValue: {
+            $sum: {
+              $cond: [{ $ne: ['$currentStatus', 'sold'] }, '$price.amount', 0],
+            },
+          },
+        },
+      },
+    ];
+    const [totalValue] = await this.propertyModel.aggregate(pipeline).exec();
+
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const result = await this.offerModel.aggregate([
+      {
+        $match: {
+          seller: new Types.ObjectId(seller._id),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            period: {
+              $cond: [
+                { $gte: ['$createdAt', sixMonthsAgo] },
+                'currentPeriod',
+                'previousPeriod',
+              ],
+            },
+          },
+          totalOffers: { $sum: 1 },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          periods: {
+            $push: {
+              period: '$_id.period',
+              totalOffers: '$totalOffers',
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          currentPeriod: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: '$periods',
+                  as: 'period',
+                  cond: { $eq: ['$$period.period', 'currentPeriod'] },
+                },
+              },
+              0,
+            ],
+          },
+          previousPeriod: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: '$periods',
+                  as: 'period',
+                  cond: { $eq: ['$$period.period', 'previousPeriod'] },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          currentTotal: '$currentPeriod.totalOffers',
+          previousTotal: '$previousPeriod.totalOffers',
+          percentageChange: {
+            $cond: {
+              if: { $gt: ['$previousPeriod.totalOffers', 0] },
+              then: {
+                $multiply: [
+                  {
+                    $divide: [
+                      {
+                        $subtract: [
+                          '$currentPeriod.totalOffers',
+                          '$previousPeriod.totalOffers',
+                        ],
+                      },
+                      '$previousPeriod.totalOffers',
+                    ],
+                  },
+                  100,
+                ],
+              },
+              else: 0,
+            },
+          },
+        },
+      },
+    ]);
+
+    const percentageChange = result[0]?.percentageChange ?? 0;
+    const currentTotal = result[0]?.currentTotal ?? 0;
+    const previousTotal = result[0]?.previousTotal ?? 0;
+
+    return {
+      totalValue: totalValue?.totalValue ?? 0,
+      totalCount,
+      averageOfferGrowth: {
+        percentageChange,
+        currentTotal,
+        previousTotal,
+      },
+    };
+  }
+
   async agentOrSellerAddTourSchedule(
     user: User | Agent,
     dto: PropertyTourScheduleDto,
