@@ -16,6 +16,9 @@ export class BuyerProperyTermsAndAgreement extends Document {
   ipAddress: string;
 
   @Prop({ type: String, required: true })
+  listingId: string;
+
+  @Prop({ type: String, required: true })
   termsVersion: string;
 
   @Prop({ type: String, default: null })

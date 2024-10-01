@@ -168,6 +168,17 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(JwtAuthGuard, SellerAuthGuard)
+  @Get('/seller/analytics/')
+  async getSellerAnalytics(@Res() res: Response, @Req() req: Request) {
+    const data = await this.propertyService.getSellerAnalytics(req.user);
+    this._sendResponse({
+      res,
+      message: 'Seller Analytics Done',
+      data,
+    });
+  }
+
   @UseGuards(JwtAgentAuthGuard)
   @Post('agent/create')
   async agentCreateProperty(
@@ -393,6 +404,11 @@ export class PropertyController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    if (!dto.listingId && !dto.property) {
+      throw new BadRequestException(
+        'Please provide listingId or property id in the request body',
+      );
+    }
     if (req.active_user_role !== AccountTypeEnum.BUYER) {
       throw new BadRequestException('Only Buyers can perform this action');
     }
