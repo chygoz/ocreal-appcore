@@ -67,6 +67,29 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/buyer/interacted-properties')
+  async getBuyerConnectedProperties(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const properties = await this.propertyService.getBuyerConnectedProperties(
+      req.user,
+      paginationDto,
+    );
+    this._sendResponse({
+      res,
+      data: {
+        properties: properties.data,
+        total: properties.total,
+        page: properties.page,
+        limit: properties.limit,
+      },
+      message: 'Properties Found',
+    });
+  }
+
   @UseGuards(JwtAuthGuard, SellerAuthGuard)
   @Post('create')
   async createProperty(

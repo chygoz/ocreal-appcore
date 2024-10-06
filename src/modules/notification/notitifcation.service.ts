@@ -10,6 +10,9 @@ import {
   NotificationUserType,
 } from './schema/notification.schema';
 import { PaginationDto } from 'src/constants/pagination.dto';
+import { User } from '../users/schema/user.schema';
+import { UserNotificationTokens } from './schema/userNotificationsTokens.schema';
+import { Agent } from '../agent/schema/agent.schema';
 
 @Injectable()
 export default class NotificationService {
@@ -17,6 +20,12 @@ export default class NotificationService {
     private readonly emailService: EmailService,
     @InjectModel(Notification.name)
     private readonly notificationModel: Model<Notification>,
+    @InjectModel(UserNotificationTokens.name)
+    private readonly userNotificationTokensModel: Model<UserNotificationTokens>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+    @InjectModel(Agent.name)
+    private readonly agentModel: Model<User>,
   ) {}
 
   private readonly oneSignalApiKey = configs.oneSignal_api_key;
@@ -44,6 +53,44 @@ export default class NotificationService {
       console.error('Error setting External User ID:', error.response.data);
       throw new Error('Failed to set External User ID');
     }
+  }
+
+  async saveUserNotificationToken(token: string, user: User) {
+    const userExists = await this.userModel.findById(user.id);
+    if (!userExists) {
+      throw new NotFoundException('User not found');
+    }
+    const alreadySaved = await this.userNotificationTokensModel.findOne({
+      token,
+      user: user.id,
+    });
+    if (alreadySaved) {
+      return alreadySaved;
+    }
+    const saved = await this.userNotificationTokensModel.create({
+      token,
+      user: new Types.ObjectId(user.id),
+    });
+    return saved;
+  }
+
+  async saveAgentNotificationToken(token: string, agent: Agent) {
+    const userExists = await this.agentModel.findById(agent.id);
+    if (!userExists) {
+      throw new NotFoundException('User not found');
+    }
+    const alreadySaved = await this.userNotificationTokensModel.findOne({
+      token,
+      agent: agent.id,
+    });
+    if (alreadySaved) {
+      return alreadySaved;
+    }
+    const saved = await this.userNotificationTokensModel.create({
+      token,
+      agent: new Types.ObjectId(agent.id),
+    });
+    return saved;
   }
 
   async sendPushNotification(

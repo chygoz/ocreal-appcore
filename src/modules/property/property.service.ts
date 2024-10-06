@@ -134,13 +134,123 @@ export class PropertyService {
     if (alreadyActedOn) {
       throw new BadRequestException('You have already acted on this');
     }
+    const propertyObject = {};
+    if (dto.property) {
+      propertyObject['property'] = new Types.ObjectId(dto.property);
+    }
     const termsAndAgreement =
       await this.buyerProperyTermsAndAgreementModel.create({
         ...dto,
+        ...propertyObject,
         user: new mongoose.Types.ObjectId(user.id),
         ipAddress,
       });
     return termsAndAgreement;
+  }
+
+  async getBuyerConnectedProperties(user: User, paginationDto: PaginationDto) {
+    const { page = 1, limit = 10, search } = paginationDto;
+    const searchStage = {
+      $match: {},
+    };
+
+    if (search) {
+      searchStage.$match = {
+        $or: [
+          {
+            numBathroom: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            lotSizeUnit: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+
+          {
+            propertyType: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'features.feature': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            propertyName: new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
+          },
+          {
+            'propertyAddressDetails.formattedAddress': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.city': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.state': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+          {
+            'propertyAddressDetails.streetName': new RegExp(
+              new RegExp(search, 'i'),
+              'i',
+            ),
+          },
+        ],
+      };
+    }
+
+    const skip = (page - 1) * limit;
+    const pipeline: any = [
+      {
+        $match: {
+          user: user._id,
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'properties',
+          localField: 'property',
+          foreignField: '_id',
+          as: 'property',
+        },
+      },
+      {
+        $unwind: {
+          path: '$property',
+          // preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: '$property',
+        },
+      },
+      searchStage,
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          paginatedResults: [{ $skip: skip }, { $limit: limit }],
+          totalCount: [{ $count: 'total' }],
+        },
+      },
+    ];
+
+    const results = await await this.buyerProperyTermsAndAgreementModel
+      .aggregate(pipeline)
+      .exec();
+
+    return {
+      data: results[0]?.paginatedResults ?? [],
+      total: results[0].totalCount[0]?.total ?? 0,
+      page,
+      limit,
+    };
   }
 
   async sharePropertyDocument(

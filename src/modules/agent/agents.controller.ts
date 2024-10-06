@@ -28,7 +28,7 @@ export class AgentsController {
     @Req() req: Request,
   ) {
     const data = await this.agentsService.onboardAgent(
-      req.agent.id,
+      req.agent._id,
       onboardAgentDto,
     );
     this._sendResponse({

@@ -10,11 +10,11 @@ import { PropertyPreferenceDto } from 'src/modules/users/dto/propertyPreference.
 
 export class AcceptTermsDto {
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   property: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   listingId: string;
 
   @IsBoolean()

@@ -219,7 +219,7 @@ export class AuthService {
         .update(loginDto.password)
         .digest('hex'),
     });
-    if (!user) throw new Error('Invalid email or password');
+    if (!user) throw new UnauthorizedException('Invalid email or password');
 
     const token = createAgentJwtToken({
       id: user._id,
@@ -228,9 +228,9 @@ export class AuthService {
       lastname: user.lastname,
       fullname: user.fullname,
       emailVerified: user.emailVerified,
-      region: user.region,
-      licence_number: user.licence_number,
-      avatar: user.avatar,
+      region: user?.region,
+      licence_number: user?.licence_number,
+      avatar: user?.avatar,
     });
 
     return {
