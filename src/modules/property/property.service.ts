@@ -209,6 +209,7 @@ export class PropertyService {
       {
         $match: {
           user: user._id,
+          accepted: { $ne: false },
         },
       },
 
