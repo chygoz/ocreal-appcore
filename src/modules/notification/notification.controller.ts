@@ -13,6 +13,9 @@ import NotificationService from './notitifcation.service';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
 import { OneSignalPlayerDto } from './dto/oneSignal.dto';
+import { CreateUserNotificationTokenDto } from './dto/userNotficiationToken.dto';
+import { JwtAuthGuard } from 'src/guards/auth-jwt.guard';
+import { JwtAgentAuthGuard } from 'src/guards/agent.guard';
 
 @UseGuards(AgentOrSellerAuthGuard)
 @Controller('Notifications')
@@ -50,6 +53,42 @@ export class NotificationController {
       res,
       data: { result },
       message: 'Push notifications subscription completed.',
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('save/user/notification-token')
+  async saveUserNotificationToken(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query() dto: CreateUserNotificationTokenDto,
+  ) {
+    const result = await this.notificationService.saveUserNotificationToken(
+      dto.token,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Push Notification Token Saved',
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Post('save/agent/notification-token')
+  async saveAgentNotificationToken(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query() dto: CreateUserNotificationTokenDto,
+  ) {
+    const result = await this.notificationService.saveAgentNotificationToken(
+      dto.token,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      data: { result },
+      message: 'Push Notification Token Saved',
     });
   }
 

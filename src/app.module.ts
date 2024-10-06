@@ -68,6 +68,7 @@ import {
   BuyerProperyTermsAndAgreement,
   BuyerProperyTermsAndAgreementSchema,
 } from './modules/property/schema/buyerPropertyTermsAndAgreement.schema';
+import { FirebaseMessagingModule } from './modules/firebase/firebase-messaging.module';
 
 @Module({
   imports: [
@@ -107,6 +108,7 @@ import {
     EmailModule,
     S3Module,
     PropertyRepoModule,
+    FirebaseMessagingModule,
   ],
   controllers: [AppController],
   providers: [AppService, MessageGateway, PropertyService],
