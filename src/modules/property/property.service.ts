@@ -2167,11 +2167,11 @@ export class PropertyService {
 
   async getAgentPropertyinvites(paginationDto: PaginationDto, agent: Agent) {
     const { page = 1, limit = 10, invitedBy } = paginationDto;
-    if (!invitedBy) {
-      throw new BadRequestException(
-        'invitedBy query params missing in your request.',
-      );
-    }
+    // if (!invitedBy) {
+    //   throw new BadRequestException(
+    //     'invitedBy query params missing in your request.',
+    //   );
+    // }
     const skip = (page - 1) * limit;
     const query = invitedBy ? { inviteAccountType: invitedBy } : {};
     const [result, total] = await Promise.all([
@@ -3638,6 +3638,51 @@ export class PropertyService {
     ]);
 
     return { result, total, page, limit };
+  }
+
+  async getAgentOfferByPropertyId(propertyId: string, user: Agent) {
+    const queryData = {
+      $or: [
+        { sellerAgent: user.id, property: new Types.ObjectId(propertyId) },
+        { buyerAgent: user.id, property: new Types.ObjectId(propertyId) },
+      ],
+    };
+
+    const offer = await this.offerModel
+      .findOne(queryData)
+      .populate([
+        'sellerAgent',
+        'buyerAgent',
+        'buyer',
+        'seller',
+        'property',
+        'counterOffer',
+      ])
+      .exec();
+    if (!offer) throw new NotFoundException('Offer not found');
+    return offer;
+  }
+
+  async getUserOfferByPropertyId(propertyId: string, user: User) {
+    const queryData = {
+      $or: [
+        { seller: user.id, property: new Types.ObjectId(propertyId) },
+        { buyer: user.id, property: new Types.ObjectId(propertyId) },
+      ],
+    };
+    const offer = await this.offerModel
+      .findOne(queryData)
+      .populate([
+        'sellerAgent',
+        'buyerAgent',
+        'buyer',
+        'seller',
+        'property',
+        'counterOffer',
+      ])
+      .exec();
+    if (!offer) throw new NotFoundException('Offer not found');
+    return offer;
   }
 
   async getAgentOutGoingPropertyOffers(
