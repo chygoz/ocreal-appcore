@@ -826,6 +826,36 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/property-offer/:propertyId')
+  async getAgentOfferByPropertyId(@Res() res: Response, @Req() req: Request) {
+    const propertyId = req.params.propertyId;
+    const data = await this.propertyService.getAgentOfferByPropertyId(
+      propertyId,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offer Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/user/property-offer/:propertyId')
+  async getUserOfferByPropertyId(@Res() res: Response, @Req() req: Request) {
+    const propertyId = req.params.propertyId;
+    const data = await this.propertyService.getUserOfferByPropertyId(
+      propertyId,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Offer Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
   @Get('/agent/outgoing/offers')
   async getAgentOutGoingPropertyOffers(
     @Res() res: Response,
