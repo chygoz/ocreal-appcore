@@ -939,6 +939,44 @@ export class PropertyController {
   }
 
   @UseGuards(JwtAgentAuthGuard)
+  @Get('/agent/tours/property/:propertyId')
+  async getAgentPropertyUpcomingTours(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getAgentPropertyUpcomingTours(
+      paginationDto,
+      req.agent,
+      req.params.propertyId,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, SellerAuthGuard)
+  @Get('/user/tours/property/:propertyId')
+  async getUserPropertyUpcomingTours(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getUserPropertyUpcomingTours(
+      paginationDto,
+      req.user,
+      req.params.propertyId,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
   @Get('/agent/invites')
   async getAgentPropertyinvites(
     @Res() res: Response,

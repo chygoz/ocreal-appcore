@@ -2165,6 +2165,64 @@ export class PropertyService {
     return { result, total, page, limit };
   }
 
+  async getAgentPropertyUpcomingTours(
+    paginationDto: PaginationDto,
+    agent: Agent,
+    propertyId: string,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const [result, total] = await Promise.all([
+      this.propertyTourModel
+        .find({
+          sellerAgent: agent.id,
+          property: new Types.ObjectId(propertyId),
+        })
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyTourModel.countDocuments({
+        sellerAgent: agent.id,
+        property: new Types.ObjectId(propertyId),
+      }),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
+  async getUserPropertyUpcomingTours(
+    paginationDto: PaginationDto,
+    user: User,
+    propertyId: string,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const [result, total] = await Promise.all([
+      this.propertyTourModel
+        .find({
+          seller: user._id,
+          property: new Types.ObjectId(propertyId),
+        })
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyTourModel.countDocuments({
+        seller: user._id,
+        property: new Types.ObjectId(propertyId),
+      }),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
   async getAgentPropertyinvites(paginationDto: PaginationDto, agent: Agent) {
     const { page = 1, limit = 10, invitedBy } = paginationDto;
     // if (!invitedBy) {
@@ -2178,7 +2236,7 @@ export class PropertyService {
       this.agentPropertyInviteModel
         .find({
           currentStatus: AgentPropertyInviteStatusEnum.pending,
-          email: agent.email,
+          $or: [{ email: agent.email }, { agent: agent._id }],
           ...query,
         })
         .populate('invitedBy')
@@ -2189,7 +2247,7 @@ export class PropertyService {
         .exec(),
       this.agentPropertyInviteModel.countDocuments({
         currentStatus: AgentPropertyInviteStatusEnum.pending,
-        email: agent.email,
+        $or: [{ email: agent.email }, { agent: agent._id }],
         ...query,
       }),
     ]);
@@ -2202,13 +2260,15 @@ export class PropertyService {
     const skip = (page - 1) * limit;
     const [result, total] = await Promise.all([
       this.agentPropertyInviteModel
-        .find({ email: agent.email })
+        .find({ $or: [{ email: agent.email }, { agent: agent._id }] })
         .populate('invitedBy')
         .populate('property')
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.agentPropertyInviteModel.countDocuments({ email: agent.email }),
+      this.agentPropertyInviteModel.countDocuments({
+        $or: [{ email: agent.email }, { agent: agent._id }],
+      }),
     ]);
 
     return { result, total, page, limit };
@@ -2473,7 +2533,7 @@ export class PropertyService {
       invitedBy: user,
       email: data.agentEmail,
       property: property.id,
-      agent: agent ? agent.id : null,
+      agent: agent ? new Types.ObjectId(agent._id) : null,
     };
 
     const propertyAgentinvite =

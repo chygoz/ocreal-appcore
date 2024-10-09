@@ -1,0 +1,1 @@
+//TODO: This is a conversation between both peers of users(all 4 of them are in the conversation at the sametime), buyer and their agent including the seller and their agent, find a way to track connections to the property conversationa and ensure not to expose this to anyone not authorized
