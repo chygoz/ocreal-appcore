@@ -119,7 +119,6 @@ export class MessageController {
   @UseGuards(JwtAuthGuard)
   @Get('user/chats/:id')
   async getUserMessageChats(
-    // @Param('id') dto: IsMongoIdDto,
     @Res() res: Response,
     @Query() paginationDto: PaginationDto,
     @Req() req: Request,
@@ -129,6 +128,82 @@ export class MessageController {
     this._sendResponse({
       res,
       message: 'Chats found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('user/message-thread/:propertyId/:agentId')
+  async getUserMessageByPropertyAndAgent(
+    @Res() res: Response,
+    @Query() paginationDto: PaginationDto,
+    @Req() req: Request,
+  ) {
+    const propertyId = req.params.propertyId;
+    const agentId = req.params.agentId;
+    const data = await this.messageService.getUserMessageByPropertyAndAgent(
+      { agentId, propertyId },
+      paginationDto,
+    );
+    this._sendResponse({
+      res,
+      message: 'Chats found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('agent/message-thread/:propertyId/:userId')
+  async getAgentMessageByPropertyAndUser(
+    @Res() res: Response,
+    @Query() paginationDto: PaginationDto,
+    @Req() req: Request,
+  ) {
+    const propertyId = req.params.propertyId;
+    const userId = req.params.userId;
+    const data = await this.messageService.getAgentMessageByPropertyAndUser(
+      { userId, propertyId },
+      paginationDto,
+    );
+    this._sendResponse({
+      res,
+      message: 'Chats found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('user/connected-agents/messages')
+  async getUserConnectedAgentsMessages(
+    @Res() res: Response,
+    @Query() paginationDto: PaginationDto,
+    @Req() req: Request,
+  ) {
+    const data = await this.messageService.getUserConnectedAgentsMessages(
+      paginationDto,
+      req.user,
+    );
+    this._sendResponse({
+      res,
+      message: 'Connections found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('agent/connected-user/messages')
+  async getAgentConnectedUserMessages(
+    @Res() res: Response,
+    @Query() paginationDto: PaginationDto,
+    @Req() req: Request,
+  ) {
+    const data = await this.messageService.getAgentConnectedUserMessages(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Connections found',
       data,
     });
   }

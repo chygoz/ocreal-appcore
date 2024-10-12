@@ -9,6 +9,10 @@ import { AgentSchema, Agent } from '../agent/schema/agent.schema';
 import { SocketModule } from '../socket/socket.module';
 import { MessageGateway } from '../socket/message.gateway';
 import { NotificationModule } from '../notification/notification.module';
+import {
+  AgentPropertyInvite,
+  AgentPropertyInviteSchema,
+} from '../property/schema/agentPropertyInvite.schema';
 
 @Module({
   imports: [
@@ -17,6 +21,10 @@ import { NotificationModule } from '../notification/notification.module';
       { name: Chat.name, schema: ChatSchema },
       { name: User.name, schema: UserSchema },
       { name: Agent.name, schema: AgentSchema },
+      {
+        name: AgentPropertyInvite.name,
+        schema: AgentPropertyInviteSchema,
+      },
     ]),
     SocketModule,
     NotificationModule,
