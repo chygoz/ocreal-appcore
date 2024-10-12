@@ -957,6 +957,42 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/seller-agent/tours/property')
+  async getSellerAgentPropertyUpcomingTours(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getSellerAgentPropertyUpcomingTours(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
+      data,
+    });
+  }
+
+  @UseGuards(JwtAgentAuthGuard)
+  @Get('/buyer-agent/tours/property')
+  async getBuyerAgentPropertyUpcomingTours(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const data = await this.propertyService.getBuyerAgentPropertyUpcomingTours(
+      paginationDto,
+      req.agent,
+    );
+    this._sendResponse({
+      res,
+      message: 'Tours Found',
+      data,
+    });
+  }
+
   @UseGuards(JwtAuthGuard, SellerAuthGuard)
   @Get('/user/tours/property/:propertyId')
   async getUserPropertyUpcomingTours(
