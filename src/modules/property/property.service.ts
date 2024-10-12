@@ -2194,6 +2194,58 @@ export class PropertyService {
     return { result, total, page, limit };
   }
 
+  async getSellerAgentPropertyUpcomingTours(
+    paginationDto: PaginationDto,
+    agent: Agent,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const [result, total] = await Promise.all([
+      this.propertyTourModel
+        .find({
+          sellerAgent: agent.id,
+        })
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyTourModel.countDocuments({
+        sellerAgent: agent.id,
+      }),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
+  async getBuyerAgentPropertyUpcomingTours(
+    paginationDto: PaginationDto,
+    agent: Agent,
+  ) {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+    const [result, total] = await Promise.all([
+      this.propertyTourModel
+        .find({
+          buyerAgent: agent.id,
+        })
+        .populate('buyer')
+        .populate('seller')
+        .populate('property')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.propertyTourModel.countDocuments({
+        buyerAgent: agent.id,
+      }),
+    ]);
+
+    return { result, total, page, limit };
+  }
+
   async getUserPropertyUpcomingTours(
     paginationDto: PaginationDto,
     user: User,
