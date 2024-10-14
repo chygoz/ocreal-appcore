@@ -70,6 +70,7 @@ export const configs =
         FACEBOOK_AUTH_APP_SECRET: process.env.DEV_FACEBOOK_AUTH_APP_SECRET,
         oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
         oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
+        data_infinite_api_token: process.env.DATAINIFINITI_API_TOKEN,
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -140,6 +141,7 @@ export const configs =
           FACEBOOK_AUTH_APP_SECRET: process.env.PROD_FACEBOOK_AUTH_APP_SECRET,
           oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
           oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
+          data_infinite_api_token: process.env.DATAINIFINITI_API_TOKEN,
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -208,4 +210,5 @@ export const configs =
           FACEBOOK_AUTH_APP_SECRET: process.env.DEV_FACEBOOK_AUTH_APP_SECRET,
           oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
           oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
+          data_infinite_api_token: process.env.DATAINIFINITI_API_TOKEN,
         };

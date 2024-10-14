@@ -974,6 +974,22 @@ export class PropertyController {
       data,
     });
   }
+  // @UseGuards(JwtAgentAuthGuard)
+  @Get('/data-infinity/property/:query')
+  async queryPropertyByAddressByDataInfiniti(
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const data =
+      await this.propertyService.queryPropertyByAddressByDataInfiniti(
+        req.params.query,
+      );
+    this._sendResponse({
+      res,
+      message: 'Properties Found',
+      data,
+    });
+  }
 
   @UseGuards(JwtAgentAuthGuard)
   @Get('/buyer-agent/tours/property')
