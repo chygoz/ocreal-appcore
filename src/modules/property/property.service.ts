@@ -2068,6 +2068,37 @@ export class PropertyService {
     }
   }
 
+  async queryPropertyByAddressByDataInfiniti(address: string) {
+    try {
+      const API_token = configs.data_infinite_api_token;
+      const format = 'JSON';
+      const query = `address:${address}`;
+      const num_records = 10;
+      const download = false;
+      const response = await axios.post(
+        'https://api.datafiniti.co/v4/properties/search',
+        {
+          query: query,
+          format: format,
+          num_records: num_records,
+          download: download,
+        },
+        {
+          headers: {
+            Authorization: 'Bearer ' + API_token,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      const data = response.data;
+      return data;
+    } catch (e) {
+      throw new BadRequestException(
+        'Something went wrong with fetching property data, please try again later.',
+      );
+    }
+  }
+
   async scheduleTour(data: CreateTourDto, user: User): Promise<PropertyTour> {
     const property = await this.propertyModel.findById({
       _id: data.property,
@@ -2931,10 +2962,10 @@ export class PropertyService {
       throw new NotFoundException('Property not found');
     }
     if (
-      property?.seller?.id &&
-      property?.seller?.id.toString() !== user?.id.toString() &&
+      property?.seller &&
+      property?.seller.toString() !== user?.id.toString() &&
       property?.sellerAgent &&
-      property?.sellerAgent?.id.toString() !== user.id.toString()
+      property?.sellerAgent.toString() !== user.id.toString()
     ) {
       throw new UnauthorizedException(
         'You are not authorized to delete this property',
@@ -3969,7 +4000,8 @@ export class PropertyService {
         agent: agent.id,
         // currentStatus: AgentPropertyInviteStatusEnum.pending,
       })
-      .populate('invitedBy');
+      .populate('invitedBy')
+      .lean();
 
     if (!invite) {
       throw new NotFoundException('invite not found');
@@ -3979,10 +4011,14 @@ export class PropertyService {
         `This invited has already been ${invite.currentStatus}.`,
       );
     }
-
     const property = await this.propertyModel
       .findById(invite.property)
       .populate(['seller', 'buyer']);
+    if (!property) {
+      throw new NotFoundException(
+        'The property tied to this invited was  not found',
+      );
+    }
     const update: any = {};
     let user;
     if (dto.response == 'accepted') {
@@ -4016,7 +4052,7 @@ export class PropertyService {
         user = property.buyer;
       }
       await this.propertyModel.findOneAndUpdate(
-        { _id: property._id, isDeleted: { $ne: true } },
+        { _id: property.id, isDeleted: { $ne: true } },
         { ...update },
         { new: true },
       );
@@ -4047,15 +4083,13 @@ export class PropertyService {
             agentName: agent.fullname,
           },
         });
-
         await this.notificationService.createNotification({
           body: `${agent.fullname}, just accepted to act as your purchasing agent on this ${property.propertyName} property.`,
           title: `${agent.fullname}, just accepted your property invite.`,
-          user: property.buyerAgent as any,
+          user: invite.invitedBy.id as any,
           // userType: NotificationUserType.agent,
         });
       }
-
       const alreadyAdded = agent.connectedUsers.includes(invite.invitedBy.id);
       if (!alreadyAdded) {
         await this.agentModel.findByIdAndUpdate(agent.id, {
@@ -4102,7 +4136,7 @@ export class PropertyService {
       await this.notificationService.createNotification({
         body: `${agent.fullname}, just rejected to act as your selling agent on this ${property.propertyName} property.`,
         title: `${agent.fullname}, just rejected your property invite.`,
-        user: property.buyerAgent as any,
+        user: invite.invitedBy.id as any,
         // userType: NotificationUserType.agent,
       });
       return updatedInvite;

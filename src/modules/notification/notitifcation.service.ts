@@ -127,9 +127,11 @@ export default class NotificationService {
     user: string;
     userType?: NotificationUserType;
   }): Promise<Notification> {
-    const saved = await this.notificationModel.create(data);
+    const payload: any = { ...data, user: new Types.ObjectId(data.user) };
+
+    const saved = await this.notificationModel.create(payload);
     const notification = await saved.save();
-    await this.sendPushNotification(data.body, [notification.user._id]);
+    await this.sendPushNotification(data.body, [notification.user.id]);
     return notification;
   }
 

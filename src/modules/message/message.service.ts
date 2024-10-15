@@ -314,11 +314,11 @@ export class MessageService {
       },
     ];
     const result = await this.agentPropertyInviteRepo.aggregate(pipeline);
-    const chats = result[0]?.data ?? [];
+    const connections = result[0]?.data ?? [];
     const total = result[0]?.totalCount ?? 0;
 
     return {
-      chats,
+      connections,
       total,
       page,
       limit,
@@ -450,12 +450,11 @@ export class MessageService {
       },
     ];
     const result = await this.agentPropertyInviteRepo.aggregate(pipeline);
-    console.log(result);
-    const chats = result[0]?.data ?? [];
+    const connections = result[0]?.data ?? [];
     const total = result[0]?.totalCount ?? 0;
 
     return {
-      chats,
+      connections,
       total,
       page,
       limit,
