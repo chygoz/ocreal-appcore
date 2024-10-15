@@ -2962,10 +2962,10 @@ export class PropertyService {
       throw new NotFoundException('Property not found');
     }
     if (
-      property?.seller?.id &&
-      property?.seller?.id.toString() !== user?.id.toString() &&
+      property?.seller &&
+      property?.seller.toString() !== user?.id.toString() &&
       property?.sellerAgent &&
-      property?.sellerAgent?.id.toString() !== user.id.toString()
+      property?.sellerAgent.toString() !== user.id.toString()
     ) {
       throw new UnauthorizedException(
         'You are not authorized to delete this property',
