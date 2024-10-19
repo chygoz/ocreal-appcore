@@ -50,7 +50,7 @@ export class MessageController {
   }
 
   @UseGuards(JwtAgentAuthGuard)
-  @Post('create/user/agent-message')
+  @Post('create/agent/agent-message')
   async createAgentMessage(
     @Body() messageDto: CreateAgentMessageDto,
     @Res() res: Response,
