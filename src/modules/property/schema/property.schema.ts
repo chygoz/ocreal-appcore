@@ -197,6 +197,9 @@ export class Property extends Document {
   sellerAgentAcceptance: boolean;
 
   @Prop({ type: SchemaTypes.Boolean, default: false })
+  createdByAgent: boolean;
+
+  @Prop({ type: SchemaTypes.Boolean, default: false })
   buyerAgentAcceptance: boolean;
 
   @Prop({ type: SchemaTypes.Number, default: 0 })

@@ -159,46 +159,56 @@ export class PropertyService {
         $or: [
           {
             numBathroom: new RegExp(new RegExp(search, 'i'), 'i'),
+            isDeleted: { $ne: true },
           },
           {
             lotSizeUnit: new RegExp(new RegExp(search, 'i'), 'i'),
+            isDeleted: { $ne: true },
           },
 
           {
             propertyType: new RegExp(new RegExp(search, 'i'), 'i'),
+            isDeleted: { $ne: true },
           },
           {
             'features.feature': new RegExp(new RegExp(search, 'i'), 'i'),
+            isDeleted: { $ne: true },
           },
           {
             propertyName: new RegExp(new RegExp(search, 'i'), 'i'),
+            isDeleted: { $ne: true },
           },
           {
             'mobile.raw_mobile': new RegExp(new RegExp(search, 'i'), 'i'),
+            isDeleted: { $ne: true },
           },
           {
             'propertyAddressDetails.formattedAddress': new RegExp(
               new RegExp(search, 'i'),
               'i',
             ),
+            isDeleted: { $ne: true },
           },
           {
             'propertyAddressDetails.city': new RegExp(
               new RegExp(search, 'i'),
               'i',
             ),
+            isDeleted: { $ne: true },
           },
           {
             'propertyAddressDetails.state': new RegExp(
               new RegExp(search, 'i'),
               'i',
             ),
+            isDeleted: { $ne: true },
           },
           {
             'propertyAddressDetails.streetName': new RegExp(
               new RegExp(search, 'i'),
               'i',
             ),
+            isDeleted: { $ne: true },
           },
         ],
       };
@@ -246,8 +256,14 @@ export class PropertyService {
       .aggregate(pipeline)
       .exec();
 
+    const payload = [];
+    for (const a of results[0]?.paginatedResults || []) {
+      const percentageCompleted = await this._getPropertyPercentage(a._id);
+      payload.push({ ...a, percentageCompleted });
+    }
+
     return {
-      data: results[0]?.paginatedResults ?? [],
+      data: payload,
       total: results[0].totalCount[0]?.total ?? 0,
       page,
       limit,
@@ -1056,6 +1072,7 @@ export class PropertyService {
       propertyName: data.propertyAddressDetails.formattedAddress,
       sellerAgent: user.id,
       propertyAddressDetails: data.propertyAddressDetails,
+      createdByAgent: true,
     };
     const createdProperty = new this.propertyModel(newData);
     const result = createdProperty.save();

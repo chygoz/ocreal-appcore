@@ -200,6 +200,7 @@ export class AuthController {
       message: 'User login successfully',
     });
   }
+
   @Post('/agent/login')
   async agentLogin(@Body() loginDto: LoginUserDto, @Res() res: Response) {
     const data = await this.authService.agentLogin(loginDto);
