@@ -71,6 +71,7 @@ export const configs =
         oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
         oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
         data_infinite_api_token: process.env.DATAINIFINITI_API_TOKEN,
+        google_redirect_url: process.env.DEV_GOOGLE_REDIRECT_URL,
       }
     : process.env.ENVIRONMENT == 'production'
       ? {
@@ -142,6 +143,7 @@ export const configs =
           oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
           oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
           data_infinite_api_token: process.env.DATAINIFINITI_API_TOKEN,
+          google_redirect_url: process.env.PROD_GOOGLE_REDIRECT_URL,
         }
       : {
           BASE_URL: 'http://http://localhost:3000',
@@ -211,4 +213,5 @@ export const configs =
           oneSignal_api_key: process.env.DEV_ONESIGNAL_API_KEY,
           oneSignal_app_id: process.env.ONESIGNAL_APP_ID,
           data_infinite_api_token: process.env.DATAINIFINITI_API_TOKEN,
+          google_redirect_url: process.env.LOCAL_GOOGLE_REDIRECT_URL,
         };
