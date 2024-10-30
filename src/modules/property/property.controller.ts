@@ -158,6 +158,40 @@ export class PropertyController {
     });
   }
 
+  @UseGuards(JwtAgentAuthGuard)
+  @Put('/agent/leave/property/:propertyId')
+  async agentLeaveProperty(@Req() req: Request, @Res() res: Response) {
+    const propertyId = req.params.propertyId;
+    const agent = req.agent;
+    const property = await this.propertyService.agentLeaveProperty(
+      propertyId,
+      agent,
+    );
+    this._sendResponse({
+      res,
+      data: { property },
+      message: 'Property removed successfully',
+      statusCode: 200,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, SellerAuthGuard)
+  @Put('/seller/leave/property/:propertyId')
+  async sellerLeaveProperty(@Req() req: Request, @Res() res: Response) {
+    const propertyId = req.params.propertyId;
+    const seller = req.user;
+    const property = await this.propertyService.sellerLeaveProperty(
+      propertyId,
+      seller,
+    );
+    this._sendResponse({
+      res,
+      data: { property },
+      message: 'Property removed successfully',
+      statusCode: 200,
+    });
+  }
+
   @UseGuards(AgentOrSellerAuthGuard)
   @Get('/all/offer/comments/:id')
   async getOfferComment(

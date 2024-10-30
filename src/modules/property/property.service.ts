@@ -543,6 +543,91 @@ export class PropertyService {
     return comment;
   }
 
+  async agentLeaveProperty(propertyId: string, agent: Agent) {
+    const property = await this.propertyModel.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(propertyId),
+        sellerAgent: new Types.ObjectId(agent.id),
+      },
+      {
+        sellerAgent: null,
+        sellerAgentAcceptance: false,
+      },
+      {
+        new: true,
+      },
+    );
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    await this.offerModel.updateMany(
+      {
+        property: new Types.ObjectId(propertyId),
+        sellerAgent: new Types.ObjectId(agent.id),
+      },
+      {
+        sellerAgent: null,
+      },
+    );
+    if (property.seller) {
+      await this.notificationService.createNotification({
+        user: property.seller as unknown as string,
+        body: `${agent.firstname} ${agent.lastname} has left the property at ${property.propertyAddressDetails.formattedAddress}`,
+        title: 'Your Agent Has Left Your Property',
+        userType: NotificationUserType.user,
+      });
+    }
+    await this.notificationService.createNotification({
+      user: agent.id,
+      body: `You have left the property at ${property.propertyAddressDetails.formattedAddress}`,
+      title: 'You Has Left A Property',
+      userType: NotificationUserType.agent,
+    });
+    return property;
+  }
+
+  async sellerLeaveProperty(propertyId: string, user: User) {
+    const property = await this.propertyModel.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(propertyId),
+        seller: new Types.ObjectId(user.id),
+      },
+      {
+        seller: null,
+      },
+      {
+        new: true,
+      },
+    );
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+    await this.offerModel.updateMany(
+      {
+        property: new Types.ObjectId(propertyId),
+        seller: new Types.ObjectId(user.id),
+      },
+      {
+        seller: null,
+      },
+    );
+    if (property.seller) {
+      await this.notificationService.createNotification({
+        user: property.seller as unknown as string,
+        body: `${user.firstname} ${user.lastname} has left the property at ${property.propertyAddressDetails.formattedAddress}`,
+        title: 'Your Agent Has Left Your Property',
+        userType: NotificationUserType.user,
+      });
+    }
+    await this.notificationService.createNotification({
+      user: user.id,
+      body: `You have left the property at ${property.propertyAddressDetails.formattedAddress}`,
+      title: 'You Has Left A Property',
+      userType: NotificationUserType.agent,
+    });
+    return property;
+  }
+
   async getPropertyAnalytics(propertyId: string) {
     const property = await this.propertyModel.findOne({
       _id: new Types.ObjectId(propertyId),
