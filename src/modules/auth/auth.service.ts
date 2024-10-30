@@ -29,7 +29,7 @@ export class AuthService {
     if (!req?.user) {
       throw new BadRequestException('No user from google');
     }
-    const data = req.user;
+    const data = req.user.user;
     const user = await this.userModel.findOne({
       email: data.email,
     });
