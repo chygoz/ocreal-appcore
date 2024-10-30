@@ -16,6 +16,7 @@ import * as jwt from 'jsonwebtoken';
 import { verificationTokenGen } from 'src/utils/randome-generators';
 import * as moment from 'moment';
 import { createAgentJwtToken } from 'src/utils/jwt.util';
+import { AccountTypeEnum } from 'src/constants';
 
 @Injectable()
 export class AuthService {
@@ -30,14 +31,17 @@ export class AuthService {
       throw new BadRequestException('No user from google');
     }
     const data = req.user.user;
+    console.log(data, 'DATA FROM GOOGLE');
     const user = await this.userModel.findOne({
       email: data.email,
     });
     if (!user) {
       const newUser = await this.userModel.create({
         email: data.email,
-        firstname: data.givenName,
-        lastname: data.familyName,
+        firstname: data.firstName,
+        lastname: data.lastName,
+        account_type: AccountTypeEnum.BUYER,
+        emailVerified: true,
       });
       const savedUser = await newUser.save();
       const token = this._generateToken(
