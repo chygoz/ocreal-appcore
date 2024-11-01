@@ -35,7 +35,6 @@ export class AuthService {
       accessToken: string;
     };
   }) {
-    console.log(payload, 'DATA FROM GOOGLE');
     const data = payload.user;
     const user = await this.userModel.findOne({
       email: data.email,
@@ -43,8 +42,9 @@ export class AuthService {
     if (!user) {
       const newUser = await this.userModel.create({
         email: data.email,
-        firstname: data.firstname,
-        lastname: data.lastname,
+        firstname: data.firstname.trim(),
+        lastname: data.lastname.trim(),
+        fullname: data.firstname.trim() + ' ' + data.lastname.trim(),
         account_type: AccountTypeEnum.BUYER,
         emailVerified: true,
       });
