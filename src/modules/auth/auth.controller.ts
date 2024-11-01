@@ -27,13 +27,12 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const data = await this.authService.googleUserLogin(req);
+    const data = await this.authService.googleValidateUser(req.user);
     return this._sendResponse({
       res,
       data,
       message: 'Google login successfull',
     });
-    // res.redirect('http://localhost:3000/auth/profile');
   }
 
   @Get('facebook')

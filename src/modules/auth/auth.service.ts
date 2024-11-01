@@ -26,20 +26,25 @@ export class AuthService {
     @InjectModel(Agent.name) private readonly agentModel: Model<Agent>,
   ) {}
 
-  async googleUserLogin(req) {
-    if (!req?.user) {
-      throw new BadRequestException('No user from google');
-    }
-    const data = req.user.user;
-    console.log(data, 'DATA FROM GOOGLE');
+  async googleValidateUser(payload: {
+    user: {
+      email: string;
+      firstname: string;
+      lastname: string;
+      picture: string;
+      accessToken: string;
+    };
+  }) {
+    console.log(payload, 'DATA FROM GOOGLE');
+    const data = payload.user;
     const user = await this.userModel.findOne({
       email: data.email,
     });
     if (!user) {
       const newUser = await this.userModel.create({
         email: data.email,
-        firstname: data.firstName,
-        lastname: data.lastName,
+        firstname: data.firstname,
+        lastname: data.lastname,
         account_type: AccountTypeEnum.BUYER,
         emailVerified: true,
       });
@@ -274,44 +279,44 @@ export class AuthService {
     return { token };
   }
 
-  async googleValidateUser(user: {
-    email: string;
-    firstName: string;
-    lastName: string;
-    picture: string;
-    accessToken: string;
-  }) {
-    const userExists = await this.userModel.findOne({ email: user.email });
-    if (userExists) {
-      const token = this._generateToken(
-        {
-          id: userExists._id,
-          email: userExists.email,
-          firstname: userExists.firstname,
-          lastname: userExists.lastname,
-          fullname: userExists.fullname,
-          account_type: userExists.account_type,
-          emailVerified: userExists.emailVerified,
-          preApproval: userExists.preApproval,
-        },
-        configs.JWT_SECRET,
-        10 * 24 * 60 * 60,
-      );
+  // async googleValidateUser(user: {
+  //   email: string;
+  //   firstName: string;
+  //   lastName: string;
+  //   picture: string;
+  //   accessToken: string;
+  // }) {
+  //   const userExists = await this.userModel.findOne({ email: user.email });
+  //   if (userExists) {
+  //     const token = this._generateToken(
+  //       {
+  //         id: userExists._id,
+  //         email: userExists.email,
+  //         firstname: userExists.firstname,
+  //         lastname: userExists.lastname,
+  //         fullname: userExists.fullname,
+  //         account_type: userExists.account_type,
+  //         emailVerified: userExists.emailVerified,
+  //         preApproval: userExists.preApproval,
+  //       },
+  //       configs.JWT_SECRET,
+  //       10 * 24 * 60 * 60,
+  //     );
 
-      return {
-        user: {
-          id: userExists._id,
-          email: userExists.email,
-          firstname: userExists.firstname,
-          lastname: userExists.lastname,
-          fullname: userExists.fullname,
-          account_type: userExists.account_type,
-          preApproval: userExists.preApproval,
-        },
-        token,
-      };
-    }
-  }
+  //     return {
+  //       user: {
+  //         id: userExists._id,
+  //         email: userExists.email,
+  //         firstname: userExists.firstname,
+  //         lastname: userExists.lastname,
+  //         fullname: userExists.fullname,
+  //         account_type: userExists.account_type,
+  //         preApproval: userExists.preApproval,
+  //       },
+  //       token,
+  //     };
+  //   }
+  // }
 
   async userForgotPassword(emailDto: { email: string }): Promise<any> {
     const userExists = await this.userModel.findOne({ email: emailDto.email });
