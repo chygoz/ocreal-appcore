@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as morgan from 'morgan';
 import { json, urlencoded } from 'express';
+import * as morgan from 'morgan';
+import { json, urlencoded } from 'express';
 import * as sanitizer from 'express-mongo-sanitize';
 import { ValidationPipe } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
@@ -29,12 +31,23 @@ async function bootstrap() {
     exclude: ['/'],
   });
   app.useGlobalFilters(new HttpExceptionFilter(), new AllExceptionsFilter());
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
+
+  app.use(morgan('dev'));
+  app.setGlobalPrefix('/v1', {
+    exclude: ['/'],
+  });
+  app.useGlobalFilters(new HttpExceptionFilter(), new AllExceptionsFilter());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const PORT = process.env.PORT;
+  const PORT = process.env.PORT;
 
   await app.listen(PORT).then(() => {
+  await app.listen(PORT).then(() => {
     console.log(`Server running on http://localhost:${PORT}`);
+  });
   });
 }
 bootstrap();
