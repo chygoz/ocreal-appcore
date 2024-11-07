@@ -24,15 +24,17 @@ import { AuthGuard } from '@nestjs/passport';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('google/callback')
+  @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const data = await this.authService.googleValidateUser(req.user);
-    return this._sendResponse({
-      res,
-      data,
-      message: 'Google login successfull',
-    });
+  async googleAuth() {}
+
+  @Get('oauth-verification')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req, @Res() res) {
+    const userData = await this.authService.googleValidateUser(req.user);
+    console.log('Received request at oauth-verification:', req.query);
+
+    return res.json(userData);
   }
 
   @Get('facebook')
@@ -47,13 +49,9 @@ export class AuthController {
     return this._sendResponse({
       res,
       data,
-      message: 'Facebook login successfull',
+      message: 'Facebook login successful',
     });
   }
-
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  async googleAuth() {}
 
   @Post('/user/send-verification')
   async sendUserVerificationEmail(

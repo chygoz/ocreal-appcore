@@ -35,30 +35,59 @@ export class AuthService {
       accessToken: string;
     };
   }) {
-    const data = payload.user;
-    const user = await this.userModel.findOne({
-      email: data.email,
-    });
-    if (!user) {
-      const newUser = await this.userModel.create({
+    try {
+      const data = payload.user;
+      const user = await this.userModel.findOne({
         email: data.email,
-        firstname: data.firstname.trim(),
-        lastname: data.lastname.trim(),
-        fullname: data.firstname.trim() + ' ' + data.lastname.trim(),
-        account_type: AccountTypeEnum.BUYER,
-        emailVerified: true,
       });
-      const savedUser = await newUser.save();
+      if (!user) {
+        const newUser = await this.userModel.create({
+          email: data.email,
+          firstname: data.firstname.trim(),
+          lastname: data.lastname.trim(),
+          fullname: data.firstname.trim() + ' ' + data.lastname.trim(),
+          account_type: AccountTypeEnum.BUYER,
+          emailVerified: true,
+        });
+        const savedUser = await newUser.save();
+        const token = this._generateToken(
+          {
+            id: savedUser._id,
+            email: savedUser.email,
+            firstname: savedUser.firstname,
+            lastname: savedUser.lastname,
+            fullname: savedUser.fullname,
+            account_type: savedUser.account_type,
+            emailVerified: savedUser.emailVerified,
+            preApproval: savedUser.preApproval,
+          },
+          configs.JWT_SECRET,
+          10 * 24 * 60 * 60,
+        );
+
+        return {
+          user: {
+            id: savedUser._id,
+            email: savedUser.email,
+            firstname: savedUser.firstname,
+            lastname: savedUser.lastname,
+            fullname: savedUser.fullname,
+            account_type: savedUser.account_type,
+            preApproval: savedUser.preApproval,
+          },
+          token,
+        };
+      }
       const token = this._generateToken(
         {
-          id: savedUser._id,
-          email: savedUser.email,
-          firstname: savedUser.firstname,
-          lastname: savedUser.lastname,
-          fullname: savedUser.fullname,
-          account_type: savedUser.account_type,
-          emailVerified: savedUser.emailVerified,
-          preApproval: savedUser.preApproval,
+          id: user._id,
+          email: user.email,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          fullname: user.fullname,
+          account_type: user.account_type,
+          emailVerified: user.emailVerified,
+          preApproval: user.preApproval,
         },
         configs.JWT_SECRET,
         10 * 24 * 60 * 60,
@@ -66,44 +95,20 @@ export class AuthService {
 
       return {
         user: {
-          id: savedUser._id,
-          email: savedUser.email,
-          firstname: savedUser.firstname,
-          lastname: savedUser.lastname,
-          fullname: savedUser.fullname,
-          account_type: savedUser.account_type,
-          preApproval: savedUser.preApproval,
+          id: user._id,
+          email: user.email,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          fullname: user.fullname,
+          account_type: user.account_type,
+          preApproval: user.preApproval,
         },
         token,
       };
+    } catch (error) {
+      console.error('Service', error);
+      throw new BadRequestException(error.message);
     }
-    const token = this._generateToken(
-      {
-        id: user._id,
-        email: user.email,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        fullname: user.fullname,
-        account_type: user.account_type,
-        emailVerified: user.emailVerified,
-        preApproval: user.preApproval,
-      },
-      configs.JWT_SECRET,
-      10 * 24 * 60 * 60,
-    );
-
-    return {
-      user: {
-        id: user._id,
-        email: user.email,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        fullname: user.fullname,
-        account_type: user.account_type,
-        preApproval: user.preApproval,
-      },
-      token,
-    };
   }
 
   async facebookUserLogin(facebookUser: any) {

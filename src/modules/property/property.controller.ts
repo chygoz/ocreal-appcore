@@ -1046,20 +1046,11 @@ export class PropertyController {
   @UseGuards(JwtAuthGuard, SellerAuthGuard)
   @Get('/user/tours/property/:propertyId')
   async getUserPropertyUpcomingTours(
-    @Res() res: Response,
     @Req() req: Request,
-    @Query() paginationDto: PaginationDto,
+    @Param('propertyId') propertyId: string,
   ) {
-    const data = await this.propertyService.getUserPropertyUpcomingTours(
-      paginationDto,
-      req.user,
-      req.params.propertyId,
-    );
-    this._sendResponse({
-      res,
-      message: 'Tours Found',
-      data,
-    });
+    const user = req.user._id;
+    return this.propertyService.getUserPropertyTour(user, propertyId);
   }
 
   @UseGuards(JwtAgentAuthGuard)

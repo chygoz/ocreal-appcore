@@ -6,6 +6,7 @@ import { AgentsController } from './agents.controller';
 import { AgentsService } from './agents.service';
 import { User, UserSchema } from '../users/schema/user.schema';
 import { Property, PropertySchema } from '../property/schema/property.schema';
+import { AgentOrSellerSocketAuthGuard } from 'src/guards/jw.socket.gaurd';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { Property, PropertySchema } from '../property/schema/property.schema';
     EmailModule,
   ],
   controllers: [AgentsController],
-  providers: [AgentsService],
+  providers: [AgentsService, AgentOrSellerSocketAuthGuard],
 })
 export class AgentsModule {}

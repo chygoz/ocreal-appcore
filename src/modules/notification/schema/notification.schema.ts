@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 import { Agent } from 'src/modules/agent/schema/agent.schema';
 import { User } from 'src/modules/users/schema/user.schema';
 
@@ -7,8 +7,10 @@ export enum NotificationUserType {
   agent = 'Agent',
   user = 'User',
 }
-@Schema({ timestamps: true, versionKey: false })
-export class Notification extends Document {
+
+export type NotificationDocument = Notification & Document;
+@Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
+export class Notification {
   @Prop({ required: true })
   title: string;
 
@@ -29,5 +31,4 @@ export class Notification extends Document {
   read: boolean;
 }
 
-export type NotificationDocument = HydratedDocument<Notification>;
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
