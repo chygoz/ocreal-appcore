@@ -1,0 +1,15 @@
+{
+     "apps": [
+       {
+         "script": "dist/src/main.js",
+         "name": "ocreal_nest_appcore",
+         "instances": "max",
+         "exec_mode": "cluster",
+         "env": {
+           "NODE_ENV": "development",
+           "PM2_PUBLIC_KEY": "knscca0yhq6yg8r",
+           "PM2_SECRET_KEY": "520dt5wfz6kavpa"
+         }
+       }
+     ]
+   }
