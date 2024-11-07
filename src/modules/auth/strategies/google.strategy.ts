@@ -1,5 +1,9 @@
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { AuthService } from '../auth.service';
 import { configs } from 'src/configs';
@@ -10,7 +14,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: configs.GOOGLE_AUTH_CLIENT_ID,
       clientSecret: configs.GOOGLE_AUTH_CLIENT_SECRET,
-      callbackURL: `${configs.google_redirect_url}/oauth-verification`,
+      callbackURL: `${process.env.LOCAL_GOOGLE_REDIRECT_URL}/v1/auth/oauth-verification`,
       scope: ['email', 'profile'],
     });
   }
@@ -29,24 +33,26 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    const { name, emails, photos } = profile;
-    const user = {
-      email: emails[0].value,
-      firstname: name.givenName,
-      lastname: name.familyName,
-      picture: photos[0].value,
-      accessToken,
-    };
+    try {
+      const { name, emails, photos } = profile;
+      const user = {
+        email: emails[0].value,
+        firstname: name.givenName,
+        lastname: name.familyName,
+        picture: photos[0].value,
+        accessToken,
+      };
 
-    const payload = {
-      user,
-    };
+      const payload = { user };
+      const authUser = await this.authService.googleValidateUser(payload);
+      if (!authUser) {
+        throw new UnauthorizedException('User not found');
+      }
 
-    const authUser = await this.authService.googleValidateUser(payload);
-    if (!authUser) {
-      throw new UnauthorizedException();
+      done(null, payload);
+    } catch (error) {
+      console.error('Strategy Error:', error);
+      done(new BadRequestException(error.message), false);
     }
-
-    done(null, payload);
   }
 }

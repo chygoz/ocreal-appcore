@@ -37,7 +37,7 @@ export class InviteService {
           template: 'invite_new_agent',
           body: {
             inviterName: user.fullname,
-            lactionUrl: `${configs.BASE_URL}/agent/accept-invite?inviteId=${alreadyinvited._id.toString()}`,
+            lactionUrl: `${configs.SELF_BASE_URL}/agent/accept-invite?inviteId=${alreadyinvited._id.toString()}`,
           },
         });
         response.push(alreadyinvited);

@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { PropertyController } from './property.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PropertyService } from './property.service';
-import { EmailModule } from 'src/services/email/email.module';
 import {
   PropertyQuery,
   PropertyQuerySchema,
@@ -20,7 +19,6 @@ import {
   UserSavedProperty,
   UserSavedPropertySchema,
 } from './schema/userFavoriteProperties.schema';
-import { NotificationModule } from '../notification/notification.module';
 import {
   PropertyDocumentRepo,
   PropertyDocumentRepoSchema,
@@ -42,6 +40,7 @@ import {
   BuyerProperyTermsAndAgreement,
   BuyerProperyTermsAndAgreementSchema,
 } from './schema/buyerPropertyTermsAndAgreement.schema';
+import { EmailService } from 'src/services/email/email.service';
 
 @Module({
   imports: [
@@ -64,10 +63,8 @@ import {
         schema: BuyerProperyTermsAndAgreementSchema,
       },
     ]),
-    EmailModule,
-    NotificationModule,
   ],
   controllers: [PropertyController],
-  providers: [PropertyService],
+  providers: [PropertyService, EmailService],
 })
 export class PropertyModule {}
