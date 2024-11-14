@@ -24,18 +24,9 @@ export class InviteController {
   @Post('agent')
   async inviteAgent(
     @Body() onboardAgentDto: InviteAgentDto,
-    @Res() res: Response,
     @Req() req: Request,
   ) {
-    const invite = await this.inviteService.inviteAnAgent(
-      req.user.id,
-      onboardAgentDto,
-    );
-    this._sendResponse({
-      res,
-      message: 'Agent Invited',
-      data: { invite },
-    });
+    return this.inviteService.inviteAnAgent(req.user.id, onboardAgentDto);
   }
 
   @UseGuards(JwtAgentAuthGuard)

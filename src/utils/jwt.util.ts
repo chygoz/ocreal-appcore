@@ -10,7 +10,7 @@ export const createUserJwtToken = (data: any) => {
 
 export const createAgentJwtToken = (data: any) => {
   const token = jwt.sign(data, configs.JWT_AGENT_SECRET, {
-    expiresIn: 10 * 24 * 60 * 60,
+    expiresIn: '100days',
   });
   return token;
 };

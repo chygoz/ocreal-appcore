@@ -1,19 +1,43 @@
 import { Module } from '@nestjs/common';
-import { SocketService } from './socket.service';
-import { MessageGateway } from './message.gateway';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Agent, AgentSchema } from '../agent/schema/agent.schema';
-import { User, UserSchema } from '../users/schema/user.schema';
+import { MessageServiceGateway } from './message.gateway';
+import { MessageService } from '../message/message.service';
+import { ConversationService } from '../conversation/service/conversation.service';
+import { Message, MessageSchema } from '../message/schema/message.schema';
+import {
+  Conversation,
+  ConversationSchema,
+} from '../conversation/schema/conversation.schema';
+import { AwsS3Service } from '../uploader/aws';
+import { OpenMessageServiceGateway } from './chat.gateway';
+import { OpenConversationService } from '../conversation/service/openConversation.service';
+import { OpenMessageService } from '../message/openmessage.service';
+import {
+  OpenConversation,
+  OpenConversationSchema,
+} from '../conversation/schema/openConversaion.schema';
+import {
+  OpenMessage,
+  OpenMessageSchema,
+} from '../message/schema/openmessage.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: Agent.name, schema: AgentSchema },
-      // { name: Property.name, schema: PropertySchema },
-      // { name: PropertyDocumentRepo.name, schema: PropertyDocumentRepoSchema },
+      { name: Message.name, schema: MessageSchema },
+      { name: Conversation.name, schema: ConversationSchema },
+      { name: OpenConversation.name, schema: OpenConversationSchema },
+      { name: OpenMessage.name, schema: OpenMessageSchema },
     ]),
   ],
-  providers: [MessageGateway, SocketService],
+  providers: [
+    MessageServiceGateway,
+    OpenMessageServiceGateway,
+    MessageService,
+    ConversationService,
+    OpenConversationService,
+    OpenMessageService,
+    AwsS3Service,
+  ],
 })
 export class SocketModule {}

@@ -11,12 +11,12 @@ import { EmailService } from 'src/services/email/email.service';
 import { UpdatePasswordDto, LoginUserDto } from './dto/auth.dto';
 import { User } from '../users/schema/user.schema';
 import { configs } from 'src/configs';
-import { Agent } from '../agent/schema/agent.schema';
 import * as jwt from 'jsonwebtoken';
 import { verificationTokenGen } from 'src/utils/randome-generators';
 import * as moment from 'moment';
 import { createAgentJwtToken } from 'src/utils/jwt.util';
 import { AccountTypeEnum } from 'src/constants';
+import { Agent } from '../agent/schema/agent.schema';
 
 @Injectable()
 export class AuthService {

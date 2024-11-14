@@ -1,176 +1,48 @@
-// // import { UseGuards } from '@nestjs/common';
-// import {
-//   MessageBody,
-//   OnGatewayConnection,
-//   OnGatewayDisconnect,
-//   // MessageBody,
-//   SubscribeMessage,
-//   WebSocketGateway,
-//   WebSocketServer,
-// } from '@nestjs/websockets';
-// import { Server, Socket } from 'socket.io';
-// import { Room } from './interfaces/message.interface';
-// import { Chat } from '../message/schema/chat.schema';
-// import { User } from '../users/schema/user.schema';
-// import { BadRequestException } from '@nestjs/common';
-// // import { SocketGuard } from 'src/guards/socket.guard';
-// // import { Server, Socket } from 'socket.io';
-// // import { SocketService } from './socket.service';
-
-// @WebSocketGateway()
-// export class MessageGateway
-//   implements OnGatewayConnection, OnGatewayDisconnect
-// {
-//   @WebSocketServer()
-//   server: Server;
-//   // server: Server<any, ISocketEvent>;
-//   private rooms: Room[] = [];
-//   // @UseGuards(SocketGuard)
-
-//   @SubscribeMessage('newChat')
-//   handleNewChat(client: any, payload: any) {
-//     // this.server.emit('newChat', payload);
-//     return 'Hello World';
-//   }
-
-//   sendNewChat(chat: Chat) {
-//     // console.log(payload);
-//     this.server.emit('newChat', chat);
-//   }
-
-//   @SubscribeMessage('join_room')
-//   async handleSetClientDataEvent(
-//     @MessageBody()
-//     payload: {
-//       roomName: string;
-//       user: User;
-//     },
-//   ) {
-//     if (payload.user.socketId) {
-//       // this.logger.log(
-//       //   `${payload.user.socketId} is joining ${payload.roomName}`,
-//       // );
-//       // const canJoin = await this.propertyService.confirmUserPropertyConnection(
-//       //   payload.user.id,
-//       //   payload.roomName,
-//       // );
-//       // if (!canJoin) {
-//       //   throw new BadRequestException('You can not join this room');
-//       // }
-//       this.server.in(payload.user.socketId).socketsJoin(payload.roomName);
-//       await this.addUserToRoom(payload.roomName, payload.user);
-//     }
-//   }
-
-//   sendMessage(payload: any) {
-//     this.server.emit('newMessage', payload);
-//   }
-
-//   async handleConnection(socket: Socket): Promise<void> {
-//     // const roomName = socket.handshake.query.room;
-//     // this.logger.log(`Socket connected: ${socket.id}`);
-//   }
-
-//   async handleDisconnect(socket: Socket): Promise<void> {
-//     await this.removeUserFromAllRooms(socket.id);
-//     // this.logger.log(`Socket disconnected: ${socket.id}`);
-//   }
-
-//   async addRoom(roomName: string, host: User): Promise<void> {
-//     const room = await this.getRoomByName(roomName);
-//     if (room === -1) {
-//       this.rooms.push({ name: roomName, host, users: [host] });
-//     }
-//   }
-
-//   async removeRoom(roomName: string): Promise<void> {
-//     const findRoom = await this.getRoomByName(roomName);
-//     if (findRoom !== -1) {
-//       this.rooms = this.rooms.filter((room) => room.name !== roomName);
-//     }
-//   }
-
-//   async getRoomHost(hostName: string): Promise<User> {
-//     const roomIndex = await this.getRoomByName(hostName);
-//     return this.rooms[roomIndex].host;
-//   }
-
-//   async getRoomByName(roomName: string): Promise<number> {
-//     const roomIndex = this.rooms.findIndex((room) => room?.name === roomName);
-//     return roomIndex;
-//   }
-
-//   async addUserToRoom(roomName: string, user: User): Promise<void> {
-//     const roomIndex = await this.getRoomByName(roomName);
-//     if (roomIndex !== -1) {
-//       this.rooms[roomIndex].users.push(user);
-//       const host = await this.getRoomHost(roomName);
-//       if (host.id === user.id) {
-//         this.rooms[roomIndex].host.socketId = user.socketId;
-//       }
-//     } else {
-//       await this.addRoom(roomName, user);
-//     }
-//   }
-
-//   async findRoomsByUserSocketId(socketId: string): Promise<Room[]> {
-//     const filteredRooms = this.rooms.filter((room) => {
-//       const found = room.users.find((user) => user.socketId === socketId);
-//       if (found) {
-//         return found;
-//       }
-//     });
-//     return filteredRooms;
-//   }
-
-//   async removeUserFromAllRooms(socketId: string): Promise<void> {
-//     const rooms = await this.findRoomsByUserSocketId(socketId);
-//     for (const room of rooms) {
-//       await this.removeUserFromRoom(socketId, room.name);
-//     }
-//   }
-
-//   async removeUserFromRoom(socketId: string, roomName: string): Promise<void> {
-//     const room = await this.getRoomByName(roomName);
-//     this.rooms[room].users = this.rooms[room].users.filter(
-//       (user) => user.socketId !== socketId,
-//     );
-//     if (this.rooms[room].users.length === 0) {
-//       await this.removeRoom(roomName);
-//     }
-//   }
-
-//   async getRooms(): Promise<Room[]> {
-//     return this.rooms;
-//   }
-// }
-
-// src/socket/message.gateway.ts
+import { Logger, UsePipes, ValidationPipe } from '@nestjs/common';
 import {
-  WebSocketGateway,
-  WebSocketServer,
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
-  MessageBody,
-  ConnectedSocket,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
-import { AgentOrSellerSocketAuthGuard } from 'src/guards/jw.socket.gaurd';
+import { ConversationService } from '../conversation/service/conversation.service';
+import { MessageService } from '../message/message.service';
+import { MessageServiceSocketEnum } from './socketEnum/message.enum';
+import { CreateConversationDto } from '../conversation/dto/conversatin.dto';
+import { AwsS3Service } from '../uploader/aws';
+
+export type MemberDto = {
+  memberId: string;
+};
+
+export type ConversationDto = {
+  conversationId: string;
+};
 
 @WebSocketGateway({
-  namespace: '/messages',
   cors: {
     origin: '*',
   },
+  namespace: 'user-agent/message',
 })
-@UseGuards(AgentOrSellerSocketAuthGuard)
-export class MessageGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+@UsePipes(new ValidationPipe({ transform: true }))
+export class MessageServiceGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
-  @WebSocketServer() server: Server;
-  private logger: Logger = new Logger('MessageGateway');
+  private readonly logger = new Logger(MessageServiceGateway.name);
+  constructor(
+    private readonly conversationService: ConversationService,
+    private readonly messageService: MessageService,
+    private readonly awsS3Service: AwsS3Service,
+  ) {}
+
+  @WebSocketServer()
+  server: Server;
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
@@ -180,27 +52,158 @@ export class MessageGateway
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage('joinRoom')
-  handleJoinRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() room: string,
-  ) {
-    client.join(room);
-    this.logger.log(`Client ${client.id} joined room: ${room}`);
-    this.server
-      .to(room)
-      .emit('message', { content: `Client ${client.id} joined the room` });
+  afterInit(server: Server) {
+    this.logger.log('MessageServiceGateway Socket Connected and running');
+    server.disconnectSockets();
   }
 
-  @SubscribeMessage('leaveRoom')
-  handleLeaveRoom(
+  @SubscribeMessage(MessageServiceSocketEnum.CREATE_CONVERSATION)
+  async createConversation(
+    @MessageBody() payload: CreateConversationDto,
     @ConnectedSocket() client: Socket,
-    @MessageBody() room: string,
   ) {
-    client.leave(room);
-    this.logger.log(`Client ${client.id} left room: ${room}`);
-    this.server
-      .to(room)
-      .emit('message', { content: `Client ${client.id} left the room` });
+    try {
+      const createConv = await this.conversationService.Create(payload);
+
+      client.emit(
+        MessageServiceSocketEnum.CONVERSATION_CREATED,
+
+        JSON.stringify({
+          conversation: createConv,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(
+        `MessageServiceGateway.handleCreateConversation, ${error}`,
+      );
+    }
+  }
+
+  @SubscribeMessage(MessageServiceSocketEnum.LIST_CONVERSATION)
+  async ListConversations(
+    @MessageBody() payload: MemberDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const listConvs = await this.conversationService.getConversationsByMember(
+        payload.memberId,
+      );
+
+      client.emit(
+        MessageServiceSocketEnum.CONVERSATION_LISTED,
+
+        JSON.stringify({
+          conversations: listConvs,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(
+        `MessageServiceGateway.handleListConversations, ${error}`,
+      );
+    }
+  }
+
+  @SubscribeMessage(MessageServiceSocketEnum.GET_CONVERSATION)
+  async ListOneConversations(
+    @MessageBody() payload: ConversationDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const listOneConvs = await this.conversationService.getOneConversation(
+        payload.conversationId,
+      );
+
+      client.emit(
+        MessageServiceSocketEnum.CONVERSATION_RETRIEVED,
+
+        JSON.stringify({
+          conversation: listOneConvs,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(
+        `MessageServiceGateway.handleListOneConversations, ${error}`,
+      );
+    }
+  }
+
+  /////////   MESSAGE ////////
+
+  @SubscribeMessage(MessageServiceSocketEnum.SEND_MESSAGE)
+  async SendMessage(
+    @MessageBody()
+    payload: {
+      conversationId: string;
+      senderId: string;
+      text?: string;
+      file?: any;
+    },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      let fileKey: string | null = null;
+
+      // Check if there's a file in the payload, upload it to S3
+      if (payload.file) {
+        fileKey = await this.awsS3Service.uploadFile(
+          payload.file.buffer,
+          payload.file.filename,
+        );
+      }
+      const createMsg = await this.messageService.createMessage({
+        conversationId: payload.conversationId,
+        senderId: payload.senderId,
+        text: payload.text,
+        file: fileKey,
+      });
+
+      client.emit(
+        MessageServiceSocketEnum.MESSAGE_SENT,
+
+        JSON.stringify({
+          message: createMsg,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(`MessageServiceGateway.handleSendMessage, ${error}`);
+    }
+  }
+
+  @SubscribeMessage('uploadFile')
+  async handleFileUpload(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() fileData: { filename: string; buffer: Buffer },
+  ) {
+    try {
+      const fileKey = await this.awsS3Service.uploadFile(
+        fileData.buffer,
+        fileData.filename,
+      );
+      client.emit('fileUploaded', { status: 'success', fileKey });
+    } catch (error) {
+      client.emit('error', 'File upload failed');
+    }
+  }
+
+  @SubscribeMessage(MessageServiceSocketEnum.LIST_MESSAGES)
+  async GetMessages(
+    @MessageBody() payload: ConversationDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const listMessages = await this.messageService.getMessagesForConversation(
+        payload.conversationId,
+      );
+
+      client.emit(
+        MessageServiceSocketEnum.MESSAGES_LISTED,
+
+        JSON.stringify({
+          messages: listMessages,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(`MessageServiceGateway.handleGetMessages, ${error}`);
+    }
   }
 }

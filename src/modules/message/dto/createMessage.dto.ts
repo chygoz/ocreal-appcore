@@ -1,48 +1,19 @@
-import {
-  IsArray,
-  IsMongoId,
-  IsOptional,
-  IsString,
-  IsNotEmpty,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsMongoId, IsOptional } from 'class-validator';
 
-export class CreateUserMessageDto {
-  @IsNotEmpty()
+export class CreateMessageDto {
   @IsMongoId()
-  agent: string;
-
   @IsNotEmpty()
+  conversationId: string;
+
   @IsMongoId()
-  property: string;
-}
-
-export class CreateAgentMessageDto {
   @IsNotEmpty()
-  @IsMongoId()
-  user: string;
+  senderId: string;
 
-  @IsNotEmpty()
-  @IsMongoId()
-  property: string;
-}
-
-export class CreateChatDto {
-  @IsNotEmpty()
-  @IsMongoId()
-  message: string;
-
-  @IsNotEmpty()
   @IsString()
-  content: string;
+  @IsNotEmpty()
+  text: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  documents?: string[];
-}
-
-export class IsMongoIdDto {
-  @IsNotEmpty()
-  @IsMongoId()
-  id: string;
+  @IsString()
+  file?: string;
 }

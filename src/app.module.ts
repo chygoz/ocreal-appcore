@@ -13,7 +13,6 @@ import { StripeModule } from './services/stripe/stripe.module';
 import { PropertyModule } from './modules/property/property.module';
 import { MessageModule } from './modules/message/message.module';
 import { InviteModule } from './modules/Agentinvite/agentInvite.module';
-import { MessageGateway } from './modules/socket/message.gateway';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ConfigModule } from '@nestjs/config';
 import { EmailModule } from './services/email/email.module';
@@ -25,6 +24,9 @@ import { FirebaseMessagingModule } from './modules/firebase/firebase-messaging.m
 import { User, UserSchema } from './modules/users/schema/user.schema';
 import { Agent } from 'http';
 import { AgentSchema } from './modules/agent/schema/agent.schema';
+import { ZipFormModule } from './modules/zipform/zipform.module';
+import { HttpModule } from '@nestjs/axios';
+import { ConversationServiceModule } from './modules/conversation/conversation.module';
 
 @Module({
   imports: [
@@ -53,8 +55,11 @@ import { AgentSchema } from './modules/agent/schema/agent.schema';
     S3Module,
     PropertyRepoModule,
     FirebaseMessagingModule,
+    ZipFormModule,
+    HttpModule,
+    ConversationServiceModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MessageGateway],
+  providers: [AppService],
 })
 export class AppModule {}

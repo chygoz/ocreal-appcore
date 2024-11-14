@@ -1094,18 +1094,12 @@ export class PropertyController {
   async addAgentToProperty(
     @Body() data: AddAgentToPropertyDto,
     @Req() req: Request,
-    @Res() res: Response,
   ) {
-    const result = await this.propertyService.addAgentToProperty(
+    return await this.propertyService.addAgentToProperty(
       req.user,
       req.active_user_role,
       data,
     );
-    this._sendResponse({
-      res,
-      data: { result },
-      message: 'Agent Added',
-    });
   }
 
   @UseGuards(JwtAgentAuthGuard)

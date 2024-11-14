@@ -30,6 +30,7 @@ export class InviteService {
         email,
         invitedBy: user._id,
       });
+      console.log(process.env.DEV_SELF_BASE_URL);
       if (alreadyinvited) {
         await this.emailService.sendEmail({
           email: email,
@@ -37,7 +38,7 @@ export class InviteService {
           template: 'invite_new_agent',
           body: {
             inviterName: user.fullname,
-            lactionUrl: `${configs.SELF_BASE_URL}/agent/accept-invite?inviteId=${alreadyinvited._id.toString()}`,
+            lactionUrl: `${process.env.DEV_SELF_BASE_URL}/agent/accept-invite?inviteId=${alreadyinvited._id.toString()}`,
           },
         });
         response.push(alreadyinvited);
@@ -61,7 +62,9 @@ export class InviteService {
       response.push(invite);
       continue;
     }
-    return true;
+    return {
+      message: 'Agent Invited successfully',
+    };
   }
 
   async agentInviteResponse(

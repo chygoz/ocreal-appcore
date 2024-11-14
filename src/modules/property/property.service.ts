@@ -2656,7 +2656,7 @@ export class PropertyService {
     user: User,
     user_role: AccountTypeEnum,
     data: AddAgentToPropertyDto,
-  ): Promise<AgentPropertyInvite> {
+  ) {
     const agent = await this.agentModel.findOne({ email: data.agentEmail });
     const alreadyInvited = await this.agentPropertyInviteModel.findOne({
       invitedBy: user.id,
@@ -2729,7 +2729,9 @@ export class PropertyService {
       //   userType: NotificationUserType.agent,
       // });
     }
-    return propertyAgentinvite.save();
+    await propertyAgentinvite.save();
+
+    return { message: ' Agent Added ' };
   }
 
   async getUserBuyingProperties(paginationDto: PaginationDto, user: User) {
