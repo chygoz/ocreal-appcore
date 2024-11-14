@@ -2717,7 +2717,7 @@ export class PropertyService {
       template: 'agent_invite',
       body: {
         inviterName: user.fullname,
-        lactionUrl: `${configs.BASE_URL}/agent/accept-invite?propertyInviteId=${propertyAgentinvite._id.toString()}`,
+        lactionUrl: `https://agents.snaphomz.com`,
       },
     });
 
