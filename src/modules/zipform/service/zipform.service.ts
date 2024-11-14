@@ -438,6 +438,65 @@ export class ZipFormService {
       );
     }
   }
+
+  /////////// UPLOAD  /////////
+
+  async uploadDocument(
+    transactionId: string,
+    contextId: string,
+    file: Buffer,
+    fileName: string,
+    description: string,
+    containerId?: string,
+    documentId?: string,
+  ): Promise<any> {
+    try {
+      const baseUrl = 'https://api.pre.zipformplus.com/api';
+      const url = `${baseUrl}/transactions/${transactionId}/documents/file?Name=${fileName}&Description=${description}${containerId ? `&ContainerId=${containerId}` : ''}${documentId ? `&Id=${documentId}` : ''}`;
+      const mimeType = this.getMimeType(fileName); // Get the appropriate MIME type based on the file extension
+
+      const response = await axios.post(url, file, {
+        headers: {
+          'X-Auth-ContextId': contextId,
+          'X-Auth-SharedKey': process.env.ZIPFORM_SHARED_KEY,
+          'Content-Type': mimeType,
+        },
+      });
+
+      return response.data; // Return the response from the API
+    } catch (error) {
+      throw new BadRequestException(
+        `Error uploading document: ${error.response?.data?.message || error.message}`,
+      );
+    }
+  }
+
+  private getMimeType(fileName: string): string {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'xls':
+        return 'application/vnd.ms-excel';
+      case 'xlsx':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'bmp':
+        return 'image/bmp';
+      case 'gif':
+        return 'image/gif';
+      default:
+        throw new BadRequestException('Unsupported file type');
+    }
+  }
 }
 
 //TODO: create transaction add the transaction to the form

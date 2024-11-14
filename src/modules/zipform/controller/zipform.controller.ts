@@ -7,10 +7,13 @@ import {
   Request,
   Param,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ZipFormService } from '../service/zipform.service';
 import { CreateTransactionDto } from '../dto/zipform.dtos';
 import { AgentOrSellerAuthGuard } from 'src/guards/seller_or_agent.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('zipform')
 export class ZipFormController {
@@ -254,6 +257,37 @@ export class ZipFormController {
         contextId,
       );
       return { result }; // Return the result indicating success
+    } catch (error) {
+      return { error: error.message }; // Return the error message if something goes wrong
+    }
+  }
+
+  @Post(':transactionId/documents/file')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadDocument(
+    @Param('transactionId') transactionId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Query('Description') description: string,
+    @Query('Name') name: string,
+    @Query('ContainerId') containerId?: string,
+    @Query('Id') documentId?: string,
+  ) {
+    const contextId = await this.zipFormService.authenticateUser();
+    if (!contextId) {
+      return { error: 'Unable to authenticate user.' };
+    }
+
+    try {
+      const result = await this.zipFormService.uploadDocument(
+        transactionId,
+        contextId,
+        file.buffer, // Use the buffer from the uploaded file
+        name,
+        description,
+        containerId,
+        documentId,
+      );
+      return { result }; // Return the result in a structured response
     } catch (error) {
       return { error: error.message }; // Return the error message if something goes wrong
     }
