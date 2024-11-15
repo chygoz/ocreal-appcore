@@ -18,8 +18,8 @@ export class ConversationService {
   async Create(payload: CreateConversationDto) {
     try {
       const existingConversation = await this.conversationModel.findOne({
-        'members.userId': payload.members.userId,
-        'members.agentId': payload.members.agentId,
+        'members.userId': payload.members.sellerId,
+        'members.agentId': payload.members.sellerAgentId,
       });
 
       if (existingConversation) {

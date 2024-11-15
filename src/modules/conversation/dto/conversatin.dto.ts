@@ -5,11 +5,24 @@ import { Types } from 'mongoose';
 export class MembersDto {
   @IsString()
   @Type(() => Types.ObjectId)
-  userId: string;
+  propertyId: string;
 
   @IsString()
   @Type(() => Types.ObjectId)
-  agentId?: string;
+  sellerId: string;
+
+  @IsString()
+  @Type(() => Types.ObjectId)
+  sellerAgentId: string;
+
+  @IsString()
+  @Type(() => Types.ObjectId)
+  buyerId: string;
+
+  @IsString()
+  @IsString()
+  @Type(() => Types.ObjectId)
+  buyerAgentId?: string;
 }
 
 export class CreateConversationDto {

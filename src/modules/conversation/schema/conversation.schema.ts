@@ -7,22 +7,40 @@ export type ConversationDocument = Conversation & Document;
 export class Conversation {
   @Prop({
     type: {
-      userId: {
+      propertyId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Property',
         required: true,
       },
-      agentId: {
+      sellerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false,
+      },
+      sellerAgentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Agent',
-        required: true,
+        required: false,
+      },
+      buyerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false,
+      },
+      buyerAgentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Agent',
+        required: false,
       },
     },
     required: true,
   })
   members: {
-    userId: string;
-    agentId: string;
+    propertyId: string;
+    sellerId?: string;
+    sellerAgentId?: string;
+    buyerId?: string;
+    buyerAgentId?: string;
   };
 }
 
