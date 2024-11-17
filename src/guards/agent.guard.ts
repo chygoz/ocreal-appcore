@@ -36,14 +36,14 @@ export class JwtAgentAuthGuard implements CanActivate {
   async validateRequest(request: Request): Promise<boolean> {
     if (!request.headers.authorization) {
       throw new BadRequestException(
-        'Please provde bearer token in authorization header.',
+        'Please provide bearer token in authorization header.',
       );
     }
     const token = request.headers.authorization.split(' ')[1];
 
     if (!token) {
       throw new BadRequestException(
-        'Please provde bearer token in authorization header.',
+        'Please provide bearer token in authorization header.',
       );
     }
 

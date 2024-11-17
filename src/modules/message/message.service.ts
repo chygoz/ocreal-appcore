@@ -34,10 +34,7 @@ export class MessageService {
 
       const checkSender = await this.conversationModel.findOne({
         _id: payload.conversationId,
-        $or: [
-          { 'members.userId': payload.senderId },
-          { 'members.agentId': payload.senderId },
-        ],
+        $or: [{ buyer: payload.senderId }, { seller: payload.senderId }],
       });
 
       if (!checkSender)

@@ -27,12 +27,18 @@ import { AgentSchema } from './modules/agent/schema/agent.schema';
 import { ZipFormModule } from './modules/zipform/zipform.module';
 import { HttpModule } from '@nestjs/axios';
 import { ConversationServiceModule } from './modules/conversation/conversation.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     MongooseModule.forRoot(configs.MONGO_DB_URL),
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '100d' },
     }),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },

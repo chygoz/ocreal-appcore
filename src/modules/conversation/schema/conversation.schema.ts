@@ -1,47 +1,46 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document } from 'mongoose';
+import { Agent } from 'src/modules/agent/schema/agent.schema';
+import { User } from 'src/modules/users/schema/user.schema';
 
 export type ConversationDocument = Conversation & Document;
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
 export class Conversation {
   @Prop({
-    type: {
-      propertyId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Property',
-        required: true,
-      },
-      sellerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: false,
-      },
-      sellerAgentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Agent',
-        required: false,
-      },
-      buyerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: false,
-      },
-      buyerAgentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Agent',
-        required: false,
-      },
-    },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Property',
     required: true,
   })
-  members: {
-    propertyId: string;
-    sellerId?: string;
-    sellerAgentId?: string;
-    buyerId?: string;
-    buyerAgentId?: string;
-  };
+  propertyId: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: User.name,
+    required: false,
+  })
+  seller: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Agent.name,
+    required: false,
+  })
+  sellerAgent: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: User.name,
+  })
+  buyer: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: Agent.name,
+  })
+  buyerAgent: string;
 }
 
 export const ConversationSchema = SchemaFactory.createForClass(Conversation);

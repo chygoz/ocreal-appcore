@@ -1,32 +1,16 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
-import { Types } from 'mongoose';
-
-export class MembersDto {
-  @IsString()
-  @Type(() => Types.ObjectId)
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+export class CreateConversationDto {
+  @IsMongoId()
+  @IsNotEmpty()
   propertyId: string;
 
-  @IsString()
-  @Type(() => Types.ObjectId)
-  sellerId: string;
+  @IsMongoId()
+  @IsOptional()
+  buyerAgent: string;
 
-  @IsString()
-  @Type(() => Types.ObjectId)
-  sellerAgentId: string;
-
-  @IsString()
-  @Type(() => Types.ObjectId)
-  buyerId: string;
-
-  @IsString()
-  @IsString()
-  @Type(() => Types.ObjectId)
-  buyerAgentId?: string;
-}
-
-export class CreateConversationDto {
-  members: MembersDto;
+  // @IsMongoId()
+  // @IsNotEmpty()
+  // seller?: string;
 }
 
 export class OpenConversationDto {

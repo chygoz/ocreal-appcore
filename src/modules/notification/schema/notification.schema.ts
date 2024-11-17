@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
-import { Agent } from 'src/modules/agent/schema/agent.schema';
-import { User } from 'src/modules/users/schema/user.schema';
+import mongoose, { Document } from 'mongoose';
 
 export enum NotificationUserType {
   agent = 'Agent',
@@ -17,15 +15,14 @@ export class Notification {
   @Prop({ required: true })
   body: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, refPath: 'userType' })
-  user: User | Agent;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false })
+  user: string;
 
-  @Prop({
-    type: MongooseSchema.Types.String,
-    enum: Object.values(NotificationUserType),
-    default: NotificationUserType.user,
-  })
-  userType: NotificationUserType;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: false })
+  agent: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: false })
+  admin: string;
 
   @Prop({ type: Boolean, default: false })
   read: boolean;

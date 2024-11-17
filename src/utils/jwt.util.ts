@@ -3,13 +3,13 @@ import { configs } from '../configs';
 
 export const createUserJwtToken = (data: any) => {
   const token = jwt.sign(data, configs.JWT_SECRET, {
-    expiresIn: 10 * 24 * 60 * 60,
+    expiresIn: '100days',
   });
   return token;
 };
 
 export const createAgentJwtToken = (data: any) => {
-  const token = jwt.sign(data, configs.JWT_AGENT_SECRET, {
+  const token = jwt.sign(data, configs.JWT_SECRET, {
     expiresIn: '100days',
   });
   return token;
@@ -17,10 +17,12 @@ export const createAgentJwtToken = (data: any) => {
 
 export const decodeJwtToken = (token: string) => {
   try {
+    // Verifying and decoding the token
     const data = jwt.verify(token, configs.JWT_SECRET);
     return data;
   } catch (error) {
-    return false;
+    console.error('JWT Decoding Error:', error.message); // Log error for debugging
+    return null; // Return null instead of false for clarity
   }
 };
 

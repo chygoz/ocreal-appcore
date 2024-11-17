@@ -9,7 +9,6 @@ import { EmailService } from 'src/services/email/email.service';
 import { AgentInvite, AgentIviteStatus } from './schema/agentInvite.schema';
 import { User } from '../users/schema/user.schema';
 import { Agent } from '../agent/schema/agent.schema';
-import { configs } from 'src/configs';
 import { PaginationDto } from 'src/constants/pagination.dto';
 import { InviteAgentDto, InviteAgentResponseDto } from './dto/agentInvite.dto';
 

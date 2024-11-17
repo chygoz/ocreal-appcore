@@ -1165,4 +1165,9 @@ export class PropertyController {
     const status_code = statusCode ? statusCode : 200;
     res.status(status_code).json(responseData);
   }
+
+  @Get('invites-buyers/:agentId')
+  async getSellers(@Param('agentId') agentId: string) {
+    return this.propertyService.getSellers(agentId);
+  }
 }

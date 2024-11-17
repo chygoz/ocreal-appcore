@@ -20,6 +20,14 @@ import {
   OpenMessage,
   OpenMessageSchema,
 } from '../message/schema/openmessage.schema';
+import {
+  AgentPropertyInvite,
+  AgentPropertyInviteSchema,
+} from '../property/schema/agentPropertyInvite.schema';
+import { Property, PropertySchema } from '../property/schema/property.schema';
+import { JwtService } from '@nestjs/jwt';
+import { User, UserSchema } from '../users/schema/user.schema';
+import { Agent, AgentSchema } from '../agent/schema/agent.schema';
 
 @Module({
   imports: [
@@ -28,6 +36,10 @@ import {
       { name: Conversation.name, schema: ConversationSchema },
       { name: OpenConversation.name, schema: OpenConversationSchema },
       { name: OpenMessage.name, schema: OpenMessageSchema },
+      { name: AgentPropertyInvite.name, schema: AgentPropertyInviteSchema },
+      { name: Property.name, schema: PropertySchema },
+      { name: User.name, schema: UserSchema },
+      { name: Agent.name, schema: AgentSchema },
     ]),
   ],
   providers: [
@@ -38,6 +50,7 @@ import {
     OpenConversationService,
     OpenMessageService,
     AwsS3Service,
+    JwtService,
   ],
 })
 export class SocketModule {}

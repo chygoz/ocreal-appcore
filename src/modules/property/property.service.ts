@@ -4561,4 +4561,24 @@ export class PropertyService {
 
     return property;
   }
+
+  async getSellers(agentId: string) {
+    try {
+      const buyers = await this.agentPropertyInviteModel
+        .find({
+          agent: agentId,
+        })
+        .populate({
+          path: 'invitedBy',
+          select: 'email firstname lastname',
+        });
+
+      if (!buyers)
+        throw new NotFoundException(`You have not been invited to a Property`);
+
+      return buyers;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
 }

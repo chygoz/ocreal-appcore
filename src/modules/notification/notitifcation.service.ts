@@ -131,7 +131,7 @@ export default class NotificationService {
 
     const saved = await this.notificationModel.create(payload);
     const notification = await saved.save();
-    await this.sendPushNotification(data.body, [notification.user.id]);
+    await this.sendPushNotification(data.body, [notification.user]);
     return notification;
   }
 

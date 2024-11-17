@@ -8,13 +8,19 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ConversationService } from '../conversation/service/conversation.service';
 import { MessageService } from '../message/message.service';
-import { MessageServiceSocketEnum } from './socketEnum/message.enum';
+import {
+  MessageServiceSocketEnum,
+  SocketErrorEnum,
+} from './socketEnum/message.enum';
 import { CreateConversationDto } from '../conversation/dto/conversatin.dto';
 import { AwsS3Service } from '../uploader/aws';
+import { JwtService } from '@nestjs/jwt';
+import { decodeJwtToken } from 'src/utils/jwt.util';
 
 export type MemberDto = {
   memberId: string;
@@ -28,7 +34,7 @@ export type ConversationDto = {
   cors: {
     origin: '*',
   },
-  namespace: 'user-agent/message',
+  namespace: 'property/message',
 })
 @UsePipes(new ValidationPipe({ transform: true }))
 export class MessageServiceGateway
@@ -39,6 +45,7 @@ export class MessageServiceGateway
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
     private readonly awsS3Service: AwsS3Service,
+    private readonly jwtService: JwtService,
   ) {}
 
   @WebSocketServer()
@@ -59,11 +66,46 @@ export class MessageServiceGateway
 
   @SubscribeMessage(MessageServiceSocketEnum.CREATE_CONVERSATION)
   async createConversation(
-    @MessageBody() payload: CreateConversationDto,
+    @MessageBody()
+    payload: CreateConversationDto,
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const createConv = await this.conversationService.Create(payload);
+      const authHeader = client.handshake.headers.authorization as string;
+      if (!authHeader) {
+        throw new WsException('Authorization token is required.');
+      }
+      const token = authHeader;
+      console.log(token);
+      if (!token) {
+        throw new WsException('Invalid authorization header format.');
+      }
+
+      let decoded: any;
+
+      try {
+        decoded = decodeJwtToken(token);
+        console.log(decoded.id);
+      } catch (err) {
+        throw new WsException('Invalid or expired token.');
+      }
+
+      // Extract user ID and account type from the token
+      const userId = decoded.id;
+      console.log(userId);
+
+      const updatedPayload: CreateConversationDto = {
+        ...payload,
+        buyerAgent: userId, // Assign userId to buyerAgent
+      };
+
+      if (!updatedPayload.buyerAgent) {
+        throw new WsException('buyerAgent is required in the payload.');
+      }
+
+      console.log('Final Payload:', updatedPayload);
+      // Example: Assign user ID to buyerId
+      const createConv = await this.conversationService.Create(updatedPayload);
 
       client.emit(
         MessageServiceSocketEnum.CONVERSATION_CREATED,
@@ -73,6 +115,7 @@ export class MessageServiceGateway
         }),
       );
     } catch (error) {
+      client.emit(SocketErrorEnum.ERROR, error?.message);
       this.logger.error(
         `MessageServiceGateway.handleCreateConversation, ${error}`,
       );
@@ -85,9 +128,29 @@ export class MessageServiceGateway
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const listConvs = await this.conversationService.getConversationsByMember(
-        payload.memberId,
-      );
+      const authHeader = client.handshake.headers.authorization as string;
+      if (!authHeader) {
+        throw new WsException('Authorization token is required.');
+      }
+
+      const token = authHeader;
+      if (!token) {
+        throw new WsException('Invalid authorization header format.');
+      }
+
+      let decoded: any;
+      try {
+        decoded = decodeJwtToken(token);
+        console.log(decoded.id);
+      } catch (err) {
+        throw new WsException('Invalid or expired token.');
+      }
+
+      // Extract user ID and account type from the token
+      const userId = decoded.id;
+
+      const listConvs =
+        await this.conversationService.getConversationsByMember(userId);
 
       client.emit(
         MessageServiceSocketEnum.CONVERSATION_LISTED,
@@ -141,6 +204,26 @@ export class MessageServiceGateway
     @ConnectedSocket() client: Socket,
   ) {
     try {
+      const authHeader = client.handshake.headers.authorization as string;
+      if (!authHeader) {
+        throw new WsException('Authorization token is required.');
+      }
+
+      const token = authHeader;
+      if (!token) {
+        throw new WsException('Invalid authorization header format.');
+      }
+
+      let decoded: any;
+      try {
+        decoded = decodeJwtToken(token);
+        console.log(decoded.id);
+      } catch (err) {
+        throw new WsException('Invalid or expired token.');
+      }
+
+      // Extract user ID and account type from the token
+      const userId = decoded.id;
       let fileKey: string | null = null;
 
       // Check if there's a file in the payload, upload it to S3
@@ -152,7 +235,7 @@ export class MessageServiceGateway
       }
       const createMsg = await this.messageService.createMessage({
         conversationId: payload.conversationId,
-        senderId: payload.senderId,
+        senderId: userId,
         text: payload.text,
         file: fileKey,
       });
@@ -165,6 +248,7 @@ export class MessageServiceGateway
         }),
       );
     } catch (error) {
+      client.emit(SocketErrorEnum.ERROR, error?.message);
       this.logger.error(`MessageServiceGateway.handleSendMessage, ${error}`);
     }
   }

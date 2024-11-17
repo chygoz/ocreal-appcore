@@ -7,12 +7,24 @@ import {
   OpenConversation,
   OpenConversationSchema,
 } from './schema/openConversaion.schema';
+import {
+  AgentPropertyInvite,
+  AgentPropertyInviteSchema,
+} from '../property/schema/agentPropertyInvite.schema';
+import { Property, PropertySchema } from '../property/schema/property.schema';
+import { Agent } from 'http';
+import { AgentSchema } from '../agent/schema/agent.schema';
+import { User, UserSchema } from '../users/schema/user.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Conversation.name, schema: ConversationSchema },
       { name: OpenConversation.name, schema: OpenConversationSchema },
+      { name: AgentPropertyInvite.name, schema: AgentPropertyInviteSchema },
+      { name: Property.name, schema: PropertySchema },
+      { name: Agent.name, schema: AgentSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   exports: [ConversationService, OpenConversationService],
