@@ -28,10 +28,12 @@ export const decodeJwtToken = (token: string) => {
 
 export const decodeAgentJwtToken = (token: string) => {
   try {
-    const data = jwt.verify(token, configs.JWT_AGENT_SECRET);
+    // Verifying and decoding the token
+    const data = jwt.verify(token, configs.JWT_SECRET);
     return data;
   } catch (error) {
-    return false;
+    console.error('JWT Decoding Error:', error.message); // Log error for debugging
+    return null; // Return null instead of false for clarity
   }
 };
 
