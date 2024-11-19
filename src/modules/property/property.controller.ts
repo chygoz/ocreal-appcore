@@ -1170,4 +1170,31 @@ export class PropertyController {
   async getSellers(@Param('agentId') agentId: string) {
     return this.propertyService.getSellers(agentId);
   }
+  @Post('search')
+  async searchProperties(@Body() body: { query: string; numRecords: number }) {
+    const { query, numRecords } = body; // Extract query from the request body
+    if (!query || typeof query !== 'string' || query.trim() === '') {
+      throw new BadRequestException(
+        'Query parameter must be a non-empty string',
+      );
+    }
+
+    return await this.propertyService.searchAndSaveProperties(
+      query,
+      numRecords,
+    );
+  }
+
+  @Get('comparable')
+  async findComparableHomes(
+    @Query('address') address: string,
+    @Query('city') city: string,
+    @Query('province') province: string,
+  ) {
+    return await this.propertyService.findComparableHomes(
+      address,
+      city,
+      province,
+    );
+  }
 }

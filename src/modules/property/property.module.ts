@@ -41,6 +41,8 @@ import {
   BuyerProperyTermsAndAgreementSchema,
 } from './schema/buyerPropertyTermsAndAgreement.schema';
 import { EmailService } from 'src/services/email/email.service';
+import { DatafinitiService } from '../datafiniti/datafiniti.service';
+import { InfinityProp, InfinityPropSchema } from './schema/infinityProperty';
 
 @Module({
   imports: [
@@ -62,9 +64,14 @@ import { EmailService } from 'src/services/email/email.service';
         name: BuyerProperyTermsAndAgreement.name,
         schema: BuyerProperyTermsAndAgreementSchema,
       },
+
+      {
+        name: InfinityProp.name,
+        schema: InfinityPropSchema,
+      },
     ]),
   ],
   controllers: [PropertyController],
-  providers: [PropertyService, EmailService],
+  providers: [PropertyService, EmailService, DatafinitiService],
 })
 export class PropertyModule {}

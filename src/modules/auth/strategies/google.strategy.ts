@@ -14,7 +14,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: configs.GOOGLE_AUTH_CLIENT_ID,
       clientSecret: configs.GOOGLE_AUTH_CLIENT_SECRET,
-      callbackURL: `https://snaphomz.com/v1/auth/oauth-verification`,
+      callbackURL: `https://snaphomz.com/`,
       scope: ['email', 'profile'],
     });
   }

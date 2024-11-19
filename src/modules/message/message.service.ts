@@ -34,7 +34,12 @@ export class MessageService {
 
       const checkSender = await this.conversationModel.findOne({
         _id: payload.conversationId,
-        $or: [{ buyer: payload.senderId }, { seller: payload.senderId }],
+        $or: [
+          { buyer: payload.senderId },
+          { seller: payload.senderId },
+          { sellerAgent: payload.senderId },
+          { buyerAgent: payload.senderId },
+        ],
       });
 
       if (!checkSender)
@@ -52,6 +57,29 @@ export class MessageService {
       });
 
       await newMessage.save();
+      console.log(newMessage.senderId);
+
+      const populatedMessage = await this.messageModel
+        .findById(newMessage._id)
+        .populate('senderId', 'name role'); // Populate the sender's details (including role)
+
+      // Include the role in the response
+      const senderRole =
+        payload.senderId === conversation.seller?.toString()
+          ? 'Seller'
+          : payload.senderId === conversation.sellerAgent?.toString()
+            ? 'Seller Agent'
+            : payload.senderId === conversation.buyerAgent?.toString()
+              ? 'Buyer Agent'
+              : 'Unknown';
+
+      console.log(senderRole);
+
+      return {
+        ...populatedMessage.toObject(),
+        senderRole,
+      };
+
       return newMessage;
     } catch (error) {
       throw new BadGatewayException(error.message);

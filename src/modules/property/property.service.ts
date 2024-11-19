@@ -63,6 +63,8 @@ import { generateReferralCode } from 'src/utils/randome-generators';
 import { AgentContract } from './schema/agentContract.schema';
 import { BuyerProperyTermsAndAgreement } from './schema/buyerPropertyTermsAndAgreement.schema';
 import { AcceptTermsDto } from './dto/buyerPropertyAgreement.dto';
+import { DatafinitiService } from '../datafiniti/datafiniti.service';
+import { InfinityProp } from './schema/infinityProperty';
 
 @Injectable()
 export class PropertyService {
@@ -93,9 +95,13 @@ export class PropertyService {
     @InjectModel(BuyerProperyTermsAndAgreement.name)
     private readonly buyerProperyTermsAndAgreementModel: Model<BuyerProperyTermsAndAgreement>,
 
+    @InjectModel(InfinityProp.name)
+    private readonly infinityPropModel: Model<InfinityProp>,
+
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
     private readonly emailService: EmailService,
+    private readonly datafinitiService: DatafinitiService,
 
     // private readonly axiosInstance: AxiosInstance,
   ) {
@@ -4581,4 +4587,131 @@ export class PropertyService {
       throw new BadRequestException(error.message);
     }
   }
+
+  async searchAndSaveProperties(query: string, numRecords: number) {
+    try {
+      // Fetch results from the external service
+      const datafinitiResults = await this.datafinitiService.searchProperties(
+        query,
+        numRecords,
+      );
+      console.log(datafinitiResults);
+
+      // Validate and map results
+      if (!datafinitiResults || !Array.isArray(datafinitiResults.records)) {
+        throw new Error('Invalid data format: "records" is not an array');
+      }
+
+      const formattedResults = datafinitiResults.records.map((record) => {
+        if (!record) {
+          throw new Error('Invalid record: Missing property data');
+        }
+
+        // Map and provide default values for required fields
+        return {
+          id: record.id || 'N/A',
+          address: record.address || 'Unknown',
+          city: record.city || 'Unknown',
+          country: record.country || 'Unknown',
+          dateAdded: record.dateAdded || new Date(),
+          dateUpdated: record.dateUpdated || new Date(),
+          descriptions: Array.isArray(record.descriptions)
+            ? record.descriptions.map((description) => ({
+                dateSeen: description.dateSeen || new Date(),
+                value: description.value || 'No Description',
+              }))
+            : [],
+          features: Array.isArray(record.features)
+            ? record.features.map((feature) => ({
+                key: feature.key || 'Unknown',
+                value: feature.value || [],
+                replace: feature.replace || null,
+              }))
+            : [],
+          floorSizeValue: record.floorSizeValue || 0,
+          floorSizeUnit: record.floorSizeUnit || 'sqft',
+          geoLocation: record.geoLocation || '0,0',
+          latitude: record.latitude || '0',
+          longitude: record.longitude || '0',
+          mostRecentPriceAmount: record.mostRecentPriceAmount || 0,
+          mostRecentPriceDomain: record.mostRecentPriceDomain || 'Unknown',
+          mostRecentPriceFirstDateSeen:
+            record.mostRecentPriceFirstDateSeen || new Date(),
+          mostRecentStatus: record.mostRecentStatus || 'Unknown',
+          mostRecentStatusFirstDateSeen:
+            record.mostRecentStatusFirstDateSeen || new Date(),
+          numFloor: record.numFloor || 0,
+          postalCode: record.postalCode || '00000',
+          prices: Array.isArray(record.prices)
+            ? record.prices.map((price) => ({
+                amountMax: price.amountMax || 0,
+                amountMin: price.amountMin || 0,
+                currency: price.currency || 'USD',
+                dateSeen: price.dateSeen || [],
+                firstDateSeen: price.firstDateSeen || new Date(),
+                lastDateSeen: price.lastDateSeen || new Date(),
+                availability: price.availability || 'Unknown',
+                isSold: price.isSold || 'Unknown',
+                pricePerSquareFoot: price.pricePerSquareFoot || 0,
+              }))
+            : [],
+          propertyType: record.propertyType || 'Unknown',
+          province: record.province || 'Unknown',
+          statuses: Array.isArray(record.statuses)
+            ? record.statuses.map((status) => ({
+                dateSeen: status.dateSeen || [],
+                firstDateSeen: status.firstDateSeen || new Date(),
+                lastDateSeen: status.lastDateSeen || new Date(),
+                type: status.type || 'Unknown',
+              }))
+            : [],
+          yearBuilt: record.yearBuilt || 0,
+        };
+      });
+
+      // Save the data into the database
+      await this.infinityPropModel.insertMany(formattedResults);
+
+      return formattedResults; // Return processed data
+    } catch (error) {
+      console.error('Error during search:', error.message); // Log the error
+      throw new BadRequestException(
+        `Error searching and saving properties: ${error.message}`,
+      );
+    }
+  }
+
+  async findComparableHomes(address: string, city: string, province: string) {
+    return await this.datafinitiService.findComparableHomes({
+      address,
+      city,
+      province,
+    });
+  }
 }
+
+// Map Datafiniti results to your schema
+// const propertiesToSave = datafinitiResults.map((record) => ({
+//   address: record.address,
+//   price: record.price,
+//   bedrooms: record.bedrooms,
+//   bathrooms: record.bathrooms,
+//   squareFootage: record.squareFootage,
+//   // Add more fields as needed
+// }));
+
+// Save properties that don't exist in your database
+// const savedProperties = await Promise.all(
+//   propertiesToSave.map(async (property) => {
+//     const existingProperty = await this.propertyModel.findOne({
+//       address: property.address,
+//     });
+
+//     if (!existingProperty) {
+//       return await this.propertyModel.create(property);
+//     }
+//     return existingProperty;
+//   }),
+// );
+
+// return savedProperties;
