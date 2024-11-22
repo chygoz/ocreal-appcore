@@ -15,6 +15,7 @@ import { Property, PropertySchema } from '../property/schema/property.schema';
 import { Agent } from 'http';
 import { AgentSchema } from '../agent/schema/agent.schema';
 import { User, UserSchema } from '../users/schema/user.schema';
+import { Offer, OfferSchema } from '../property/schema/offer.schema';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { User, UserSchema } from '../users/schema/user.schema';
       { name: Property.name, schema: PropertySchema },
       { name: Agent.name, schema: AgentSchema },
       { name: User.name, schema: UserSchema },
+      { name: Offer.name, schema: OfferSchema },
     ]),
   ],
   exports: [ConversationService, OpenConversationService],

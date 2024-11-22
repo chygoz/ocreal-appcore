@@ -247,6 +247,18 @@ export class MessageServiceGateway
           message: createMsg,
         }),
       );
+      console.log(payload.conversationId);
+      const allMessages = await this.messageService.getMessagesForConversation(
+        payload.conversationId,
+      );
+
+      client.emit(
+        MessageServiceSocketEnum.MESSAGES_LISTED,
+
+        JSON.stringify({
+          messages: allMessages,
+        }),
+      );
     } catch (error) {
       client.emit(SocketErrorEnum.ERROR, error?.message);
       this.logger.error(`MessageServiceGateway.handleSendMessage, ${error}`);
@@ -287,6 +299,76 @@ export class MessageServiceGateway
         }),
       );
     } catch (error) {
+      this.logger.error(`MessageServiceGateway.handleGetMessages, ${error}`);
+    }
+  }
+
+  @SubscribeMessage(MessageServiceSocketEnum.VIEW_MESSAGES)
+  async GetMessagesForSellerAndBuyer(
+    @MessageBody() payload: { id: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const listMessages = await this.messageService.getMessagesForSeller(
+        payload.id,
+      );
+
+      client.emit(
+        MessageServiceSocketEnum.ALL_VIEWED_MESSAGES,
+
+        JSON.stringify({
+          messages: listMessages,
+        }),
+      );
+    } catch (error) {
+      client.emit(SocketErrorEnum.ERROR, error?.message);
+      this.logger.error(`MessageServiceGateway.handleGetMessages, ${error}`);
+    }
+  }
+
+  @SubscribeMessage(MessageServiceSocketEnum.LIST_CONVERSIONS_BY_PROPERTY)
+  async GetConversationsByPropertyId(
+    @MessageBody() payload: { propertyId: string; id: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const authHeader = client.handshake.headers.authorization as string;
+      if (!authHeader) {
+        throw new WsException('Authorization token is required.');
+      }
+
+      const token = authHeader;
+      if (!token) {
+        throw new WsException('Invalid authorization header format.');
+      }
+
+      let decoded: any;
+      try {
+        decoded = decodeJwtToken(token);
+        console.log(decoded.id);
+      } catch (err) {
+        throw new WsException('Invalid or expired token.');
+      }
+
+      // Extract user ID and account type from the token
+      const userId = decoded.id;
+
+      const id = (payload.id = userId);
+      const listConversation =
+        await this.conversationService.getAllConversationsByAgentAndPropertyId(
+          id,
+          payload.propertyId,
+        );
+
+      client.emit(
+        MessageServiceSocketEnum.PROPERTY_CONVERSATION_RETRIEVED,
+
+        JSON.stringify({
+          messages: listConversation,
+        }),
+      );
+    } catch (error) {
+      client.emit(SocketErrorEnum.ERROR, error?.message);
       this.logger.error(`MessageServiceGateway.handleGetMessages, ${error}`);
     }
   }

@@ -13,6 +13,12 @@ export enum MessageServiceSocketEnum {
   RECEIVE_MESSAGE = 'receive_message',
   LIST_MESSAGES = 'list_messages',
   MESSAGES_LISTED = 'messages_listed',
+
+  VIEW_MESSAGES = 'view_messages',
+  ALL_VIEWED_MESSAGES = 'all_viewed_messages',
+
+  LIST_CONVERSIONS_BY_PROPERTY = 'list_conversations_by_property',
+  PROPERTY_CONVERSATION_RETRIEVED = 'property_conversation_retrieved',
 }
 
 export enum OpenMessageServiceSocketEnum {

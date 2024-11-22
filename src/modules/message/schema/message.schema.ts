@@ -12,7 +12,7 @@ export class Message {
   })
   conversationId: mongoose.Schema.Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, required: true })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true })
   senderId: mongoose.Schema.Types.ObjectId;
 
   @Prop({ type: String })

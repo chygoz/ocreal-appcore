@@ -11,6 +11,7 @@ import { CreateConversationDto } from '../dto/conversatin.dto';
 import { Property } from 'src/modules/property/schema/property.schema';
 import { AgentPropertyInvite } from 'src/modules/property/schema/agentPropertyInvite.schema';
 import { User } from 'src/modules/users/schema/user.schema';
+import { Offer } from 'src/modules/property/schema/offer.schema';
 
 @Injectable()
 export class ConversationService {
@@ -19,8 +20,8 @@ export class ConversationService {
     private readonly conversationModel: Model<Conversation>,
     @InjectModel(Property.name)
     private readonly propertyModel: Model<Property>,
-    @InjectModel(AgentPropertyInvite.name)
-    private readonly agentPropertyInviteModel: Model<AgentPropertyInvite>,
+    @InjectModel(Offer.name)
+    private readonly OfferModel: Model<Offer>,
 
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
@@ -48,48 +49,25 @@ export class ConversationService {
       }
 
       // Step 2: If no existing conversation, check for an agent invite
-      if (propertyId) {
-        const agentInvite = await this.agentPropertyInviteModel.findOne({
-          property: propertyId,
-        });
 
-        if (agentInvite) {
-          // If an agent invite exists, create a new conversation with sellerAgent
-          const newConversation = await this.conversationModel.create({
-            propertyId,
-            sellerAgent: agentInvite.agent,
-            seller: agentInvite.invitedBy,
-            buyerAgent,
-          });
+      const offer = await this.OfferModel.findOne({
+        property: propertyId,
+        buyerAgent: buyerAgent,
+      });
 
-          return newConversation;
-        } else {
-          // No agent invite, fetch property and seller details
-          const property = await this.propertyModel.findById(propertyId);
+      if (!offer)
+        throw new NotFoundException('An offer has not been submitted');
 
-          if (!property) {
-            throw new BadRequestException('Property not found');
-          }
+      // If an agent invite exists, create a new conversation with sellerAgent
+      const newConversation = await this.conversationModel.create({
+        propertyId,
+        sellerAgent: offer.sellerAgent,
+        seller: offer.seller,
+        buyerAgent: offer.buyerAgent || null,
+        buyer: offer.buyer || null,
+      });
 
-          const sellerId = property.seller.toString();
-          const sellerDetails =
-            (await this.userModel.findById(sellerId)) ||
-            (await this.agentModel.findById(sellerId));
-
-          if (!sellerDetails) {
-            throw new BadRequestException('Seller not found');
-          }
-
-          // Create the new conversation with seller and buyer details
-          const newConversation = await this.conversationModel.create({
-            propertyId,
-            seller: sellerId,
-            buyerAgent,
-          });
-
-          return newConversation;
-        }
-      }
+      return newConversation;
     } catch (error) {
       console.log('THE ERROR', error);
       throw new BadRequestException(error.message); // Consider using BadRequestException for input validation errors
@@ -108,10 +86,8 @@ export class ConversationService {
           ],
         })
         .populate('propertyId')
-        .populate('seller')
-        .populate('sellerAgent')
-        .populate('buyer')
-        .populate('buyerAgent')
+        .populate('sellerAgent', 'fullname')
+        .populate('buyerAgent', 'fullname')
         .exec();
 
       return conversations;
@@ -124,7 +100,7 @@ export class ConversationService {
     try {
       const conversation = await this.conversationModel
         .findById(conversationId)
-        .populate('propertyId')
+        //.populate('propertyId')
         .populate('seller')
         .populate('sellerAgent')
         .populate('buyer')
@@ -134,6 +110,37 @@ export class ConversationService {
         throw new NotFoundException('Conversation not found');
       }
       return conversation;
+    } catch (error) {
+      throw new BadGatewayException(error.message);
+    }
+  }
+
+  async getAllConversationsByAgentAndPropertyId(
+    id: string,
+    propertyId: string,
+  ) {
+    try {
+      const conversations = await this.conversationModel
+        .find({
+          $and: [
+            {
+              $or: [{ sellerAgent: id }, { buyerAgent: id }],
+            },
+            { propertyId: propertyId },
+          ],
+        })
+        .populate('propertyId')
+        .populate('seller', 'fullname')
+        .populate('sellerAgent', 'fullname')
+        .populate('buyer', 'fullname')
+        .populate('buyerAgent', 'fullname')
+        .exec();
+
+      if (!conversations || conversations.length === 0) {
+        throw new NotFoundException('No conversations found');
+      }
+
+      return conversations;
     } catch (error) {
       throw new BadGatewayException(error.message);
     }

@@ -28,6 +28,7 @@ import { Property, PropertySchema } from '../property/schema/property.schema';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserSchema } from '../users/schema/user.schema';
 import { Agent, AgentSchema } from '../agent/schema/agent.schema';
+import { Offer, OfferSchema } from '../property/schema/offer.schema';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { Agent, AgentSchema } from '../agent/schema/agent.schema';
       { name: Property.name, schema: PropertySchema },
       { name: User.name, schema: UserSchema },
       { name: Agent.name, schema: AgentSchema },
+      { name: Offer.name, schema: OfferSchema },
     ]),
   ],
   providers: [

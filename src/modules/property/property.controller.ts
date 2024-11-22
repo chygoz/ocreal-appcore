@@ -1170,6 +1170,8 @@ export class PropertyController {
   async getSellers(@Param('agentId') agentId: string) {
     return this.propertyService.getSellers(agentId);
   }
+
+  @UseGuards(JwtAgentAuthGuard)
   @Post('search')
   async searchProperties(@Body() body: { query: string; numRecords: number }) {
     const { query, numRecords } = body; // Extract query from the request body

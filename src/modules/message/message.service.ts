@@ -35,15 +35,13 @@ export class MessageService {
       const checkSender = await this.conversationModel.findOne({
         _id: payload.conversationId,
         $or: [
-          { buyer: payload.senderId },
-          { seller: payload.senderId },
           { sellerAgent: payload.senderId },
           { buyerAgent: payload.senderId },
         ],
       });
 
       if (!checkSender)
-        throw new NotFoundException(`Sender not found in the conversation`);
+        throw new NotFoundException(`Sender not Not allowed to send message`);
 
       const sendTime = new Date();
       const formattedSendTime = format(sendTime, 'yyyy-MM-dd HH:mm:ss');
@@ -61,17 +59,15 @@ export class MessageService {
 
       const populatedMessage = await this.messageModel
         .findById(newMessage._id)
-        .populate('senderId', 'name role'); // Populate the sender's details (including role)
+        .populate('senderId', 'fullname');
 
       // Include the role in the response
       const senderRole =
-        payload.senderId === conversation.seller?.toString()
-          ? 'Seller'
-          : payload.senderId === conversation.sellerAgent?.toString()
-            ? 'Seller Agent'
-            : payload.senderId === conversation.buyerAgent?.toString()
-              ? 'Buyer Agent'
-              : 'Unknown';
+        payload.senderId === conversation.sellerAgent?.toString()
+          ? 'Seller Agent'
+          : payload.senderId === conversation.buyerAgent?.toString()
+            ? 'Buyer Agent'
+            : 'Unknown Role';
 
       console.log(senderRole);
 
@@ -79,8 +75,6 @@ export class MessageService {
         ...populatedMessage.toObject(),
         senderRole,
       };
-
-      return newMessage;
     } catch (error) {
       throw new BadGatewayException(error.message);
     }
@@ -120,6 +114,28 @@ export class MessageService {
         throw new BadGatewayException('Message not found');
       }
       return message;
+    } catch (error) {
+      throw new BadGatewayException(error.message);
+    }
+  }
+
+  async getMessagesForSeller(id: string) {
+    try {
+      // Find all conversations involving the seller
+      const conversations = await this.conversationModel.findOne({
+        $or: [{ seller: id }, { buyer: id }],
+      });
+
+      if (!conversations) {
+        throw new NotFoundException('No conversations found for this user');
+      }
+
+      // Fetch all messages for these conversations
+      const messages = await this.messageModel
+        .find({ conversationId: conversations._id })
+        .populate('senderId', 'fullname');
+
+      return messages;
     } catch (error) {
       throw new BadGatewayException(error.message);
     }
