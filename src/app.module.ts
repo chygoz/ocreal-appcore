@@ -21,10 +21,11 @@ import { S3Module } from './modules/s3/s3.module';
 import { PropertyRepoModule } from './modules/propertyRepo/propertyRepo.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronJobModule } from './cronJob/cronJob.module';
-import { FirebaseMessagingModule } from './modules/firebase/firebase-messaging.module';
+// import { FirebaseMessagingModule } from './modules/firebase/firebase-messaging.module';
 import { User, UserSchema } from './modules/users/schema/user.schema';
 import { Agent } from 'http';
 import { AgentSchema } from './modules/agent/schema/agent.schema';
+import { ZipformsModule } from './modules/zipforms/zipforms.module';
 
 @Module({
   imports: [
@@ -52,7 +53,8 @@ import { AgentSchema } from './modules/agent/schema/agent.schema';
     EmailModule,
     S3Module,
     PropertyRepoModule,
-    FirebaseMessagingModule,
+    ZipformsModule,
+    // FirebaseMessagingModule,
   ],
   controllers: [AppController],
   providers: [AppService, MessageGateway],
