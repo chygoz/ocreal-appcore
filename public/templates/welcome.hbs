@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to OCReal</title>
+  <title>Confirm Verification Code</title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -23,8 +23,22 @@
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
+    .header {
+      background-color: #ff6600;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header img {
+      max-width: 150px;
+      height: auto;
+    }
+
     h1 {
-      color: #007bff;
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
     p {
@@ -33,40 +47,87 @@
       margin-bottom: 15px;
     }
 
-    strong {
-      color: #007bff;
+    .verification-code {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
     }
 
-    a {
-      color: #007bff;
-      text-decoration: none;
+    .verification-code span {
+      display: inline-block;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 24px;
       font-weight: bold;
+      background-color: #f9f9f9;
     }
 
-    a:hover {
-      text-decoration: underline;
+    .button {
+      display: block;
+      width: fit-content;
+      margin: 0 auto 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
     }
 
     footer {
       margin-top: 20px;
       color: #666;
       font-size: 14px;
+      text-align: center;
+    }
+
+    .footer-address {
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .footer-links a {
+      color: #666;
+      text-decoration: none;
+      font-size: 12px;
+      margin: 0 5px;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Welcome to OCReal</h1>
-    <p>Hello {{fullname}},</p>
-    <p>Thank you for joining OCReal! To get started, please use the following code to verify your email:</p>
-    <p>
-      <strong>Verification Code:</strong> {{verificationCode}}
-    </p>
-    <p>This code will expire in 10 minutes.</p>
-    <p>Enter this code on the OCReal website to complete the email verification process.</p>
+    <div class="header">
+      <img src="https://drive.google.com/uc?export=view&id=162Xg-4DS552bG_EJbfmsNrQDYcrt61Us" alt="OC Snaphomz Logo">
+    </div>
+    <h1>Confirm Verification Code</h1>
+    <p>Hi {{fullname}},</p>
+    <p>This is your verification code:</p>
+    <div class="verification-code">
+      {{#each verification_code}}
+        <span>{{this}}</span>
+      {{/each}}
+    </div>
+    <p>This code will only be valid for the next 5 minutes. If the code does not work, you can use this login verification link:</p>
+    <a href="{{verification_code_link}}" class="button">Verify Email</a>
     <footer>
-      <p>Thank you for choosing OCReal!</p>
-      <p>Best regards,<br>OCReal Team</p>
+      <p>Thanks,</p>
+      <p>SnapHomz</p>
+      <div class="footer-address">
+        © SnapHomz, 151 O'Connor Street, Ground Floor, Ottawa ON, K2P 2L8
+      </div>
+      <div class="footer-links">
+        <a href="#">Unsubscribe</a> |
+        <a href="#">View in the browser</a>
+      </div>
     </footer>
   </div>
 </body>

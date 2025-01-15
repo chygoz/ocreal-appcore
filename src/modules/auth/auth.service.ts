@@ -17,6 +17,9 @@ import { verificationTokenGen } from 'src/utils/randome-generators';
 import * as moment from 'moment';
 import { createAgentJwtToken } from 'src/utils/jwt.util';
 import { AccountTypeEnum } from 'src/constants';
+import { MailDispatcherDto } from 'src/services/email/dto/mail.dto';
+import { accountVerification } from 'src/services/email/templates/sendMailVerification';
+accountVerification;
 
 @Injectable()
 export class AuthService {
@@ -267,21 +270,38 @@ export class AuthService {
     if (userExists)
       throw new DuplicateException('An account with this email already exists');
     const token = await this._generateUserEmailToken();
-    await this.userModel.create({
+    const user = new this.userModel({
       email: emailDto.email,
       verification_code: token,
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
-    await this.emailService.sendEmail({
-      email: emailDto.email,
-      subject: 'Welcome to OCReal',
-      template: 'welcome',
-      body: {
-        verificationCode: token,
-        fullname: 'User',
-      },
-    });
-    return { token };
+
+    // await user.save()
+    // await this.emailService.sendEmail({
+    //   email: emailDto.email,
+    //   subject: 'Welcome to OCReal',
+    //   template: 'welcome',
+    //   body: {
+    //     verification_code: token,
+    //     fullname: 'User',
+    //   },
+    // });
+    // return { token };
+
+    // const verCode = awa
+
+    function emailDispatcherPayload(): MailDispatcherDto {
+      return {
+        to: emailDto.email,
+        from: 'contact@ocreal.online',
+        subject: 'Welcome to OCReal',
+        html: accountVerification(token),
+      };
+    }
+    await this.emailService.emailDispatcher(emailDispatcherPayload());
+    return {
+      token,
+    };
   }
 
   // async googleValidateUser(user: {
@@ -333,18 +353,18 @@ export class AuthService {
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
     const email = emailDto.email;
-    await this.emailService.sendEmail({
-      email: email,
-      subject: 'Password Reset Request',
-      template: 'forgot_password',
-      body: {
-        verificationCode: token,
-        fullname: userExists.fullname,
-      },
-    });
-    return {
-      token,
-    };
+    // await this.emailService.sendEmail({
+    //   email: email,
+    //   subject: 'Password Reset Request',
+    //   template: 'forgot_password',
+    //   body: {
+    //     verificationCode: token,
+    //     fullname: userExists.fullname,
+    //   },
+    // });
+    // return {
+    //   token,
+    // };
   }
 
   async agentForgotPassword(emailDto: { email: string }): Promise<any> {
@@ -358,15 +378,15 @@ export class AuthService {
       verification_code: token,
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
-    await this.emailService.sendEmail({
-      email: emailDto.email,
-      subject: 'Password Reset Request',
-      template: 'forgot_password',
-      body: {
-        verificationCode: token,
-        fullname: agentExists.fullname,
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: emailDto.email,
+    //   subject: 'Password Reset Request',
+    //   template: 'forgot_password',
+    //   body: {
+    //     verificationCode: token,
+    //     fullname: agentExists.fullname,
+    //   },
+    // });
     return {
       token,
     };
@@ -413,14 +433,14 @@ export class AuthService {
     });
     if (!user) throw new DuplicateException('Invalid token. Please try again');
 
-    await this.emailService.sendEmail({
-      email: user.email,
-      subject: 'Password Changed!!!',
-      template: 'password-update',
-      body: {
-        fullname: user.fullname ? user.fullname : 'User',
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: user.email,
+    //   subject: 'Password Changed!!!',
+    //   template: 'password-update',
+    //   body: {
+    //     fullname: user.fullname ? user.fullname : 'User',
+    //   },
+    // });
 
     const token = this._generateToken(
       {
@@ -457,14 +477,14 @@ export class AuthService {
     });
     if (!agent) throw new DuplicateException('Invalid token. Please try again');
 
-    await this.emailService.sendEmail({
-      email: agent.email,
-      subject: 'Password Changed!!!',
-      template: 'password-update',
-      body: {
-        fullname: agent.fullname ? agent.fullname : 'User',
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: agent.email,
+    //   subject: 'Password Changed!!!',
+    //   template: 'password-update',
+    //   body: {
+    //     fullname: agent.fullname ? agent.fullname : 'User',
+    //   },
+    // });
 
     const token = createAgentJwtToken({
       id: agent.id,
@@ -524,14 +544,14 @@ export class AuthService {
     });
     if (!agent) throw new DuplicateException('Invalid token. Please try again');
 
-    await this.emailService.sendEmail({
-      email: agent.email,
-      subject: 'Password Changed!!!',
-      template: 'password_changed',
-      body: {
-        fullname: agent.fullname ? agent.fullname : 'User',
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: agent.email,
+    //   subject: 'Password Changed!!!',
+    //   template: 'password_changed',
+    //   body: {
+    //     fullname: agent.fullname ? agent.fullname : 'User',
+    //   },
+    // });
 
     const token = this._generateToken(
       {
@@ -573,15 +593,15 @@ export class AuthService {
       verification_code: token,
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
-    await this.emailService.sendEmail({
-      email: emailDto.email,
-      subject: 'Welcome to OCReal',
-      template: 'welcome',
-      body: {
-        verificationCode: token,
-        fullname: 'User',
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: emailDto.email,
+    //   subject: 'Welcome to OCReal',
+    //   template: 'welcome',
+    //   body: {
+    //     verificationCode: token,
+    //     fullname: 'User',
+    //   },
+    // });
     return { token };
   }
 
@@ -595,15 +615,15 @@ export class AuthService {
       verification_code: token,
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
-    await this.emailService.sendEmail({
-      email: email,
-      subject: 'Welcome to OCReal',
-      template: 'resend_code',
-      body: {
-        verificationCode: token,
-        fullname: user.fullname || 'User',
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: email,
+    //   subject: 'Welcome to OCReal',
+    //   template: 'resend_code',
+    //   body: {
+    //     verificationCode: token,
+    //     fullname: user.fullname || 'User',
+    //   },
+    // });
     return {
       token,
     };
@@ -621,15 +641,15 @@ export class AuthService {
       verification_code: token,
       token_expiry_time: moment().add(10, 'minutes').toDate(),
     });
-    await this.emailService.sendEmail({
-      email: emailDto.email,
-      subject: 'Welcome to OCReal',
-      template: 'resend_code',
-      body: {
-        verificationCode: token,
-        fullname: agent.fullname || 'User',
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: emailDto.email,
+    //   subject: 'Welcome to OCReal',
+    //   template: 'resend_code',
+    //   body: {
+    //     verificationCode: token,
+    //     fullname: agent.fullname || 'User',
+    //   },
+    // });
     return { token };
   }
 

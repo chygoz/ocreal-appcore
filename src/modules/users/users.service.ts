@@ -170,14 +170,14 @@ export class UsersService {
     });
     if (!user) throw new DuplicateException('Invalid token. Please try again');
 
-    await this.emailService.sendEmail({
-      email: user.email,
-      subject: 'Password Changed!!!',
-      template: 'password-update',
-      body: {
-        fullname: user.fullname ? user.fullname : 'User',
-      },
-    });
+    // await this.emailService.sendEmail({
+    //   email: user.email,
+    //   subject: 'Password Changed!!!',
+    //   template: 'password-update',
+    //   body: {
+    //     fullname: user.fullname ? user.fullname : 'User',
+    //   },
+    // });
 
     const token = this._generateToken(
       {
