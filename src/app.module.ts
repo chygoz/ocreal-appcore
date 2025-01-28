@@ -25,6 +25,7 @@ import { FirebaseMessagingModule } from './modules/firebase/firebase-messaging.m
 import { User, UserSchema } from './modules/users/schema/user.schema';
 import { Agent } from 'http';
 import { AgentSchema } from './modules/agent/schema/agent.schema';
+import { ZipformsModule } from './modules/zipforms/zipforms.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { AgentSchema } from './modules/agent/schema/agent.schema';
     EmailModule,
     S3Module,
     PropertyRepoModule,
+    ZipformsModule,
     FirebaseMessagingModule,
   ],
   controllers: [AppController],
