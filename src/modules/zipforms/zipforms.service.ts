@@ -73,4 +73,35 @@ export class ZipformsService {
       );
     }
   }
+  async addTransactionForm(
+    contextId: string,
+    sharedKey: string,
+    transactionData: any,
+  ): Promise<any> {
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Auth-ContextId': contextId, // Custom header for the context ID
+      'X-Auth-SharedKey': sharedKey, // Custom header for the shared key
+    };
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(this.zipFormTransactionUrl, transactionData, {
+          headers,
+        }),
+      );
+      return response.data; // Return the transaction data
+    } catch (error) {
+      // Handle errors appropriately
+      const errorMessage =
+        error.response?.data?.error || 'Failed to create transaction.';
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: errorMessage,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 }

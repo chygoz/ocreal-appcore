@@ -19,6 +19,8 @@ import { createAgentJwtToken } from 'src/utils/jwt.util';
 import { AccountTypeEnum } from 'src/constants';
 import { MailDispatcherDto } from 'src/services/email/dto/mail.dto';
 import { accountVerification } from 'src/services/email/templates/sendMailVerification';
+import { resendVerification } from 'src/services/email/templates/resendMailVerification';
+resendVerification
 accountVerification;
 
 @Injectable()
@@ -287,8 +289,6 @@ export class AuthService {
     //   },
     // });
     // return { token };
-
-    // const verCode = awa
 
     function emailDispatcherPayload(): MailDispatcherDto {
       return {
@@ -624,6 +624,16 @@ export class AuthService {
     //     fullname: user.fullname || 'User',
     //   },
     // });
+
+    function emailDispatcherPayload(): MailDispatcherDto {
+      return {
+        to: user.email,
+        from: 'contact@ocreal.online',
+        subject: 'Welcome to OCReal',
+        html: resendVerification(token),
+      };
+    }
+    await this.emailService.emailDispatcher(emailDispatcherPayload());
     return {
       token,
     };
