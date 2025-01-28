@@ -20,7 +20,7 @@ import { AccountTypeEnum } from 'src/constants';
 import { MailDispatcherDto } from 'src/services/email/dto/mail.dto';
 import { accountVerification } from 'src/services/email/templates/sendMailVerification';
 import { resendVerification } from 'src/services/email/templates/resendMailVerification';
-resendVerification
+resendVerification;
 accountVerification;
 
 @Injectable()

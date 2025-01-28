@@ -1,7 +1,5 @@
-export const accountVerification = (
-    verification_code: string
-  ): string => {
-    return `
+export const accountVerification = (verification_code: string): string => {
+  return `
   <!DOCTYPE html>
   <html lang="en">
   <head>
@@ -134,7 +132,11 @@ export const accountVerification = (
         <p>Hi User,</p>
         <p>This is your verification code:</p>
         <div class="verification-code">
-          ${verification_code.toString().split('').map(digit => `<span>${digit}</span>`).join('')}
+          ${verification_code
+            .toString()
+            .split('')
+            .map((digit) => `<span>${digit}</span>`)
+            .join('')}
         </div>
         <p>This code will only be valid for the next 5 minutes. If the code does not work, you can use this login verification link:</p>
         <a href="#" class="button">Verify Email</a>
@@ -154,4 +156,4 @@ export const accountVerification = (
   </body>
   </html>
     `;
-  };
+};

@@ -2,9 +2,11 @@ import {
   Controller,
   Post,
   Body,
+  Get,
   Headers,
   HttpException,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ZipformsService } from './zipforms.service';
 import { FormAuthDto } from './dto/form.dto';
@@ -41,6 +43,76 @@ export class ZipformsController {
       contextId,
       sharedKey,
       transactionData,
+    );
+
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+  @Get('viewagentForm')
+  async viewagentForm(
+    @Headers('X-Auth-ContextId') contextId: string,
+    @Headers('X-Auth-SharedKey') sharedKey: string,
+  ) {
+    if (!contextId || !sharedKey) {
+      throw new HttpException(
+        'Missing required authentication headers',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const result = await this.zipformsService.viewAgentLibraryForm(
+      contextId,
+      sharedKey,
+    );
+
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+  @Get('allforms')
+  async allforms(
+    @Headers('X-Auth-ContextId') contextId: string,
+    @Headers('X-Auth-SharedKey') sharedKey: string,
+  ) {
+    if (!contextId || !sharedKey) {
+      throw new HttpException(
+        'Missing required authentication headers',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const result = await this.zipformsService.viewAllForms(
+      contextId,
+      sharedKey,
+    );
+
+    return {
+      status: 'success',
+      data: result,
+    };
+  }
+  @Post('addFormToTransaction')
+  async formToTransaction(
+    @Headers('X-Auth-contextId') contextId: string,
+    @Headers('X-Auth-SharedKey') sharedKey: string,
+    @Body() transactionData: any,
+    @Query('transactionId') transactionId: string,
+  ) {
+    if (!contextId || !sharedKey) {
+      throw new HttpException(
+        'Missing required authentication headers',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const result = await this.zipformsService.addTransactionForm(
+      contextId,
+      sharedKey,
+      transactionData,
+      transactionId,
     );
 
     return {

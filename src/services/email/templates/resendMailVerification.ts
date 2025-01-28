@@ -1,7 +1,5 @@
-export const resendVerification = (
-    verification_code: string
-  ): string => {
-    return `
+export const resendVerification = (verification_code: string): string => {
+  return `
   <!DOCTYPE html>
   <html lang="en">
   <head>
@@ -134,7 +132,11 @@ export const resendVerification = (
         <p>Hi User,</p>
         <p>It seems like you haven't verified your email with OCReal yet. Please use the following verification code to complete the process:</p>
         <div class="verification-code">
-          ${verification_code.toString().split('').map(digit => `<span>${digit}</span>`).join('')}
+          ${verification_code
+            .toString()
+            .split('')
+            .map((digit) => `<span>${digit}</span>`)
+            .join('')}
         </div>
         <p>This code will expire in 10 minutes for security reasons.</p>
 
@@ -158,4 +160,4 @@ export const resendVerification = (
   </body>
   </html>
     `;
-  };
+};
