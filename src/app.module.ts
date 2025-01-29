@@ -54,7 +54,7 @@ import { ZipformsModule } from './modules/zipforms/zipforms.module';
     S3Module,
     PropertyRepoModule,
     ZipformsModule,
-    FirebaseMessagingModule,
+    // FirebaseMessagingModule,
   ],
   controllers: [AppController],
   providers: [AppService, MessageGateway],
